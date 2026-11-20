@@ -14,7 +14,7 @@ test("Plus theme initializes on mobile markup and switches the native site color
         <div class="cell"><a href="/" class="top">Home</a></div>
       </div></div></header>
       <div id="Wrapper"><div class="content">
-        <div id="Tabs"><a class="tab_current" href="/?tab=tech">\u6280\u672f</a></div>
+        <div id="Tabs"><a class="tab_current" href="/?tab=tech">技术</a></div>
       </div></div>
     </body></html>`,
     { url: "https://www.v2ex.com/?tab=tech", runScripts: "outside-only", pretendToBeVisual: true },
@@ -274,7 +274,7 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   assert.equal(window.document.querySelectorAll("#vx-settings").length, 1);
   const settingsShortcut = window.document.querySelector(".vx-settings-shortcut button");
   assert.ok(settingsShortcut.querySelector("svg"));
-  assert.equal(settingsShortcut.getAttribute("aria-label"), "\u8bbe\u7f6e");
+  assert.equal(settingsShortcut.getAttribute("aria-label"), "设置");
   settingsShortcut.click();
   assert.equal(window.document.querySelectorAll("#vx-settings-dialog").length, 1);
   window.document.querySelector("#vx-settings-dialog .v2p-modal-close-btn").click();
@@ -421,15 +421,13 @@ test("Cloudflare and error pages do not run V2EX Kit", async () => {
 test("script language preferences localize modules and guests skip account features", async () => {
   const translations = {
     enus: ["Settings", "Preview", "Top replies"],
-    zhcn: ["\u8bbe\u7f6e", "\u9884\u89c8", "高赞回复"],
-    jajp: ["\u8a2d\u5b9a", "\u30d7\u30ec\u30d3\u30e5\u30fc", "高評価の返信"],
-    kokr: ["\uc124\uc815", "\ubbf8\ub9ac\ubcf4\uae30", "감사를 많이 받은 댓글"],
+    zhcn: ["设置", "预览", "高赞回复"],
+    jajp: ["設定", "プレビュー", "高評価の返信"],
   };
   for (const [language, locale, expected] of [
     [undefined, "enus", "zhcn"],
     ["en", "jajp", "enus"],
     ["ja", "enus", "jajp"],
-    ["ko", "enus", "kokr"],
     ...Object.keys(translations).map((locale) => ["site", locale, locale]),
   ]) {
     const instance = new JSDOM(

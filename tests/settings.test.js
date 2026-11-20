@@ -11,7 +11,7 @@ test("closing upload history returns to settings and preserves unsaved fields", 
   openSettings(createStorage(api), true);
   const settings = document.querySelector("#vx-settings-dialog");
   const language = settings.querySelector('[name="language"]');
-  language.value = "ko";
+  language.value = "ja";
   settings.querySelector('[name="theme"]').value = "vscode";
   settings.querySelector("#vx-settings-tab-images").click();
   const history = settings.querySelector("#vx-settings-panel-images > button");
@@ -31,7 +31,7 @@ test("closing upload history returns to settings and preserves unsaved fields", 
     assert.equal(document.querySelectorAll(".v2p-modal-mask").length, 1);
     assert.equal(settings.isConnected, true);
     assert.equal(settings.hasAttribute("inert"), false);
-    assert.equal(language.value, "ko");
+    assert.equal(language.value, "ja");
     assert.equal(settings.querySelector('[name="theme"]').value, "vscode");
     assert.equal(document.activeElement, history);
     assert.equal(document.body.classList.contains("v2p-modal-open"), true);
@@ -83,9 +83,9 @@ test("settings give every option a Chinese label and an associated description",
   assert.equal(language.value, "zh");
   assert.deepEqual(
     [...language.options].map((option) => option.value),
-    ["zh", "en", "ja", "ko", "site"],
+    ["zh", "en", "ja", "site"],
   );
-  assert.match(document.querySelector(".vx-storage-help").textContent, /\u672c\u5730/);
+  assert.match(document.querySelector(".vx-storage-help").textContent, /本地/);
   assert.equal(document.querySelectorAll('[name*="font"]').length, 0);
   document.querySelector(".v2p-modal-close-btn").click();
 });
@@ -118,13 +118,13 @@ test("guest settings retain saved preferences and show account dependencies", ()
     );
   }
   document.querySelector('[name="preloadPages"]').value = "1";
-  document.querySelector('[name="language"]').value = "ko";
+  document.querySelector('[name="language"]').value = "ja";
   assert.equal(document.querySelector('[name="theme"]').disabled, false);
   document.querySelector('[name="theme"]').value = "vscode";
   document
     .querySelector("form")
     .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-  assert.deepEqual(saved, { ...original, preloadPages: 1, language: "ko", theme: "vscode" });
+  assert.deepEqual(saved, { ...original, preloadPages: 1, language: "ja", theme: "vscode" });
   document.querySelector(".v2p-modal-close-btn").click();
   setLanguage("zh");
 });
@@ -152,7 +152,7 @@ test("Apply saves across tabs and keeps the settings panel open", () => {
   const store = createStorage(memoryAPI());
   openSettings(store);
   const dialog = document.querySelector("#vx-settings-dialog");
-  dialog.querySelector('[name="language"]').value = "ko";
+  dialog.querySelector('[name="language"]').value = "ja";
   const display = dialog.querySelector("#vx-settings-tab-display");
   display.click();
   dialog.querySelector('[name="theme"]').value = "native";
@@ -163,7 +163,7 @@ test("Apply saves across tabs and keeps the settings panel open", () => {
   );
   hotLimit.value = "2";
   dialog.querySelector('.v2p-modal-footer button[type="button"]').click();
-  assert.equal(store.options().language, "ko");
+  assert.equal(store.options().language, "ja");
   assert.equal(store.options().theme, "native");
   assert.equal(store.options().hotRepliesLimit, 2);
   assert.equal(dialog.isConnected, true);
@@ -201,7 +201,7 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
     ],
   );
   const language = panels[0].querySelector('[name="language"]');
-  language.value = "ko";
+  language.value = "ja";
   tabs[0].focus();
   tabs[0].dispatchEvent(new window.KeyboardEvent("keydown", { key: "End", bubbles: true }));
   assert.equal(document.activeElement, tabs[4]);
@@ -211,7 +211,7 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
     [true, true, true, true, false],
   );
   tabs[0].click();
-  assert.equal(language.value, "ko");
+  assert.equal(language.value, "ja");
   document.querySelector(".v2p-modal-close-btn").click();
   window.close();
 });
