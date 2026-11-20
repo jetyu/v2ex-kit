@@ -1,0 +1,1011 @@
+[hidden] {
+  display: none !important;
+}
+
+.item_title:has(+ .vx-preview-visible) {
+  display: inline;
+}
+
+.v2p-topic-preview-btn.vx-preview-visible {
+  margin-inline-start: 8px;
+  padding: 1px 6px;
+  visibility: visible;
+}
+
+.thank_area.v2p-controls {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+}
+
+#reply-box.reply-box-sticky {
+  isolation: isolate;
+}
+
+.thank_area.v2p-controls > a {
+  visibility: inherit;
+}
+
+.vx-page-start {
+  display: block;
+  height: 0;
+  scroll-margin-top: 12px;
+}
+
+.reply-group .v2p-reply-content {
+  --bg-reply: var(--box-background-alt-color);
+}
+
+.vx-member-popup {
+  box-sizing: border-box;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+}
+
+.vx-member-popup .v2p-popup-content {
+  width: 100%;
+  max-height: calc(100dvh - 18px);
+}
+
+.vx-member-popup .v2p-member-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  overflow-wrap: anywhere;
+}
+
+.vx-member-popup .v2p-info-left {
+  flex: none;
+}
+
+.vx-member-popup .v2p-info-right {
+  min-width: 0;
+}
+
+.vx-member-popup :is(.v2p-no, .v2p-created-date) {
+  width: auto;
+  min-height: 16px;
+  height: auto;
+}
+
+.vx-member-popup .v2p-member-card-actions {
+  flex-wrap: wrap;
+}
+
+.vx-member-rank {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--v2p-color-font-secondary);
+}
+
+.vx-member-replies .v2p-member-topics-list {
+  gap: 8px;
+}
+
+.vx-member-reply {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  color: inherit;
+}
+
+.vx-member-reply-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vx-member-reply-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.5;
+  color: var(--v2p-color-font-secondary);
+}
+
+.vx-member-reply-time {
+  font-size: 12px;
+  color: var(--v2p-color-font-tertiary);
+}
+
+.vx-member-popup .v2p-member-topic-item-row:not(:hover, :focus-within) .v2p-topic-preview-btn {
+  display: none;
+}
+
+.vx-member-popup .v2p-member-topic-item-row:focus-within .v2p-topic-preview-btn {
+  max-width: none;
+  max-height: none;
+  visibility: visible;
+}
+
+#vx-settings-dialog {
+  --v2p-color-bg-content: #fff;
+  --v2p-color-foreground: #000;
+  --v2p-color-bg-input: #f9f9f9;
+  --v2p-color-font-secondary: #666;
+  --v2p-color-font-tertiary: var(--v2p-color-font-secondary);
+  --v2p-color-mask: rgb(0 0 0 / 28%);
+  --box-border-color: rgb(128 128 128 / 23%);
+  --box-border-radius: 3px;
+  --vx-settings-button: #f0f0f0;
+  --vx-settings-button-hover: #f5f5f5;
+  --vx-settings-button-border: #ddd;
+  --vx-settings-active: #334;
+  --vx-control-accent: #485cc7;
+  --vx-modal-mask-image: none;
+  --vx-modal-header-image: none;
+  color-scheme: light;
+  color: var(--v2p-color-foreground);
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"])
+  #vx-settings-dialog {
+  --v2p-color-bg-content: #18222d;
+  --v2p-color-foreground: #d1d5d9;
+  --v2p-color-bg-input: #001d25;
+  --v2p-color-font-secondary: #b2c3d4;
+  --box-border-color: #22303f;
+  --vx-settings-button: #22303f;
+  --vx-settings-button-hover: #2c3a4d;
+  --vx-settings-button-border: #3e5874;
+  --vx-settings-active: #393f4e;
+  --vx-control-accent: #7b8fe8;
+  color-scheme: dark;
+}
+
+#vx-settings-dialog .v2p-modal-main {
+  width: 100%;
+  max-width: 840px;
+  height: 640px;
+  max-height: 100%;
+  border: 1px solid var(--box-border-color);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 20%);
+}
+
+.vx-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--box-border-color);
+}
+
+#vx-settings-dialog [role="tab"] {
+  padding: 4px 9px;
+  border: 0;
+  border-radius: var(--box-border-radius);
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+#vx-settings-dialog [role="tab"]:hover {
+  background: var(--vx-settings-button-hover);
+}
+
+#vx-settings-dialog [role="tab"][aria-selected="true"] {
+  color: #fff;
+  background: var(--vx-settings-active);
+}
+
+#vx-settings-dialog .v2p-modal-content {
+  min-height: 0;
+  padding: 18px;
+}
+
+.vx-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 28px;
+}
+
+.vx-settings-grid:not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.vx-settings-option {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 4px;
+  min-width: 0;
+}
+
+.vx-settings-option label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+}
+
+#vx-settings-dialog label {
+  font-weight: 400;
+}
+
+#vx-settings-dialog .vx-settings-option > p,
+.vx-settings-option label small {
+  color: var(--v2p-color-font-secondary);
+}
+
+#vx-settings-dialog .vx-settings-option > p {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.vx-settings-option label small {
+  margin-inline-start: 6px;
+  white-space: nowrap;
+}
+
+.vx-settings-option input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.vx-settings-option input[type="number"] {
+  width: 5em;
+}
+
+.vx-settings-option:has(input[type="text"]) {
+  grid-column: 1 / -1;
+}
+
+.vx-settings-option:has(input[type="text"]) label {
+  display: grid;
+}
+
+.vx-settings-option input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vx-image-settings {
+  min-inline-size: 0;
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--box-border-color);
+  border-radius: var(--box-border-radius);
+}
+
+.vx-image-settings .vx-settings-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#vx-settings-dialog p {
+  margin: 4px 0 0;
+  line-height: 1.45;
+}
+
+#vx-settings-dialog .vx-settings-notice {
+  margin: 0 0 12px;
+}
+
+.vx-settings-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#vx-settings-dialog .v2p-modal-header,
+#vx-settings-dialog .v2p-modal-footer {
+  flex-shrink: 0;
+}
+
+#vx-settings-dialog .v2p-modal-footer [role="status"] {
+  min-width: 0;
+  margin: 0 auto 0 0;
+}
+
+#vx-settings-dialog .v2p-modal-footer button {
+  flex: none;
+}
+
+@media (max-width: 620px) {
+  .vx-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #vx-settings-dialog .v2p-modal-header {
+    flex-wrap: wrap;
+  }
+}
+
+.vx-tag-editor-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vx-tag-editor-dialog .v2p-modal-main {
+  width: min(100%, 520px);
+  height: auto;
+  max-height: 100%;
+}
+
+.vx-tag-editor-dialog .v2p-tag-input-wrapper {
+  padding: 16px 20px;
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog) {
+  --vx-control-radius: 3px;
+}
+
+.vx-tag-editor-dialog {
+  --vx-control-accent: var(--v2p-color-accent-600);
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog)
+  :is(input[type="text"], input[type="search"], input[type="number"], select, .vx-tag-input) {
+  box-sizing: border-box;
+  min-height: 32px;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--vx-control-radius);
+  color: var(--v2p-color-foreground);
+  font: inherit;
+  background: var(--v2p-color-bg-input);
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog)
+  :is(input[type="text"], input[type="search"], input[type="number"], select, .vx-tag-input):hover {
+  border-color: var(--box-border-color);
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog)
+  :is(input[type="text"], input[type="search"], input[type="number"], select):focus {
+  border-color: var(--vx-control-accent);
+  outline: 2px solid color-mix(in srgb, var(--vx-control-accent) 22%, transparent);
+  outline-offset: 0;
+  background: var(--v2p-color-bg-content);
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog) .vx-tag-input:focus-within {
+  border-color: var(--vx-control-accent);
+}
+
+#vx-settings-dialog :is(select, input[type="search"]) {
+  max-width: 100%;
+}
+
+#vx-settings-dialog input[type="checkbox"] {
+  accent-color: var(--vx-control-accent);
+}
+
+#vx-settings-dialog :is(.normal.button, .v2p-modal-close-btn) {
+  height: auto;
+  margin: 0;
+  padding: 3px 10px !important;
+  border: 1px solid var(--vx-settings-button-border);
+  border-radius: 3px !important;
+  color: var(--v2p-color-foreground);
+  font: inherit;
+  text-shadow: none;
+  background: var(--vx-settings-button);
+  box-shadow: none;
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog) button.normal.button {
+  min-height: 30px;
+  max-width: 100%;
+  border-radius: var(--vx-control-radius);
+}
+
+:is(#vx-settings-dialog, .vx-tag-editor-dialog) button:focus-visible {
+  outline: 2px solid var(--vx-control-accent);
+  outline-offset: 2px;
+}
+
+.v2p-tag-input-wrapper [role="alert"]:empty {
+  display: none;
+}
+
+.vx-settings-tag-manager {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--box-border-color);
+  border-radius: var(--box-border-radius);
+}
+
+.vx-settings-tag-manager summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.vx-tag-entry,
+.vx-tag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.vx-tag-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-block: 12px;
+}
+
+.vx-tag-filters label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.vx-tag-filters :is(input, select) {
+  width: 100%;
+  margin: 0;
+}
+
+.vx-tag-filters .vx-tag-count {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+@media (max-width: 620px) {
+  .vx-tag-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@supports (appearance: base-select) and selector(::picker(select)) {
+  .vx-tag-group,
+  .vx-tag-group::picker(select) {
+    appearance: base-select;
+  }
+
+  .vx-tag-group {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vx-tag-group::picker(select) {
+    width: anchor-size(width);
+    max-width: calc(100vw - 24px);
+    max-height: min(55vh, 280px);
+    margin-block: 4px;
+    padding: 4px;
+    overflow: auto;
+    border: 1px solid var(--box-border-color);
+    border-radius: var(--vx-control-radius);
+    background: var(--v2p-color-bg-content);
+    color: var(--v2p-color-foreground);
+    box-shadow: var(--v2p-widget-shadow);
+  }
+
+  .vx-tag-group option {
+    padding: 6px 8px;
+    border-radius: var(--vx-control-radius);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .vx-tag-group option:is(:hover, :focus-visible) {
+    background: var(--v2p-color-bg-input);
+  }
+
+  .vx-tag-group option:checked {
+    color: var(--v2p-color-button-special-foreground);
+    background: var(--v2p-color-button-special-background);
+  }
+}
+
+#vx-settings-dialog .vx-tag-capacity,
+#vx-settings-dialog .vx-storage-help {
+  margin-block: 8px;
+  color: var(--v2p-color-font-secondary);
+}
+
+.vx-tag-count {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--button-background-hover-color);
+}
+
+.vx-tag-editor:not(:empty) {
+  margin-top: 12px;
+  padding-block: 12px;
+  border-block: 1px solid var(--box-border-color);
+}
+
+.vx-tag-editor h3 {
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+
+.vx-tag-editor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 8px;
+  color: var(--v2p-color-font-secondary);
+  font-size: 12px;
+}
+
+.vx-tag-editor-meta p,
+#vx-settings-dialog .vx-tag-editor-meta p {
+  flex: 1 1 15em;
+  margin: 0;
+}
+
+.vx-tag-editor-count {
+  margin-inline-start: auto;
+  white-space: nowrap;
+}
+
+.vx-tag-editor > .vx-tag-actions {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.vx-tag-fields {
+  display: contents;
+}
+
+.vx-tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  max-height: min(38vh, 230px);
+  overflow: auto;
+}
+
+.vx-tag-field {
+  display: inline-flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  align-items: center;
+  gap: 2px;
+  padding-inline: 6px 3px;
+  border-radius: var(--vx-control-radius);
+  background: var(--button-background-hover-color);
+}
+
+.vx-tag-field-editing {
+  flex: 1 1 13em;
+}
+
+.vx-tag-input textarea,
+.vx-tag-input textarea:focus {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 24px;
+  padding: 3px 2px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  line-height: 18px;
+  background: transparent;
+  resize: none;
+}
+
+.vx-tag-field textarea {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.vx-tag-entry {
+  flex: 1 1 10em;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.vx-tag-entry textarea {
+  flex: 1 1 0;
+}
+
+.vx-tag-edit-value,
+.vx-tag-remove-value,
+.vx-tag-add,
+.vx-tag-filter {
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--vx-control-radius);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vx-tag-edit-value {
+  padding: 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vx-tag-remove-value,
+.vx-tag-add {
+  flex: 0 0 20px;
+  padding: 0;
+  font-size: 16px;
+}
+
+:is(.vx-tag-edit-value, .vx-tag-remove-value, .vx-tag-add):hover {
+  background: var(--v2p-color-button-background-hover);
+}
+
+.vx-tag-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.vx-tag-row,
+.vx-tag-empty {
+  padding: 10px;
+  border: 1px solid var(--box-border-color);
+  border-radius: var(--box-border-radius);
+  background: var(--box-background-color);
+}
+
+.vx-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vx-tag-member {
+  flex: 1 1 14em;
+  min-width: 0;
+}
+
+.vx-tag-profile {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.vx-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vx-tag-chips li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vx-tag-filter {
+  max-width: 100%;
+  padding: 0 7px;
+  overflow-wrap: anywhere;
+  background: var(--v2p-color-bg-input);
+}
+
+.vx-tag-filter:hover {
+  border-color: var(--box-border-color);
+}
+
+.vx-tag-filter[aria-pressed="true"] {
+  border-color: var(--v2p-color-button-special-border);
+  color: var(--v2p-color-button-special-foreground);
+  background: var(--v2p-color-button-special-background);
+}
+
+.vx-tag-actions .vx-tag-delete.normal.button {
+  color: color-mix(in srgb, var(--v2p-color-error) 70%, var(--v2p-color-foreground));
+}
+
+.vx-tag-actions .vx-tag-delete.normal.button:hover {
+  border-color: var(--v2p-color-error);
+}
+
+.vx-tags {
+  min-width: 0;
+  max-width: min(300px, 100%);
+  gap: 3px;
+  line-height: 1.5;
+  color: var(--v2p-color-foreground);
+}
+
+.topic_info .vx-tags {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+  margin-inline: 8px;
+  margin-block: 0;
+  vertical-align: middle;
+}
+
+.vx-tags-text {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vx-upload-record {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.vx-upload-record-preview {
+  display: flex;
+  flex: 0 0 min(112px, 32%);
+  height: 80px;
+  overflow: hidden;
+  border: 1px solid var(--box-border-color);
+  border-radius: var(--box-border-radius);
+  background: var(--box-background-alt-color);
+}
+
+.vx-upload-record-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.vx-upload-record-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.vx-upload-remove {
+  margin-top: 8px;
+}
+
+.vx-upload-history-status:empty {
+  display: none;
+}
+
+.vx-page-actions {
+  position: fixed;
+  z-index: 60;
+  inset-inline-end: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: grid;
+  padding: 3px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 0;
+  background: var(--v2p-color-bg-widget);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 10%);
+}
+
+.vx-page-actions button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--v2p-color-foreground);
+  font: inherit;
+  line-height: 1;
+  background: transparent;
+  cursor: pointer;
+  animation: vx-action-enter 0.16s ease-out;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.vx-page-actions button:hover {
+  color: var(--v2p-color-accent-600);
+  background: var(--v2p-color-button-background-hover);
+}
+
+.vx-page-actions button:focus-visible {
+  outline: 2px solid var(--v2p-color-accent-600);
+  outline-offset: 2px;
+}
+
+.vx-page-actions button svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.vx-page-action-hint {
+  position: absolute;
+  inset-inline-end: calc(100% + 12px);
+  top: 50%;
+  transform: translate(var(--vx-hint-offset, 4px), -50%);
+  visibility: hidden;
+  opacity: 0;
+  width: max-content;
+  max-width: min(160px, calc(100vw - 90px));
+  box-sizing: border-box;
+  padding: 5px 10px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--v2p-color-foreground);
+  background: var(--v2p-color-bg-widget);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease-out,
+    transform 0.12s ease-out,
+    visibility 0s linear 0.12s;
+}
+
+.vx-page-actions button:is(:hover, :focus-visible) .vx-page-action-hint {
+  transform: translate(0, -50%);
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.vx-settings-shortcut {
+  position: fixed;
+  z-index: 60;
+  inset-inline-start: 0;
+  bottom: 0;
+  padding: max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+.vx-settings-shortcut > .vx-page-actions {
+  position: relative;
+  inset: auto;
+  transform: translateY(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease-out,
+    transform 0.16s ease-out;
+}
+
+.vx-settings-shortcut:hover > .vx-page-actions,
+.vx-settings-shortcut:has(button:focus-visible) > .vx-page-actions {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.vx-settings-shortcut .vx-page-action-hint {
+  --vx-hint-offset: -4px;
+
+  inset-inline-start: calc(100% + 12px);
+  inset-inline-end: auto;
+}
+
+.v2p-modal-open :is(.vx-page-actions, .vx-settings-shortcut) {
+  display: none;
+}
+
+@keyframes vx-action-enter {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-page-actions button,
+  .vx-page-action-hint,
+  .vx-settings-shortcut > .vx-page-actions {
+    animation: none;
+    transition: none;
+  }
+
+  .vx-settings-shortcut > .vx-page-actions {
+    transform: none;
+  }
+
+  .vx-page-action-hint {
+    transform: translateY(-50%);
+  }
+}
+.vx-image-viewer {
+  display: grid;
+  place-items: center;
+}
+
+.vx-image-viewer .v2p-modal-main {
+  width: fit-content;
+  min-width: min(280px, 100%);
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+.vx-image-viewer .v2p-modal-content {
+  display: grid;
+  place-items: center;
+}
+
+.vx-image-viewer img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(96dvh - 70px);
+  object-fit: contain;
+}
+
+.vx-image-viewer [role="status"] {
+  margin: 20px;
+}
+
+:is(:root[data-v2p-page="topic"], .vx-topic-excerpt)
+  :is(.topic_content, .reply_content, .subtle .markdown_body)
+  img:not(.v2p-emoji-img) {
+  cursor: zoom-in;
+}
+
+.vx-topic-excerpt .v2p-modal-main {
+  width: min(100%, 760px);
+  height: auto;
+  max-height: 100%;
+}
+
+.vx-topic-excerpt .topic_content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.vx-backup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.vx-backup-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: 8px;
+  justify-items: start;
+}
+
+.vx-backup-fields > :is(label, button) {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.vx-backup-method {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.vx-backup-method select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vx-backup :is(.vx-backup-fields, p):empty {
+  display: none;
+}

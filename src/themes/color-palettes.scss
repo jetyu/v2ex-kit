@@ -1,0 +1,140 @@
+@mixin palette($page, $panel, $ink, $accent, $dark-page, $dark-panel, $dark-ink, $dark-accent) {
+  --vx-palette-page: #{$page};
+  --vx-palette-panel: #{$panel};
+  --vx-palette-ink: #{$ink};
+  --vx-palette-accent: #{$accent};
+
+  &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
+    --vx-palette-page: #{$dark-page};
+    --vx-palette-panel: #{$dark-panel};
+    --vx-palette-ink: #{$dark-ink};
+    --vx-palette-accent: #{$dark-accent};
+    --vx-dark-accent: var(--vx-palette-accent);
+  }
+}
+
+:root[data-vx-theme="vscode"] {
+  @include palette(#f8f8f8, #fff, #3b3b3b, #005fb8, #181818, #1f1f1f, #ccc, #4daafc);
+  --vx-vscode-button: #005fb8;
+  --vx-vscode-hover: #0258a8;
+
+  &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
+    --vx-vscode-button: #0078d4;
+    --vx-vscode-hover: #026ec1;
+  }
+
+  &,
+  & body {
+    --v2p-box-radius: 6px;
+    --v2p-input-radius: 4px;
+    --v2p-button-radius: 4px;
+    --v2p-popup-radius: 6px;
+  }
+
+  body :is(#Top, #site-header, #Main #Tabs, #Rightbar > .box) {
+    background: var(--vx-palette-page);
+  }
+
+  body #Main #Tabs {
+    .tab_current {
+      border-radius: 999px;
+      color: #fff;
+      background: var(--vx-vscode-button);
+      box-shadow: none;
+    }
+  }
+
+  body #Main #SecondaryTabs {
+    border-radius: 999px;
+    background: var(--v2p-color-accent-100);
+  }
+
+  body #Main a.node:any-link {
+    padding: 0;
+    border-radius: 0;
+    color: var(--vx-palette-accent);
+    background: transparent;
+
+    &:is(:hover, :focus-visible) {
+      text-decoration: underline;
+    }
+  }
+
+  body :is(#Main, #Rightbar) > .box {
+    border-radius: var(--v2p-box-radius);
+  }
+
+  body :is(#Top, #Main, #Rightbar) .button.special:not(:disabled),
+  body #reply-box :is(input, button)[type="submit"]:enabled {
+    border: 1px solid transparent;
+    border-radius: var(--v2p-button-radius);
+    color: #fff;
+    background: var(--vx-vscode-button);
+    box-shadow: none;
+
+    &:hover {
+      color: #fff;
+      background: var(--vx-vscode-hover);
+    }
+  }
+
+  &[data-v2p-mobile] :is(body, #Main) {
+    min-width: 0 !important;
+  }
+}
+
+:root[data-v2p-theme][data-vx-theme="vscode"] {
+  &,
+  & body {
+    --v2p-color-background: var(--vx-palette-page);
+    --v2p-color-bg-content: var(--vx-palette-panel);
+    --v2p-color-foreground: var(--vx-palette-ink);
+    --v2p-color-font-secondary: color-mix(
+      in srgb,
+      var(--vx-palette-ink) 86%,
+      var(--vx-palette-panel)
+    );
+    --v2p-color-font-tertiary: color-mix(
+      in srgb,
+      var(--vx-palette-ink) 72%,
+      var(--vx-palette-panel)
+    );
+    --v2p-color-font-quaternary: var(--v2p-color-font-tertiary);
+    --vx-color-fill: color-mix(in srgb, var(--vx-palette-ink) 7%, var(--vx-palette-panel));
+    --v2p-color-divider: color-mix(in srgb, var(--vx-palette-ink) 18%, var(--vx-palette-panel));
+    --v2p-color-border: var(--v2p-color-divider);
+    --v2p-color-bg-subtle: var(--v2p-color-accent-50);
+    --v2p-color-bg-hover-btn: var(--vx-color-fill);
+    --v2p-color-bg-input: var(--vx-color-fill);
+    --v2p-color-bg-block: var(--vx-color-fill);
+    --v2p-color-button-background: var(--vx-color-fill);
+    --v2p-color-button-background-hover: var(--v2p-color-divider);
+    --v2p-color-accent-50: color-mix(
+      in srgb,
+      var(--vx-palette-accent) 10%,
+      var(--vx-palette-panel)
+    );
+    --v2p-color-accent-100: color-mix(
+      in srgb,
+      var(--vx-palette-accent) 18%,
+      var(--vx-palette-panel)
+    );
+    --v2p-color-accent-200: color-mix(
+      in srgb,
+      var(--vx-palette-accent) 30%,
+      var(--vx-palette-panel)
+    );
+    --v2p-color-accent-300: color-mix(
+      in srgb,
+      var(--vx-palette-accent) 50%,
+      var(--vx-palette-panel)
+    );
+    --v2p-color-accent-400: var(--vx-palette-accent);
+    --v2p-color-accent-500: var(--vx-palette-accent);
+    --v2p-color-accent-600: var(--vx-palette-accent);
+    --v2p-color-accent-700: var(--vx-palette-accent);
+    --v2p-color-selection-background: var(--v2p-color-accent-200);
+    --link-hover-color: var(--vx-palette-accent);
+    --vx-reply-link: var(--vx-palette-accent);
+  }
+}
