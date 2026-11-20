@@ -1,17 +1,16 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/jetyu/v2ex-kit/main/assets/v2ex-kit.png" width="144" alt="V2EX Kit Logo">
   <h1>V2EX Kit</h1>
-  <p>一套专注阅读、回复与用户管理的 V2EX 浏览器增强工具。</p>
+  <p>改善 V2EX 阅读与回复体验，提供主题切换、帖子预览、用户标签、自动签到和图片上传的油猴脚本</p>
 
   <p>
     <a href="https://greasyfork.org/zh-CN/scripts/397787-v2ex-kit"><strong>在 Greasy Fork 安装</strong></a>
     · <a href="https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.user.js">直接安装</a>
-    · <a href="https://github.com/jetyu/v2ex-kit/releases/latest">版本发布</a>
     · <a href="https://github.com/jetyu/v2ex-kit/issues">问题反馈</a>
   </p>
 </div>
 
-V2EX Kit 是运行在 V2EX 页面内的用户脚本。它将主题美化、内容预览、分页回复、用户标签和自动签到等常用能力整合到一个可配置的脚本中，不需要额外部署服务。
+V2EX Kit 是运行在 V2EX 页面内的用户脚本。主题美化、内容预览、分页回复、用户标签和自动签到等常用能力整合到一个可配置的脚本中。
 
 ## 功能概览
 
@@ -54,7 +53,7 @@ V2EX Kit 是运行在 V2EX 页面内的用户脚本。它将主题美化、内�
 
 ## 浏览器与脚本管理器
 
-构建目标为 Chrome 120+ 与 Firefox 121+。其他 Chromium / Firefox 衍生浏览器通常也可运行，但不在持续测试范围内。
+构建目标为 Chrome 130+ 与 Firefox 150+。其他 Chromium / Firefox 衍生浏览器通常也可运行，但不在持续测试范围内。
 
 脚本使用 `GM_*` 存储、菜单、样式与跨域请求 API；若使用 Tampermonkey 之外的管理器，请确认这些 API 可用。
 
@@ -99,6 +98,6 @@ npm run check
 - [V2EX Polish](https://github.com/coolpace/V2EX_Polish)：主题、预览、用户卡片、标签、表情与长回复折叠；
 - [V2EX.REP](https://github.com/v2hot/v2ex.rep)：热门回复侧栏与图片上传入口。
 
-## 许可证
+## 开源许可证
 
 V2EX Kit 基于 [MIT License](LICENSE) 发布。

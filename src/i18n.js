@@ -5,7 +5,7 @@ const messages = {
   "plusTheme-light": ["Light", "浅色", "ライト"],
   "plusTheme-dark": ["Dark", "深色", "ダーク"],
   "plusTheme-auto": ["System", "跟随系统", "システム"],
-  themePlusEmerald: ["Plus Emerald", "Plus 翠绿", "Plus エメラルド"],
+  themePlusEmerald: ["Plus Emerald", "祖母绿", "Plus エメラルド"],
   imgurProxy: ["Proxy Imgur images", "代理加载 Imgur 图片", "Imgur 画像をプロキシ経由で表示"],
   imgurProxyHelp: [
     "Load Imgur images through the selected proxy, which receives the image URLs.",
@@ -149,7 +149,7 @@ const messages = {
   projectHomepage: ["GitHub homepage", "GitHub 主页", "GitHub ホームページ"],
   reportIssue: ["Report an issue", "问题反馈", "問題を報告"],
   mitLicense: ["MIT License", "MIT 许可证", "MIT ライセンス"],
-  aboutReferences: ["Scripts and themes referenced", "参考脚本与主题", "参考にしたスクリプトとテーマ"],
+  aboutReferences: ["Scripts and themes referenced", "致谢·参考脚本", "参考にしたスクリプトとテーマ"],
   aboutPolish: [
     "Themes, topic previews, member cards, tags, emoji and reply folding.",
     "主题样式、帖子预览、用户卡片、标签、表情与长回复折叠。",
@@ -162,7 +162,7 @@ const messages = {
   ],
   aboutPlus: [
     "Plus Emerald theme styles and navigation icons.",
-    "Plus 翠绿主题样式与导航图标。",
+    "备份与恢复功能、祖母绿主题样式与导航图标。",
     "Plus エメラルドのテーマスタイルとナビゲーションアイコン。",
   ],
   aboutTheme: [
@@ -237,7 +237,7 @@ const messages = {
     "标签页可见时检查，自动领取每日登录奖励",
     "タブの表示時に確認し、1 日に最大 3 回試行します。",
   ],
-  autoCheckIn: ["Collect daily reward automatically", "自动领取每日奖励", "ログイン報酬を自動受取"],
+  autoCheckIn: ["Collect daily reward automatically", "每日自动签到", "ログイン報酬を自動受取"],
   upload: ["Image uploads", "图片上传", "画像アップロード"],
   uploadHelp: [
     "Select, paste, or drop images to upload to public Imgur hosting. Deletion links are stored locally.",
