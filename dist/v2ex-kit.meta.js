@@ -8,6 +8,7 @@
 // @license      MIT
 // @homepageURL  https://github.com/jetyu/v2ex-kit
 // @supportURL   https://github.com/jetyu/v2ex-kit/issues
+// @icon         https://raw.githubusercontent.com/jetyu/v2ex-kit/main/assets/v2ex-kit.png
 // @downloadURL  https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.user.js
 // @updateURL    https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.meta.js
 // @match        https://v2ex.com/*

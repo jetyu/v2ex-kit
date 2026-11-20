@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-test("release artifact retains metadata and bundled licenses within its size budget", () => {
+test("release artifact retains metadata within its size budget", () => {
   const built = readFileSync(new URL("../dist/v2ex-kit.user.js", import.meta.url), "utf8");
   const metadata = readFileSync(new URL("../dist/v2ex-kit.meta.js", import.meta.url), "utf8");
   const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
@@ -30,10 +30,6 @@ test("release artifact retains metadata and bundled licenses within its size bud
   const base = "https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit";
   assert.ok(metadata.includes(`// @downloadURL  ${base}.user.js\n`));
   assert.ok(metadata.includes(`// @updateURL    ${base}.meta.js\n`));
-  for (const name of ["v2ex-polish-MIT", "v2ex-rep-MIT", "floating-ui-MIT", "lucide-LICENSE"]) {
-    const license = readFileSync(new URL(`../licenses/${name}.txt`, import.meta.url), "utf8");
-    assert.ok(built.replaceAll("\r\n", "\n").includes(license.replaceAll("\r\n", "\n").trim()));
-  }
   assert.ok(Buffer.byteLength(built) <= 388 * 1024, "Release userscript exceeds 388 KiB");
   assert.doesNotMatch(
     built,

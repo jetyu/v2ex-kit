@@ -4,19 +4,6 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-const polishLicense = await readFile(
-  new URL("../licenses/v2ex-polish-MIT.txt", import.meta.url),
-  "utf8",
-);
-const repLicense = await readFile(new URL("../licenses/v2ex-rep-MIT.txt", import.meta.url), "utf8");
-const floatingLicense = await readFile(
-  new URL("../licenses/floating-ui-MIT.txt", import.meta.url),
-  "utf8",
-);
-const lucideLicense = await readFile(
-  new URL("../licenses/lucide-LICENSE.txt", import.meta.url),
-  "utf8",
-);
 const output = "dist/v2ex-kit";
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const entryPoint = fileURLToPath(new URL("../src/main.js", import.meta.url));
@@ -24,6 +11,7 @@ const userScript = fileURLToPath(new URL(`../${output}.user.js`, import.meta.url
 const repository = "jetyu/v2ex-kit";
 const homepage = `https://github.com/${repository}`;
 const base = `https://raw.githubusercontent.com/${repository}/main/${output}`;
+const icon = `https://raw.githubusercontent.com/${repository}/main/assets/v2ex-kit.png`;
 const target = ["chrome120", "firefox121"];
 const header = `// ==UserScript==
 // @name         V2EX Kit
@@ -35,6 +23,7 @@ const header = `// ==UserScript==
 // @license      MIT
 // @homepageURL  ${homepage}
 // @supportURL   ${homepage}/issues
+// @icon         ${icon}
 // @downloadURL  ${base}.user.js
 // @updateURL    ${base}.meta.js
 // @match        https://v2ex.com/*
@@ -63,7 +52,7 @@ await build({
   minify: true,
   outfile: userScript,
   banner: {
-    js: `${header}\n/*\n${polishLicense.trim()}\n\n${repLicense.trim()}\n\n${floatingLicense.trim()}\n\n${lucideLicense.trim()}\n*/`,
+    js: header,
   },
   legalComments: "inline",
   loader: { ".css": "text" },

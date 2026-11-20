@@ -1,58 +1,104 @@
-# V2EX Kit
+<div align="center">
+  <img src="assets/v2ex-kit.png" width="144" alt="V2EX Kit Logo">
+  <h1>V2EX Kit</h1>
+  <p>一套专注阅读、回复与用户管理的 V2EX 浏览器增强工具。</p>
 
-V2EX Kit 是一个面向 V2EX 的浏览器用户脚本，用于改善主题浏览、回复阅读和用户管理体验。脚本在 V2EX 页面内运行，无需部署独立服务。
+  <p>
+    <a href="https://greasyfork.org/zh-CN/scripts/397787-v2ex-kit"><strong>在 Greasy Fork 安装</strong></a>
+    · <a href="https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.user.js">直接安装</a>
+    · <a href="https://github.com/jetyu/v2ex-kit/releases/latest">版本发布</a>
+    · <a href="https://github.com/jetyu/v2ex-kit/issues">问题反馈</a>
+  </p>
+</div>
 
-[安装脚本](https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.user.js) · [正式版本](https://github.com/jetyu/v2ex-kit/releases/latest) · [问题反馈](https://github.com/jetyu/v2ex-kit/issues)
+V2EX Kit 是运行在 V2EX 页面内的用户脚本。它将主题美化、内容预览、分页回复、用户标签和自动签到等常用能力整合到一个可配置的脚本中，不需要额外部署服务。
 
-## 功能特性
+## 功能概览
 
-- **界面与主题**：提供多套可切换主题，并支持简体中文、英语和日语界面。
-- **主题阅读**：支持列表页主题预览、大图查看和长回复自动折叠。
-- **回复浏览**：预加载后续回复页，连续展示多页内容，并提取高感谢数回复。
-- **用户管理**：通过悬浮卡片查看用户资料和近期活动，支持自定义标签、关注与屏蔽。
-- **回复工具**：提供浮动回复框、表情选择和 Imgur 图片上传，并保留上传记录。
-- **辅助功能**：支持每日自动签到、页面快捷操作以及设置和用户标签的备份恢复。
+| 模块         | 能力                                                             |
+| ------------ | ---------------------------------------------------------------- |
+| 界面与主题   | 多套可切换主题；简体中文、英语和日语界面；桌面端与移动端布局适配 |
+| 主题阅读     | 列表页主题预览、大图查看、长回复折叠和页面快捷操作               |
+| 回复浏览     | 后续页面预加载、跨页连续阅读、引用关系解析和高感谢回复提取       |
+| 用户管理     | 悬浮资料卡、近期活动、自定义标签、关注与屏蔽                     |
+| 回复工具     | 浮动回复框、表情选择、Imgur 图片上传及上传记录                   |
+| 自动化与数据 | 每日自动签到、设置与标签导入导出、V2EX 记事本备份                |
+
+所有功能均可在设置面板中按需启用。账号相关功能（签到、关注、屏蔽和回复等）需要先登录 V2EX。
 
 ## 安装
 
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或其他兼容的用户脚本管理器。
-2. 打开 [V2EX Kit 安装文件](https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.user.js)，并在脚本管理器中确认安装。
-3. 刷新 V2EX 页面。
+### 1. 安装用户脚本管理器
 
-建议停用 V2EX Polish、V2EX.REP 等功能重叠的脚本，避免多个脚本同时修改页面。
+推荐使用 [Tampermonkey](https://www.tampermonkey.net/)，也可使用兼容 UserScript API 的脚本管理器。
 
-## 配置
+### 2. 安装 V2EX Kit
 
-安装后，通过 V2EX Kit 设置面板管理主题、语言和功能开关。自动签到、关注、屏蔽和回复等账号相关功能仅在登录 V2EX 后可用。
+打开 [Greasy Fork 脚本页](https://greasyfork.org/zh-CN/scripts/397787-v2ex-kit)，点击“安装此脚本”，随后在脚本管理器中确认安装。也可以从仓库[直接安装最新构建](https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.user.js)。
 
-## 数据与隐私
+### 3. 打开 V2EX
 
-设置、用户标签和图片上传记录默认保存在用户脚本管理器本地。设置与标签可以通过 JSON 文件导入导出，也可手动备份至 V2EX 记事本。详细规则见 [备份与恢复](docs/backup.md)。
+刷新任意 V2EX 页面。安装成功后，页面顶部和用户脚本管理器菜单中会出现 **V2EX Kit 设置**入口。
 
-图片上传功能会将所选文件发送至 Imgur 公共图床。Imgur 图片代理默认关闭，启用后会将 Imgur 图片地址发送给配置的代理服务。
+> [!IMPORTANT]
+> V2EX Polish、V2EX.REP 等脚本与本项目存在功能重叠。建议停用重叠脚本，避免多个脚本同时修改 DOM、样式或回复行为。
 
-## 开发
+## 配置与数据
 
-开发环境需要 Node.js 和 npm。受支持的 Node.js 版本见 [package.json](package.json)。
+脚本设置、用户标签和图片上传记录默认通过用户脚本管理器保存在本地，不依赖项目自建服务器。
+
+- 设置和用户标签支持 JSON 导入与导出。
+- 登录后可将备份手动写入 V2EX 记事本，便于跨设备恢复。
+- 图片上传会把用户选取的文件发送到 Imgur 公共图床。
+- Imgur 图片代理默认关闭；启用后，图片地址会发送到用户配置的代理服务。
+
+## 浏览器与脚本管理器
+
+构建目标为 Chrome 120+ 与 Firefox 121+。其他 Chromium / Firefox 衍生浏览器通常也可运行，但不在持续测试范围内。
+
+脚本使用 `GM_*` 存储、菜单、样式与跨域请求 API；若使用 Tampermonkey 之外的管理器，请确认这些 API 可用。
+
+## 本地开发
+
+项目需要 Node.js 和 npm，受支持的 Node.js 版本以 [package.json](package.json) 中的 `engines` 字段为准。
 
 ```sh
 npm ci --ignore-scripts
 npm run check
 ```
 
-- `npm run build`：构建用户脚本。
-- `npm test`：构建并运行测试。
-- `npm run check`：执行格式检查、构建和完整测试。
+| 命令                   | 用途                             |
+| ---------------------- | -------------------------------- |
+| `npm run build`        | 将源码和样式打包为用户脚本       |
+| `npm test`             | 重新构建并运行 Node.js 测试套件  |
+| `npm run format:check` | 检查 Prettier 格式               |
+| `npm run check`        | 依次执行格式检查、构建和完整测试 |
 
-构建产物位于 `dist/v2ex-kit.user.js` 和 `dist/v2ex-kit.meta.js`。
+### 项目结构
 
-## 致谢
+```text
+.
+├─ assets/                 # README 与脚本使用的品牌资源
+├─ dist/                   # 可安装的构建产物
+├─ scripts/build.mjs       # esbuild / Sass 构建入口
+├─ src/                    # 功能模块、主题和样式源码
+└─ tests/                  # Node.js 测试套件与页面 fixtures
+```
 
-- [V2EX Polish](https://github.com/coolpace/V2EX_Polish)：主题、预览、用户卡片、标签、表情和长回复折叠。
-- [V2EX.REP](https://github.com/v2hot/v2ex.rep)：热门回复侧栏和图片上传入口。
+构建会生成：
 
-第三方代码的版权与许可信息见 [第三方声明](THIRD-PARTY-NOTICES.md)。
+- `dist/v2ex-kit.user.js`：完整可安装脚本；
+- `dist/v2ex-kit.meta.js`：供脚本管理器检查更新的元数据。
+
+## 设计与依赖
+
+功能按模块组织在 `src/` 中，由 `src/main.js` 统一初始化。构建阶段使用 esbuild 打包 JavaScript，并通过 Sass 与 esbuild 处理、压缩样式；运行时依赖 `@floating-ui/dom` 完成浮层定位。
+
+项目吸收并改造了以下开源项目的部分能力：
+
+- [V2EX Polish](https://github.com/coolpace/V2EX_Polish)：主题、预览、用户卡片、标签、表情与长回复折叠；
+- [V2EX.REP](https://github.com/v2hot/v2ex.rep)：热门回复侧栏与图片上传入口。
 
 ## 许可证
 
-本项目采用 [MIT 许可证](LICENSE)。
+V2EX Kit 基于 [MIT License](LICENSE) 发布。
