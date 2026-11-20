@@ -55,7 +55,7 @@ test("settings give every option a Chinese label and an associated description",
   openSettings(store);
   const controls = [...document.querySelectorAll("form :is(input,select)[name]")];
   assert.equal(controls.length, 16);
-  assert.equal(document.querySelectorAll('[role="tabpanel"]').length, 5);
+  assert.equal(document.querySelectorAll('[role="tabpanel"]').length, 6);
   assert.equal(
     document.querySelector(".v2p-modal-footer [type=submit]").form.id,
     "vx-settings-form",
@@ -71,7 +71,12 @@ test("settings give every option a Chinese label and an associated description",
     document.querySelector('[name="imgurProxyUrl"]').value,
     "https://proxy.duckduckgo.com/iu/?u=",
   );
-  assert.equal(document.querySelector('[name="preloadPages"]').value, "3");
+  const preload = document.querySelector('select[name="preloadPages"]');
+  assert.equal(preload.value, "3");
+  assert.deepEqual(
+    [...preload.options].map(({ value, text }) => [value, text]),
+    ["关闭", "1", "2", "3", "4", "5"].map((label, count) => [String(count), label]),
+  );
   assert.equal(document.querySelector('[name="imgurClientId"]').value, "custom123");
   const theme = document.querySelector('[name="theme"]');
   assert.equal(theme.value, "vscode");
@@ -150,22 +155,32 @@ test("invalid preload values cannot overwrite saved settings", () => {
 test("Apply saves across tabs and keeps the settings panel open", () => {
   const { window } = dom("");
   const store = createStorage(memoryAPI());
+  store.saveOptions({ hotReplies: false, hotRepliesLimit: 4 });
   openSettings(store);
   const dialog = document.querySelector("#vx-settings-dialog");
   dialog.querySelector('[name="language"]').value = "ja";
   const display = dialog.querySelector("#vx-settings-tab-display");
   display.click();
   dialog.querySelector('[name="theme"]').value = "native";
-  const hotLimit = dialog.querySelector('[name="hotRepliesLimit"]');
+  const hotLimit = dialog.querySelector('select[name="hotReplies"]');
+  assert.equal(hotLimit.value, "0");
   assert.deepEqual(
     [...hotLimit.options].map((option) => option.value),
-    ["1", "2", "3", "4", "5"],
+    ["0", "1", "2", "3", "4", "5"],
   );
+  assert.equal(hotLimit.options[0].textContent, "关闭");
   hotLimit.value = "2";
+  dialog.querySelector('[name="base64Decode"]').checked = false;
   dialog.querySelector('.v2p-modal-footer button[type="button"]').click();
   assert.equal(store.options().language, "ja");
   assert.equal(store.options().theme, "native");
   assert.equal(store.options().hotRepliesLimit, 2);
+  assert.equal(store.options().hotReplies, true);
+  hotLimit.value = "0";
+  dialog.querySelector('.v2p-modal-footer button[type="button"]').click();
+  assert.equal(store.options().hotReplies, false);
+  assert.equal(store.options().hotRepliesLimit, 2);
+  assert.equal(store.options().base64Decode, false);
   assert.equal(dialog.isConnected, true);
   assert.equal(display.getAttribute("aria-selected"), "true");
   assert.match(dialog.querySelector('.v2p-modal-footer [role="status"]').textContent, /已保存/);
@@ -179,7 +194,7 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
   const panels = [...document.querySelectorAll('[role="tabpanel"]')];
   assert.deepEqual(
     panels.map((panel) => panel.hidden),
-    [false, true, true, true, true],
+    [false, true, true, true, true, true],
   );
   assert.deepEqual(
     panels.map((panel) => [...panel.querySelectorAll("[name]")].map((field) => field.name)),
@@ -190,13 +205,14 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
         "preview",
         "userCards",
         "autoFold",
+        "base64Decode",
         "hotReplies",
-        "hotRepliesLimit",
         "preloadPages",
         "emoji",
       ],
       ["imgurProxy", "imgurProxyUrl", "upload", "imgurClientId"],
       ["tags"],
+      [],
       [],
     ],
   );
@@ -204,11 +220,24 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
   language.value = "ja";
   tabs[0].focus();
   tabs[0].dispatchEvent(new window.KeyboardEvent("keydown", { key: "End", bubbles: true }));
-  assert.equal(document.activeElement, tabs[4]);
+  assert.equal(document.activeElement, tabs[5]);
+  assert.equal(tabs[5].textContent, "关于");
   assert.ok(panels[4].querySelector(".vx-backup"));
   assert.deepEqual(
+    [...panels[5].querySelectorAll("a")].map((link) => link.href),
+    [
+      "https://github.com/jetyu/v2ex-kit",
+      "https://github.com/jetyu/v2ex-kit/issues",
+      "https://github.com/jetyu/v2ex-kit/blob/main/LICENSE",
+      "https://github.com/coolpace/V2EX_Polish",
+      "https://github.com/v2hot/v2ex.rep",
+      "https://github.com/thinktip/v2ex-plus",
+      "https://github.com/yuyinws/v2ex-theme",
+    ],
+  );
+  assert.deepEqual(
     panels.map((panel) => panel.hidden),
-    [true, true, true, true, false],
+    [true, true, true, true, true, false],
   );
   tabs[0].click();
   assert.equal(language.value, "ja");

@@ -15,6 +15,7 @@ import { installPageActions } from "./page-actions.js";
 import { enhanceImages, installImageViewer } from "./image-viewer.js";
 import { installImgurProxy } from "./imgur-proxy.js";
 import { installPlusNavigation } from "./plus-navigation.js";
+import { enhanceBase64 } from "./base64.js";
 
 let themeReady = false;
 
@@ -66,6 +67,7 @@ function start() {
     if (isTopic) enhanceImages(root);
     enhanceReplyActions(root);
     folding.enhance(root);
+    if (options.base64Decode) enhanceBase64(root);
   };
   enhance(document);
   if (options.imgurProxy) installImgurProxy(document, options.imgurProxyUrl);

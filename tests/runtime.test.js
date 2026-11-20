@@ -274,7 +274,7 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   assert.equal(window.document.querySelectorAll("#vx-settings").length, 1);
   const settingsShortcut = window.document.querySelector(".vx-settings-shortcut button");
   assert.ok(settingsShortcut.querySelector("svg"));
-  assert.equal(settingsShortcut.getAttribute("aria-label"), "设置");
+  assert.equal(settingsShortcut.getAttribute("aria-label"), "脚本设置");
   settingsShortcut.click();
   assert.equal(window.document.querySelectorAll("#vx-settings-dialog").length, 1);
   window.document.querySelector("#vx-settings-dialog .v2p-modal-close-btn").click();
@@ -420,8 +420,8 @@ test("Cloudflare and error pages do not run V2EX Kit", async () => {
 
 test("script language preferences localize modules and guests skip account features", async () => {
   const translations = {
-    enus: ["Settings", "Preview", "Top replies"],
-    zhcn: ["设置", "预览", "高赞回复"],
+    enus: ["Script Settings", "Preview", "Top replies"],
+    zhcn: ["脚本设置", "预览", "高赞回复"],
     jajp: ["設定", "プレビュー", "高評価の返信"],
   };
   for (const [language, locale, expected] of [

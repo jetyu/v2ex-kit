@@ -6,7 +6,12 @@ import { icon } from "./icons.js";
 import { THEMES } from "./theme.js";
 import { createBackup } from "./backup-ui.js";
 import { DEFAULT_IMGUR_PROXY_URL, normalizeImgurProxyURL } from "./imgur-proxy.js";
-import { MAX_HOT_REPLIES } from "./storage.js";
+import { MAX_HOT_REPLIES, MAX_PRELOAD_PAGES } from "./storage.js";
+import { createAbout } from "./about.js";
+
+function hotReplySelection(options) {
+  return String(options.hotReplies ? options.hotRepliesLimit : 0);
+}
 
 export function openSettings(store, signedIn = Boolean(currentUser()), tagActions) {
   if (document.querySelector("#vx-settings-dialog")) return;
@@ -74,8 +79,8 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       "preview",
       "userCards",
       "autoFold",
+      "base64Decode",
       "hotReplies",
-      "hotRepliesLimit",
       "preloadPages",
       "emoji",
     ],
@@ -94,7 +99,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       const caption = element("label");
       const name = element("span", t(key));
       const control = element(
-        ["language", "theme", "hotRepliesLimit"].includes(key) ? "select" : "input",
+        ["language", "theme", "hotReplies", "preloadPages"].includes(key) ? "select" : "input",
       );
       control.id = `vx-option-${key}`;
       control.name = key;
@@ -131,16 +136,16 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
           control.append(option);
         }
         control.value = options.theme;
-      } else if (key === "hotRepliesLimit") {
-        for (let count = 1; count <= MAX_HOT_REPLIES; count++) {
-          const option = element("option", String(count));
+      } else if (key === "hotReplies" || key === "preloadPages") {
+        const hot = key === "hotReplies";
+        const max = hot ? MAX_HOT_REPLIES : MAX_PRELOAD_PAGES;
+        control.required = true;
+        for (let count = 0; count <= max; count++) {
+          const option = element("option", count === 0 ? t("off") : String(count));
           option.value = String(count);
           control.append(option);
         }
-        control.value = String(options.hotRepliesLimit);
-      } else if (key === "preloadPages") {
-        Object.assign(control, { type: "number", min: "0", max: "5", step: "1", required: true });
-        control.value = String(options[key]);
+        control.value = hot ? hotReplySelection(options) : String(options[key]);
       } else if (key === "imgurClientId") {
         Object.assign(control, { type: "text", autocomplete: "off", pattern: "[A-Za-z0-9]{0,64}" });
         control.value = options[key];
@@ -204,10 +209,13 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
     const next = { ...store.options() };
     for (const [key, control] of fields) {
       if (control.disabled) continue;
-      next[key] = control.type === "checkbox" ? control.checked : control.value;
+      if (key === "hotReplies") {
+        const count = Number(control.value);
+        next.hotReplies = count > 0;
+        if (next.hotReplies) next.hotRepliesLimit = count;
+      } else next[key] = control.type === "checkbox" ? control.checked : control.value;
     }
     next.preloadPages = Number(next.preloadPages);
-    next.hotRepliesLimit = Number(next.hotRepliesLimit);
     if (next.imgurProxyUrl.trim() && !normalizeImgurProxyURL(next.imgurProxyUrl)) {
       message.textContent = t("imgurProxyUrlInvalid");
       reveal(fields.get("imgurProxyUrl"));
@@ -231,7 +239,8 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       const restored = store.options();
       for (const [key, control] of fields) {
         if (control.disabled) continue;
-        if (control.type === "checkbox") control.checked = restored[key];
+        if (key === "hotReplies") control.value = hotReplySelection(restored);
+        else if (control.type === "checkbox") control.checked = restored[key];
         else control.value = restored[key];
       }
     },
@@ -250,6 +259,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
     panels.settingsTags.append(details);
   }
   addPanel("backup").append(backup);
+  addPanel("about").append(createAbout());
   if (!signedIn) dialog.content.append(element("p", t("guestNotice"), "vx-settings-notice"));
   dialog.content.append(form);
   activate(0);

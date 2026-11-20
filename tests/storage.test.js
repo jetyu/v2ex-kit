@@ -23,6 +23,8 @@ test("options reject invalid types and unknown fields", () => {
   assert.equal(normalizeOptions({ language: "site" }).language, "site");
   assert.equal(Object.hasOwn(options, "privacy"), false);
   assert.equal(options.preloadPages, 2);
+  assert.equal(options.base64Decode, true);
+  assert.equal(normalizeOptions({ base64Decode: false }).base64Decode, false);
   assert.equal(options.imgurClientId, "");
   assert.equal(options.injected, undefined);
 });

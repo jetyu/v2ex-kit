@@ -6,6 +6,7 @@ export const DEFAULT_IMGUR_CLIENT_ID = "3107b9ef8b316f3";
 export const TAG_LIMITS = Object.freeze({ perMember: 20, length: 80, importMembers: 20_000 });
 export const BACKUP_BYTES = 2_000_000;
 export const MAX_HOT_REPLIES = 5;
+export const MAX_PRELOAD_PAGES = 5;
 export function normalizeHotRepliesLimit(value) {
   return Number.isInteger(value) && value >= 1 && value <= MAX_HOT_REPLIES
     ? value
@@ -26,6 +27,7 @@ export const DEFAULTS = Object.freeze({
   upload: true,
   emoji: true,
   autoFold: true,
+  base64Decode: true,
   imgurClientId: "",
   imgurProxy: false,
   imgurProxyUrl: DEFAULT_IMGUR_PROXY_URL,
@@ -49,7 +51,11 @@ export function normalizeOptions(input = {}) {
     if (typeof DEFAULTS[key] === "boolean" && typeof input[key] === "boolean")
       output[key] = input[key];
   }
-  if (Number.isInteger(input.preloadPages) && input.preloadPages >= 0 && input.preloadPages <= 5) {
+  if (
+    Number.isInteger(input.preloadPages) &&
+    input.preloadPages >= 0 &&
+    input.preloadPages <= MAX_PRELOAD_PAGES
+  ) {
     output.preloadPages = input.preloadPages;
   }
   if (typeof input.imgurClientId === "string" && /^[a-z0-9]{0,64}$/i.test(input.imgurClientId)) {
