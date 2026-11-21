@@ -177,27 +177,46 @@ test("native reply groups remain visible through transparent reply items", () =>
   );
 });
 
-test("hot replies keep author and time on one line with normalized avatar columns", () => {
-  dom(`<div id="Main"><div id="top_replies">
-    <div class="cell vx-hot-reply"><div class="vr_wrapper"><table><tbody><tr>
+test("hot replies keep OP beside the author and use square normal-sized avatars", () => {
+  dom(`<style>
+    img.avatar { width: 40px !important; max-width: 24px !important; height: 20px !important; max-height: 20px !important; }
+    .flex-one-row { display: flex; justify-content: space-between; }
+  </style><div id="Main"><div id="top_replies">
+    <div class="cell vx-hot-reply" id="rhot_7"><table><tbody><tr>
       <td><img class="avatar"></td><td></td><td><div class="flex-one-row">
-        <div class="flex-one-row"><strong>very-long-member-name</strong><span class="ago">1 天前</span></div>
-        <div class="vx-hot-meta">2 · 7</div>
+        <div class="flex-one-row gap10"><strong>very-long-member-name</strong><div class="badges"><span class="badge op">OP</span></div><span class="ago">1 天前</span><span class="v2p-likes-box">2</span></div>
+        <div class="fr"><a class="no">7</a></div>
       </div></td>
-    </tr></tbody></table></div></div>
+    </tr></tbody></table></div>
   </div></div>`);
   const style = document.createElement("style");
-  style.textContent = compile("src/vendor/rep/content.scss").css;
+  style.textContent = `${compile("src/vendor/rep/content.scss").css}\n${readFileSync(
+    "src/themes/plus-emerald.css",
+    "utf8",
+  )}`;
   document.head.append(style);
-  const info = window.getComputedStyle(
-    document.querySelector("#top_replies td > .flex-one-row > .flex-one-row"),
+  const infoNode = document.querySelector("#top_replies td > .flex-one-row > .flex-one-row");
+  const info = window.getComputedStyle(infoNode);
+  const likes = window.getComputedStyle(infoNode.querySelector(".v2p-likes-box"));
+  const avatar = window.getComputedStyle(document.querySelector("#top_replies .avatar"));
+  assert.equal(info.flexGrow, "0");
+  assert.equal(info.justifyContent, "flex-start");
+  assert.deepEqual(
+    [...infoNode.children].map((node) => node.className || node.tagName),
+    ["STRONG", "badges", "ago", "v2p-likes-box"],
   );
-  const author = window.getComputedStyle(document.querySelector("#top_replies strong"));
-  const time = window.getComputedStyle(document.querySelector("#top_replies .ago"));
-  assert.equal(info.flexWrap, "nowrap");
-  assert.equal(author.flexGrow, "0");
-  assert.equal(time.flexShrink, "0");
-  assert.equal(time.whiteSpace, "nowrap");
+  assert.equal(likes.top, "0px");
+  assert.equal(likes.alignSelf, "center");
+  assert.equal(avatar.display, "block");
+  assert.equal(avatar.width, "40px");
+  assert.equal(avatar.minWidth, "40px");
+  assert.equal(avatar.maxWidth, "40px");
+  assert.equal(avatar.height, "40px");
+  assert.equal(avatar.minHeight, "40px");
+  assert.equal(avatar.maxHeight, "40px");
+  assert.match(avatar.aspectRatio, /^1(?: \/ 1)?$/);
+  assert.equal(avatar.objectFit, "cover");
+  assert.notEqual(window.getComputedStyle(document.querySelector("#top_replies table")).tableLayout, "fixed");
 });
 
 test("tag filters use their grid columns instead of V2EX's fixed input width", () => {

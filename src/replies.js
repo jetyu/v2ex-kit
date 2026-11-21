@@ -42,46 +42,41 @@ function directReplyNode(reply, selector) {
   );
 }
 
-function enableHotThank(likes, reply) {
-  const area = directReplyNode(reply, ".thank_area");
-  const action = [...(area?.querySelectorAll("a") ?? [])].find((anchor) => {
-    if (anchor.querySelector(".v2p-control-thank")) return true;
-    const source = `${anchor.getAttribute("href") ?? ""} ${anchor.getAttribute("onclick") ?? ""}`;
-    return /thankReply\s*\(|\/thank\/reply\//.test(source);
-  });
-  if (!action || area.classList.contains("thanked")) return;
-  likes.classList.add("vx-hot-thank");
-  likes.setAttribute("role", "button");
-  likes.setAttribute("aria-label", t("thankReply"));
-  likes.title = t("thankReply");
-  likes.tabIndex = 0;
-  let pending = false;
-  const activate = (event) => {
-    if (
-      pending ||
-      likes.getAttribute("aria-disabled") === "true" ||
-      (event.type === "keydown" && !["Enter", " "].includes(event.key))
-    )
-      return;
-    event.preventDefault();
-    pending = true;
-    likes.classList.add("v2p-thank-pending");
-    likes.setAttribute("aria-disabled", "true");
-    action.click();
-    reply.node.ownerDocument.defaultView.setTimeout(() => {
-      pending = false;
-      if (!likes.isConnected) return;
-      likes.classList.remove("v2p-thank-pending");
-      if (area.classList.contains("thanked") || !action.isConnected) {
-        likes.classList.add("v2p-thanked");
-        likes.setAttribute("aria-label", t("thanked"));
-        likes.title = t("thanked");
-        likes.tabIndex = -1;
-      } else likes.removeAttribute("aria-disabled");
-    }, 1_500);
-  };
-  likes.addEventListener("click", activate);
-  likes.addEventListener("keydown", activate);
+function replyAction(anchor) {
+  if (anchor.querySelector(".v2p-control-hide")) return "hide";
+  if (anchor.querySelector(".v2p-control-thank")) return "thank";
+  if (anchor.querySelector(".v2p-control-reply")) return "reply";
+  const source = `${anchor.getAttribute("href") ?? ""} ${anchor.getAttribute("onclick") ?? ""}`;
+  if (/ignoreReply\s*\(|\/ignore\/reply\//.test(source)) return "hide";
+  if (/thankReply\s*\(|\/thank\/reply\//.test(source)) return "thank";
+  if (/replyOne\s*\(/.test(source)) return "reply";
+  return null;
+}
+
+function bindClonedReplyActions(cloned, reply) {
+  const sourceArea = directReplyNode(reply, ".thank_area");
+  const clonedArea = [...cloned.querySelectorAll(".thank_area")].find(
+    (area) => !area.closest(".reply_content") && area.closest(".vx-hot-reply") === cloned,
+  );
+  if (!clonedArea) return;
+  const sourceActions = new Map();
+  for (const anchor of sourceArea?.querySelectorAll("a") ?? []) {
+    const action = replyAction(anchor);
+    if (action && !sourceActions.has(action)) sourceActions.set(action, anchor);
+  }
+  for (const anchor of [...clonedArea.querySelectorAll("a")]) {
+    const action = replyAction(anchor);
+    const source = sourceActions.get(action);
+    if (!source || action === "reply") {
+      anchor.remove();
+      continue;
+    }
+    anchor.removeAttribute("onclick");
+    anchor.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (source.isConnected) source.click();
+    });
+  }
 }
 
 export function pageCount(doc, path) {
@@ -176,9 +171,10 @@ export function importReply(row, base) {
 }
 
 // Ported from V2EX.REP show-top-replies.ts and cloneReplyElement; see third-party notices.
+// Keep the source cell > table hierarchy so the normal reply layout remains authoritative.
 export function cloneTopReply(reply) {
   const cloned = reply.node.cloneNode(true);
-  cloned.id = `top_${reply.id}`;
+  cloned.id = `rhot_${reply.id.slice(2)}`;
   cloned.classList.add("vx-hot-reply");
   cloned.classList.remove(
     "v2p-indent",
@@ -192,37 +188,29 @@ export function cloneTopReply(reply) {
   for (const name of ["--depth", "--level", "--tree-top", "--tree-bottom"])
     cloned.style.removeProperty(name);
   for (const child of cloned.querySelectorAll(
-    ".cell,.v2p-topic-reply-ref,.nested,.thank_area,.reply-toggle,.reply-tree-line,.reply-tree-join,.reply-tree-more",
+    ".cell,.nested,.reply-toggle,.reply-tree-line,.reply-tree-join,.reply-tree-more",
   ))
     if (!child.closest(".reply_content")) child.remove();
-  for (const wrapper of cloned.querySelectorAll(".v2p-reply-content")) {
-    const content = wrapper.querySelector(".reply_content");
-    if (content) wrapper.replaceWith(content);
-  }
   const floor = cloned.querySelector(".no");
-  const toolbox = cloned.querySelector(".fr") ?? floor?.parentElement;
-  if (floor && toolbox) {
+  if (floor) {
     const jump = element("a", floor.textContent, "no");
     jump.href = `#${reply.id}`;
     jump.addEventListener("click", (event) => {
       event.preventDefault();
       reply.node.scrollIntoView({ block: "start" });
     });
-    toolbox.replaceChildren(jump);
-    toolbox.classList.add("vx-hot-meta");
-    const likes = cloned.querySelector(".v2p-likes-box");
-    if (likes) {
-      enableHotThank(likes, reply);
-      toolbox.prepend(likes);
-    }
+    floor.replaceWith(jump);
   }
+  bindClonedReplyActions(cloned, reply);
+  for (const button of cloned.querySelectorAll(".v2p-reply-content > .v2p-expand-btn"))
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      const content = button.parentElement;
+      const collapsed = content.classList.toggle("v2p-collapsed");
+      button.textContent = t(collapsed ? "expandReply" : "collapseReply");
+      button.setAttribute("aria-expanded", String(!collapsed));
+    });
   for (const node of cloned.querySelectorAll("[id]")) node.removeAttribute("id");
-  const table = cloned.firstElementChild;
-  if (table?.tagName === "TABLE") {
-    const wrapper = element("div", undefined, "vr_wrapper");
-    table.after(wrapper);
-    wrapper.append(table);
-  }
   return cloned;
 }
 export function initReplies({ options, getDocument, enhance }) {

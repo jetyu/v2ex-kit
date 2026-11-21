@@ -113,7 +113,7 @@ const messages = {
   collapseReply: "收起回复",
   preloadPages: "预加载后续页数",
   preloadPagesHelp: "自动加载后续回复页，最多预加载5页。",
-  autoCheckInHelp: "登录V2EX后，自动领取每日登录奖励",
+  autoCheckInHelp: "登录V2EX后，自动领取每日登录奖励。",
   autoCheckIn: "每日自动签到",
   upload: "图片上传",
   uploadHelp: "支持选择、拖拽、粘贴图片上传至 Imgur 公开图床。",

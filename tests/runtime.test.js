@@ -290,7 +290,11 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   window.eval(built);
   await new Promise((resolve) => setTimeout(resolve, 40));
   assert.equal(window.document.querySelector(".item_title a").target, "_blank");
-  assert.equal(window.document.querySelectorAll(".vx-tags").length, 3);
+  assert.equal(
+    window.document.querySelectorAll('#Main > .box > .cell[id^="r_"] .vx-tags').length,
+    3,
+  );
+  assert.equal(window.document.querySelectorAll("#top_replies .vx-tags").length, 2);
   assert.equal(window.document.querySelectorAll("#vx-settings").length, 1);
   const settingsEntry = window.document.querySelector("#vx-settings");
   assert.ok(settingsEntry.querySelector("svg"));
@@ -374,7 +378,7 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   const tagCount = window.document.querySelectorAll(".vx-tags").length;
   await new Promise((resolve) => setTimeout(resolve, 60));
   assert.equal(window.document.querySelectorAll(".vx-tags").length, tagCount);
-  const hot = () => window.document.getElementById("top_r_99");
+  const hot = () => window.document.getElementById("rhot_99");
   const settle = () => new Promise((resolve) => setTimeout(resolve, 60));
   row.querySelector(".reply_content").textContent = "Updated content";
   await settle();

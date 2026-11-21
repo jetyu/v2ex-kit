@@ -171,24 +171,26 @@ a.no {
   display: none !important;
 }
 
-#top_replies .vr_wrapper > table {
-  table-layout: fixed;
-  width: 100%;
-}
-
 #top_replies {
   --vx-hot-reply-avatar-size: 48px;
   --vx-hot-reply-avatar-gap: 10px;
 }
 
-#top_replies .vx-hot-reply > .vr_wrapper > table > tbody > tr {
+#Main #top_replies .vx-hot-reply > table > tbody > tr {
   > td:first-child {
     width: var(--vx-hot-reply-avatar-size);
     min-width: var(--vx-hot-reply-avatar-size);
 
     .avatar {
+      display: block;
       width: var(--vx-hot-reply-avatar-size) !important;
+      min-width: var(--vx-hot-reply-avatar-size) !important;
+      max-width: var(--vx-hot-reply-avatar-size) !important;
       height: var(--vx-hot-reply-avatar-size) !important;
+      min-height: var(--vx-hot-reply-avatar-size) !important;
+      max-height: var(--vx-hot-reply-avatar-size) !important;
+      aspect-ratio: 1;
+      object-fit: cover;
     }
   }
 
@@ -202,55 +204,13 @@ a.no {
   overflow-wrap: anywhere;
 }
 
-#top_replies td > .flex-one-row {
-  column-gap: 4px;
-  > .flex-one-row:first-child {
-    flex: 1 1 auto;
-    flex-wrap: nowrap;
-    min-width: 0;
-  }
-  > .vx-hot-meta {
-    display: flex;
-    flex: none;
-    align-self: flex-start;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-    white-space: nowrap;
-    .v2p-likes-box {
-      top: 0;
-    }
+#top_replies td > .flex-one-row > .flex-one-row:first-child {
+  flex: 0 1 auto;
+  justify-content: flex-start;
 
-    .vx-hot-thank:not([aria-disabled="true"]) {
-      cursor: pointer;
-
-      &:hover {
-        color: var(--v2p-color-heart);
-      }
-    }
-
-    .vx-hot-thank:focus-visible {
-      border-radius: 2px;
-      outline: 2px solid var(--v2p-color-heart);
-      outline-offset: 2px;
-    }
-
-    .vx-hot-thank.v2p-thank-pending {
-      cursor: wait;
-      opacity: 0.6;
-    }
-  }
-  strong {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .ago {
-    flex: none;
-    line-height: 110%;
-    white-space: nowrap;
+  > .v2p-likes-box {
+    top: 0;
+    align-self: center;
   }
 }
 

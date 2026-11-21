@@ -30,8 +30,8 @@ test("hot replies are inline and show only the configured number of highest-rank
     initReplies({ options: { hotReplies: true, hotRepliesLimit: limit }, enhance() {} });
     const panel = document.querySelector("#Main > #top_replies");
     assert.deepEqual(
-      [...panel.querySelectorAll('[id^="top_r_"]')].map((row) => row.id),
-      Array.from({ length: expected }, (_, index) => `top_r_${7 - index}`),
+      [...panel.querySelectorAll(".vx-hot-reply")].map((row) => row.id),
+      Array.from({ length: expected }, (_, index) => `rhot_${7 - index}`),
     );
     assert.ok(panel.compareDocumentPosition(document.querySelector("#topic-replies")) & 4);
     assert.equal(document.querySelector("#Rightbar #top_replies"), null);
@@ -45,6 +45,7 @@ test("Polish reply icons preserve native handlers, counts and thanked state", ()
   );
   const area = document.querySelector(".thank_area");
   const original = area.lastElementChild;
+  area.append(original.cloneNode(true));
   let clicks = 0;
   original.addEventListener("click", (event) => {
     event.preventDefault();
@@ -63,7 +64,7 @@ test("Polish reply icons preserve native handlers, counts and thanked state", ()
   area.innerHTML = '<a href="#;" onclick="ignoreReply(1, 42)">Hide</a> Thanks sent';
   enhanceReplyActions(area);
   assert.equal(area.querySelectorAll(".v2p-control-hide").length, 1);
-  assert.equal(area.querySelector(".v2p-control-thank").getAttribute("aria-disabled"), "true");
+  assert.equal(area.querySelector(".v2p-control-thank"), null);
   assert.equal(document.querySelector(".v2p-likes-box").classList.contains("v2p-thanked"), true);
   assert.doesNotMatch(area.textContent, /Thanks sent/);
 });
@@ -77,7 +78,8 @@ test("imported replies and REP hot replies retain the native table structure", (
   assert.equal(copy.querySelector("img.avatar").getAttribute("width"), "48");
   assert.equal(copy.querySelector("pre code").textContent, "const answer = 42;");
   const hot = cloneTopReply(parseReply(copy));
-  assert.ok(hot.querySelector(".vr_wrapper > table"));
+  assert.equal(hot.firstElementChild.tagName, "TABLE");
+  assert.equal(hot.querySelector(".vr_wrapper"), null);
   assert.equal(hot.querySelector("a.no").getAttribute("href"), "#r_1");
   assert.equal(hot.querySelector("pre code").textContent, "const answer = 42;");
 });
@@ -97,7 +99,7 @@ test("thanks sorting uses floor order for ties", () => {
   );
 });
 
-test("top reply clones keep the full body even when the original reply is folded", () => {
+test("top reply clones preserve folded content and restore its local toggle", () => {
   dom(`<div class="cell" id="r_1">
     <div class="v2p-reply-content v2p-collapsed">
       <div class="reply_content"><p>Start</p><div class="cell cited_reply">Quoted text</div><p>End</p></div>
@@ -110,14 +112,20 @@ test("top reply clones keep the full body even when the original reply is folded
     [...clone.querySelector(".reply_content").children].map((node) => node.textContent),
     ["Start", "Quoted text", "End"],
   );
-  assert.doesNotMatch(clone.textContent, /Nested reply|Expand/);
-  assert.equal(clone.querySelector(".v2p-collapsed"), null);
+  assert.doesNotMatch(clone.textContent, /Nested reply/);
+  const content = clone.querySelector(".v2p-reply-content");
+  const toggle = clone.querySelector(".v2p-expand-btn");
+  assert.equal(content.classList.contains("v2p-collapsed"), true);
+  toggle.click();
+  assert.equal(content.classList.contains("v2p-collapsed"), false);
+  assert.equal(toggle.textContent, "收起回复");
 });
 
-test("hot reply metadata shares the first row without moving the original likes", () => {
+test("hot reply clones preserve metadata order and proxy the original thank action", () => {
   const { window } = dom(`<div id="Main"><div class="cell" id="r_12"><table><tbody><tr><td>
     <div class="flex-one-row"><div class="flex-one-row gap10"><strong><a href="/member/Alice">Alice</a></strong>
-    <span class="ago">now</span><span class="small fade flex-one-row gap5"><img src="/heart.png">123</span></div>
+    <div class="badges"><span class="badge op">OP</span></div><span class="ago">now</span>
+    <span class="small fade flex-one-row gap5"><img src="/heart.png">123</span></div>
     <div class="fr"><span class="no">12</span></div></div><div class="reply_content">Reply</div>
     </td></tr></tbody></table><div class="thank_area"><a href="#;" onclick="thankReply(12)">Thank</a></div></div></div>`);
   let thankClicks = 0;
@@ -132,27 +140,24 @@ test("hot reply metadata shares the first row without moving the original likes"
   const likes = source.querySelector(".v2p-likes-box");
   const originalParent = likes.parentElement;
   const hot = cloneTopReply(parseReply(source));
-  const meta = hot.querySelector(".vx-hot-meta");
   const info = hot.querySelector("td > .flex-one-row > .flex-one-row:first-child");
-  assert.equal(meta.firstElementChild.classList.contains("v2p-likes-box"), true);
-  assert.equal(meta.firstElementChild.classList.contains("vx-hot-thank"), true);
-  assert.equal(meta.firstElementChild.getAttribute("role"), "button");
-  assert.equal(meta.firstElementChild.getAttribute("aria-label"), "感谢回复");
-  assert.equal(meta.firstElementChild.textContent, "123");
-  assert.equal(meta.lastElementChild.getAttribute("href"), "#r_12");
-  assert.equal(meta.parentElement.querySelector("strong a").textContent, "Alice");
-  assert.equal(hot.querySelector(".ago").parentElement, meta.previousElementSibling);
+  const clonedLikes = hot.querySelector(".v2p-likes-box");
+  assert.equal(hot.querySelector(".vx-hot-meta,.vx-hot-thank"), null);
+  assert.equal(info.firstElementChild.tagName, "STRONG");
+  assert.equal(info.children[1].classList.contains("badges"), true);
+  assert.equal(info.children[2].classList.contains("ago"), true);
+  assert.equal(info.lastElementChild, clonedLikes);
+  assert.equal(hot.querySelector(".badge.op").textContent, "OP");
   assert.equal(info.querySelector(".ago").parentElement, info);
-  assert.equal(info.style.width, "");
+  assert.equal(hot.querySelector("a.no").getAttribute("href"), "#r_12");
+  assert.equal(hot.querySelector("a.no").parentElement.classList.contains("fr"), true);
   assert.equal(likes.parentElement, originalParent);
   assert.equal(parseReply(source).thanks, 123);
-  meta.firstElementChild.click();
-  meta.firstElementChild.click();
+  hot.querySelector(".v2p-control-thank").closest("a").click();
   assert.equal(thankClicks, 1);
-  assert.equal(meta.firstElementChild.getAttribute("aria-disabled"), "true");
   let jumped = false;
   source.scrollIntoView = () => (jumped = true);
-  meta.lastElementChild.click();
+  hot.querySelector("a.no").click();
   assert.equal(jumped, true);
   window.close();
 });
@@ -194,56 +199,56 @@ test("hot replies retain unchanged rows and update counts, ordering and empty st
   });
   const panel = document.querySelector("#top_replies");
   const header = panel.firstElementChild;
-  const unchanged = document.querySelector("#top_r_2");
-  const original = document.querySelector("#top_r_1");
+  const unchanged = document.querySelector("#rhot_2");
+  const original = document.querySelector("#rhot_1");
   const ids = () =>
-    [...document.querySelectorAll('#top_replies > [id^="top_r_"]')].map((n) => n.id);
+    [...document.querySelectorAll("#top_replies > .vx-hot-reply")].map((n) => n.id);
   const update = (id, count) => {
     const reply = document.querySelector(`#r_${id}`);
     reply.querySelector(".thank_count").textContent = String(count);
     module.update([reply]);
   };
-  assert.deepEqual(ids(), ["top_r_2", "top_r_1"]);
+  assert.deepEqual(ids(), ["rhot_2", "rhot_1"]);
   update(1, 9);
   assert.equal(document.querySelector("#top_replies"), panel);
   assert.equal(panel.firstElementChild, header);
-  assert.equal(document.querySelector("#top_r_2"), unchanged);
-  assert.notEqual(document.querySelector("#top_r_1"), original);
-  assert.equal(document.querySelector("#top_r_1 .thank_count").textContent, "9");
-  assert.equal(document.querySelector("#top_r_1 .reply_content").textContent, "Complete reply 1");
-  assert.deepEqual(ids(), ["top_r_1", "top_r_2"]);
-  const updated = document.querySelector("#top_r_1");
+  assert.equal(document.querySelector("#rhot_2"), unchanged);
+  assert.notEqual(document.querySelector("#rhot_1"), original);
+  assert.equal(document.querySelector("#rhot_1 .thank_count").textContent, "9");
+  assert.equal(document.querySelector("#rhot_1 .reply_content").textContent, "Complete reply 1");
+  assert.deepEqual(ids(), ["rhot_1", "rhot_2"]);
+  const updated = document.querySelector("#rhot_1");
   update(1, 9);
-  assert.equal(document.querySelector("#top_r_1"), updated);
+  assert.equal(document.querySelector("#rhot_1"), updated);
   document.querySelector("#r_2 .reply_content").textContent = "Updated reply 2";
   module.invalidate(document.querySelector("#r_2"));
   update(2, 5);
-  assert.notEqual(document.querySelector("#top_r_2"), unchanged);
-  assert.equal(document.querySelector("#top_r_2 .reply_content").textContent, "Updated reply 2");
+  assert.notEqual(document.querySelector("#rhot_2"), unchanged);
+  assert.equal(document.querySelector("#rhot_2 .reply_content").textContent, "Updated reply 2");
   const changed = document.querySelector("#r_2");
   changed.classList.add("v2p-blocked-reply");
   module.update([changed]);
-  assert.deepEqual(ids(), ["top_r_1"]);
+  assert.deepEqual(ids(), ["rhot_1"]);
   changed.classList.remove("v2p-blocked-reply");
   module.update([changed]);
-  assert.deepEqual(ids(), ["top_r_1", "top_r_2"]);
+  assert.deepEqual(ids(), ["rhot_1", "rhot_2"]);
   changed.style.display = "none";
   module.update([changed]);
-  assert.deepEqual(ids(), ["top_r_1"]);
+  assert.deepEqual(ids(), ["rhot_1"]);
   changed.style.removeProperty("display");
   module.update([changed]);
   update(2, 0);
   assert.equal(unchanged.isConnected, false);
-  assert.deepEqual(ids(), ["top_r_1"]);
+  assert.deepEqual(ids(), ["rhot_1"]);
   update(1, 0);
   assert.equal(document.querySelector("#top_replies"), null);
   assert.equal(document.querySelector("[data-vx-hot-gap]"), null);
   update(3, 1);
-  const retained = document.querySelector("#top_r_3");
+  const retained = document.querySelector("#rhot_3");
   document.querySelector("[data-vx-paging]").insertAdjacentHTML("beforebegin", row(4, 7));
   module.add(document.querySelector("#r_4"));
-  assert.equal(document.querySelector("#top_r_3"), retained);
-  assert.deepEqual(ids(), ["top_r_4", "top_r_3"]);
+  assert.equal(document.querySelector("#rhot_3"), retained);
+  assert.deepEqual(ids(), ["rhot_4", "rhot_3"]);
   let jumped = false;
   document.querySelector("#r_3").scrollIntoView = () => (jumped = true);
   retained.querySelector("a.no").click();
@@ -251,7 +256,7 @@ test("hot replies retain unchanged rows and update counts, ordering and empty st
   document.querySelector("#r_3").remove();
   module.update([module.replies.get("r_3").node]);
   assert.equal(module.replies.has("r_3"), false);
-  assert.deepEqual(ids(), ["top_r_4"]);
+  assert.deepEqual(ids(), ["rhot_4"]);
   window.close();
 });
 

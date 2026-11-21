@@ -116,15 +116,11 @@ export function enhanceReplyActions(root, pageWindow = globalThis.unsafeWindow) 
       anchor.setAttribute("aria-label", anchor.title);
       anchor.replaceChildren(control);
     }
-    if (area.classList.contains("thanked") && !area.querySelector(".v2p-control-thank")) {
-      for (const node of [...area.childNodes]) if (node.nodeType === 3) node.remove();
-      const thanked = owned(
-        element("span", undefined, "v2p-control v2p-control-thank v2p-thanked"),
-      );
-      thanked.setAttribute("aria-label", t("thanked"));
-      thanked.setAttribute("aria-disabled", "true");
-      thanked.append(icon("heart"));
-      area.append(thanked);
+    const thankControls = [...area.querySelectorAll(".v2p-control-thank")];
+    if (area.classList.contains("thanked")) {
+      for (const control of thankControls) (control.closest("a") ?? control).remove();
+    } else {
+      for (const control of thankControls.slice(1)) (control.closest("a") ?? control).remove();
     }
     if (area.classList.contains("thanked"))
       for (const likes of reply.querySelectorAll(".v2p-likes-box"))
