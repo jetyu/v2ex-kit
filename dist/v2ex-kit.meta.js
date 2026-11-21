@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         V2EX Kit
 // @namespace    https://github.com/jetyu/v2ex-kit
-// @version      1.3.0
+// @version      1.3.1
 // @description  Improve V2EX reading and replies with themes, previews, tags, check-in and image uploads.
 // @description:zh-CN  改善 V2EX 阅读与回复体验，提供主题切换、帖子预览、用户标签、自动签到和图片上传。
 // @author       jetyu

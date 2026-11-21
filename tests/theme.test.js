@@ -213,3 +213,50 @@ test("post-list member tags paint above the topic metadata overlay", () => {
   assert.equal(list.marginInlineEnd, "8px");
   assert.equal(list.lineHeight, reply.lineHeight);
 });
+
+test("member registration dates use the same compact capsule label everywhere", () => {
+  dom(
+    '<span class="vx-member-inline-meta"><span class="vx-member-registration">注册于 2012-12-20</span></span>',
+  );
+  const style = document.createElement("style");
+  style.textContent = readFileSync("src/styles.css", "utf8");
+  document.head.append(style);
+  const label = window.getComputedStyle(document.querySelector(".vx-member-registration"));
+  // JSDOM normalizes inline-flex to flex in computed styles.
+  assert.equal(label.display, "flex");
+  assert.equal(label.padding, "1px 6px");
+  assert.equal(label.borderStyle, "solid");
+  assert.equal(label.borderRadius, "999px");
+  assert.equal(label.lineHeight, "14.85px");
+});
+
+test("shared editor actions stay left-aligned and equally sized over theme rules", () => {
+  dom(`<style>
+    #reply-box form { text-align: right; }
+    #reply-box button { float: right; padding: 0 24px !important; }
+  </style><div id="reply-box"><form>
+    <div class="vx-reply-actions" data-vx-owned>
+      <button type="submit">回复</button>
+      <button type="button" class="normal button vx-editor-icon-button"><span class="vx-editor-button-icon"></span></button>
+      <button type="button" class="normal button vx-editor-icon-button"><span class="vx-editor-button-icon"></span></button>
+    </div>
+  </form></div>`);
+  const style = document.createElement("style");
+  style.textContent = readFileSync("src/styles.css", "utf8");
+  document.head.append(style);
+  const actions = window.getComputedStyle(document.querySelector(".vx-reply-actions"));
+  assert.equal(actions.display, "flex");
+  assert.equal(actions.justifyContent, "flex-start");
+  assert.equal(actions.textAlign, "start");
+  assert.equal(actions.width, "100%");
+  for (const control of document.querySelectorAll(".vx-editor-icon-button")) {
+    const computed = window.getComputedStyle(control);
+    assert.equal(computed.cssFloat, "none");
+    assert.equal(computed.width, "34px");
+    assert.equal(computed.height, "32px");
+    assert.equal(computed.padding, "0px");
+    const graphic = window.getComputedStyle(control.querySelector(".vx-editor-button-icon"));
+    assert.equal(graphic.width, "20px");
+    assert.equal(graphic.height, "20px");
+  }
+});

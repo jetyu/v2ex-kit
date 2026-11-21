@@ -10,7 +10,7 @@ import {
 } from "../src/backup-format.js";
 import { boundedText, notesBackup } from "../src/backup-notes.js";
 import { openSettings } from "../src/settings.js";
-import { setLanguage, t } from "../src/i18n.js";
+import { t } from "../src/i18n.js";
 import { dom, memoryAPI } from "./helpers.js";
 
 const snapshot = (members = { alice: ["friend"] }) => ({
@@ -153,7 +153,6 @@ test("Notes verifies the signed-in account and reads the saved note back", async
 
 test("settings embed local backup and file import waits for restore choices", async () => {
   const { window } = dom("");
-  setLanguage("en");
   const store = createStorage(memoryAPI());
   openSettings(store, true);
   const dialog = document.querySelector("#vx-settings-dialog .vx-backup");
@@ -192,12 +191,10 @@ test("settings embed local backup and file import waits for restore choices", as
     [...dialog.querySelectorAll("button")].find((b) => b.textContent === t("backupToNotes")),
   );
   window.close();
-  setLanguage("zh");
 });
 
 test("removed cloud preferences fall back to local and guests cannot use Notes", () => {
   const { window } = dom("");
-  setLanguage("en");
   const api = memoryAPI();
   const store = createStorage(api);
   store.set("backup:mode", "cloud");
@@ -213,7 +210,7 @@ test("removed cloud preferences fall back to local and guests cannot use Notes",
   mode.dispatchEvent(new window.Event("change"));
   assert.equal(theme.value, "native");
   assert.equal(document.querySelectorAll(".v2p-modal-mask").length, 1);
-  assert.match(root.textContent, /Requires V2EX sign-in/);
+  assert.match(root.textContent, /需要登录 V2EX/);
   assert.equal(root.querySelectorAll("button").length, 2);
   for (const button of root.querySelectorAll("button")) {
     assert.equal(button.disabled, true);
@@ -221,7 +218,6 @@ test("removed cloud preferences fall back to local and guests cannot use Notes",
   }
   assert.equal(store.get("backup:mode"), "notes");
   window.close();
-  setLanguage("zh");
 });
 
 test("closing settings while a backup file loads cannot restore or reopen it", async () => {

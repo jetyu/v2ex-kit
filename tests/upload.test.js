@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { setLanguage } from "../src/i18n.js";
 import { initUpload, openUploadHistory, replacePlaceholder, uploadImage } from "../src/upload.js";
 import { createStorage, DEFAULT_IMGUR_CLIENT_ID } from "../src/storage.js";
 import { dom, memoryAPI } from "./helpers.js";
@@ -20,7 +19,6 @@ test("upload completion preserves concurrent typing and removed markers", () => 
 
 test("upload validates files and response URLs before changing the draft", async () => {
   dom("");
-  setLanguage("en");
   const image = new File(["image"], "test.png", { type: "image/png" });
   const result = await uploadImage(image, "client123", (request) => {
     assert.equal(request.url, "https://api.imgur.com/3/image");
@@ -48,11 +46,11 @@ test("upload validates files and response URLs before changing the draft", async
         responseText: '{"success":true,"data":{"link":"https://evil.test/a.png"}}',
       }),
     ),
-    /failed/,
+    /上传失败/,
   );
   await assert.rejects(
     uploadImage(image, "client", (request) => request.ontimeout()),
-    /timed out/,
+    /上传超时/,
   );
 });
 
@@ -69,12 +67,22 @@ test("empty custom Client ID uses the upstream public default", async () => {
   });
 });
 
-test("upload entry uses the original REP reply header position", () => {
+test("upload entry sits beside Reply with the same button styling as editor controls", () => {
   dom(
     '<div id="reply-box"><div class="cell"><div>New Comment</div><div>Back to top</div></div><div class="cell"><form><textarea id="reply_content"></textarea><button type="submit">Reply</button></form></div></div>',
   );
   initUpload({ upload: true }, createStorage(memoryAPI()), () => assert.fail());
-  assert.ok(document.querySelector("#reply-box > div > div > .vr_upload_image"));
+  const submit = document.querySelector('button[type="submit"]');
+  const pick = document.querySelector(".vx-upload-button");
+  assert.equal(submit.parentElement.className, "vx-reply-actions");
+  assert.equal(submit.nextElementSibling, pick);
+  assert.equal(pick.tagName, "BUTTON");
+  assert.equal(pick.type, "button");
+  assert.equal(pick.textContent, "");
+  assert.ok(pick.querySelector(".vx-editor-button-icon svg"));
+  assert.equal(pick.getAttribute("aria-label"), "插入图片");
+  assert.equal(pick.classList.contains("normal"), true);
+  assert.equal(pick.classList.contains("button"), true);
   assert.equal(document.querySelector(".vx-upload .vr_upload_image"), null);
 });
 
@@ -215,7 +223,6 @@ test("uploads record the source topic with the image in one write", async () => 
 
 test("history removes confirmed Imgur deletions and lets users remove local records", async () => {
   const { window } = dom("");
-  setLanguage("en");
   const store = createStorage(memoryAPI());
   store.recordUpload({ link: "https://i.imgur.com/deleted.png", fileName: "deleted.png" });
   store.recordUpload({ link: "https://i.imgur.com/unknown.png", fileName: "unknown.png" });
@@ -238,10 +245,7 @@ test("history removes confirmed Imgur deletions and lets users remove local reco
     );
     assert.equal(requests.length, 2);
     assert.ok(requests.every(({ method }) => method === "HEAD"));
-    assert.match(
-      document.querySelector(".vx-upload-history-status").textContent,
-      /deleted on Imgur/,
-    );
+    assert.match(document.querySelector(".vx-upload-history-status").textContent, /在 Imgur 删除/);
     const remove = document.querySelector(".vx-upload-remove");
     window.confirm = () => false;
     remove.click();
@@ -251,7 +255,7 @@ test("history removes confirmed Imgur deletions and lets users remove local reco
     assert.deepEqual(store.uploads(), []);
     assert.equal(requests.length, 2);
     assert.equal(document.querySelector(".vx-upload-record"), null);
-    assert.match(document.querySelector(".v2p-modal-content").textContent, /No uploads yet/);
+    assert.match(document.querySelector(".v2p-modal-content").textContent, /暂无上传记录/);
     document.querySelector(".v2p-modal-close-btn").click();
   } finally {
     globalThis.fetch = previousFetch;

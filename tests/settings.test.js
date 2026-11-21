@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { openSettings } from "../src/settings.js";
-import { setLanguage } from "../src/i18n.js";
 import { createStorage } from "../src/storage.js";
 import { dom, memoryAPI } from "./helpers.js";
 
@@ -10,8 +9,7 @@ test("closing upload history returns to settings and preserves unsaved fields", 
   const api = memoryAPI();
   openSettings(createStorage(api), true);
   const settings = document.querySelector("#vx-settings-dialog");
-  const language = settings.querySelector('[name="language"]');
-  language.value = "ja";
+  assert.equal(settings.querySelector(".v2p-modal-close-btn").textContent, "关闭");
   settings.querySelector('[name="theme"]').value = "vscode";
   settings.querySelector("#vx-settings-tab-images").click();
   const history = settings.querySelector("#vx-settings-panel-images > button");
@@ -31,7 +29,6 @@ test("closing upload history returns to settings and preserves unsaved fields", 
     assert.equal(document.querySelectorAll(".v2p-modal-mask").length, 1);
     assert.equal(settings.isConnected, true);
     assert.equal(settings.hasAttribute("inert"), false);
-    assert.equal(language.value, "ja");
     assert.equal(settings.querySelector('[name="theme"]').value, "vscode");
     assert.equal(document.activeElement, history);
     assert.equal(document.body.classList.contains("v2p-modal-open"), true);
@@ -53,8 +50,8 @@ test("settings give every option a Chinese label and an associated description",
     theme: "vscode",
   });
   openSettings(store);
-  const controls = [...document.querySelectorAll("form :is(input,select)[name]")];
-  assert.equal(controls.length, 16);
+  const controls = [...document.querySelectorAll("form :is(input,select,textarea)[name]")];
+  assert.equal(controls.length, 21);
   assert.equal(document.querySelectorAll('[role="tabpanel"]').length, 6);
   assert.equal(
     document.querySelector(".v2p-modal-footer [type=submit]").form.id,
@@ -67,10 +64,7 @@ test("settings give every option a Chinese label and an associated description",
   }
   assert.equal(document.querySelector('[name="privacy"]'), null);
   assert.equal(document.querySelector('[name="imgurProxy"]').checked, false);
-  assert.equal(
-    document.querySelector('[name="imgurProxyUrl"]').value,
-    "https://proxy.duckduckgo.com/iu/?u=",
-  );
+  assert.equal(document.querySelector('[name="imgurProxyUrl"]'), null);
   const preload = document.querySelector('select[name="preloadPages"]');
   assert.equal(preload.value, "3");
   assert.deepEqual(
@@ -84,20 +78,26 @@ test("settings give every option a Chinese label and an associated description",
     [...theme.options].map((option) => option.value),
     ["plus-emerald", "geist", "claude", "vscode", "native"],
   );
-  const language = document.querySelector('[name="language"]');
-  assert.equal(language.value, "zh");
+  assert.equal(document.querySelector('[name="language"]'), null);
+  const filterMode = document.querySelector('[name="filterMode"]');
+  assert.equal(filterMode.value, "collapse");
   assert.deepEqual(
-    [...language.options].map((option) => option.value),
-    ["zh", "en", "ja", "site"],
+    [...filterMode.options].map(({ value, textContent }) => [value, textContent]),
+    [
+      ["collapse", "折叠"],
+      ["hide", "隐藏"],
+    ],
   );
+  assert.equal(document.querySelector('[name="filterKeywords"]').tagName, "TEXTAREA");
   assert.match(document.querySelector(".vx-storage-help").textContent, /本地/);
   assert.equal(document.querySelectorAll('[name*="font"]').length, 0);
+  assert.equal(document.querySelector('[name="imgurProxy"]').closest("fieldset"), null);
+  assert.equal(document.querySelector("#vx-settings-form fieldset"), null);
   document.querySelector(".v2p-modal-close-btn").click();
 });
 
 test("guest settings retain saved preferences and show account dependencies", () => {
   dom('<html lang="zh-CN">');
-  setLanguage("en");
   const original = createStorage(memoryAPI()).options();
   let saved;
   openSettings(
@@ -111,27 +111,22 @@ test("guest settings retain saved preferences and show account dependencies", ()
     },
     false,
   );
-  assert.match(document.querySelector(".v2p-modal-title").textContent, /Settings/);
-  assert.match(document.querySelector(".vx-settings-notice").textContent, /Sign in/);
+  assert.match(document.querySelector(".v2p-modal-title").textContent, /脚本设置/);
+  assert.match(document.querySelector(".vx-settings-notice").textContent, /登录 V2EX/);
   for (const key of ["autoCheckIn", "emoji", "upload", "imgurClientId"]) {
     const control = document.querySelector(`[name="${key}"]`);
     assert.equal(control.disabled, true);
     assert.equal(control.checked, false);
-    assert.match(
-      control.closest("label").querySelector("small").textContent,
-      /Requires V2EX sign-in/,
-    );
+    assert.match(control.closest("label").querySelector("small").textContent, /需要登录 V2EX/);
   }
   document.querySelector('[name="preloadPages"]').value = "1";
-  document.querySelector('[name="language"]').value = "ja";
   assert.equal(document.querySelector('[name="theme"]').disabled, false);
   document.querySelector('[name="theme"]').value = "vscode";
   document
     .querySelector("form")
     .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-  assert.deepEqual(saved, { ...original, preloadPages: 1, language: "ja", theme: "vscode" });
+  assert.deepEqual(saved, { ...original, preloadPages: 1, theme: "vscode" });
   document.querySelector(".v2p-modal-close-btn").click();
-  setLanguage("zh");
 });
 
 test("invalid preload values cannot overwrite saved settings", () => {
@@ -140,12 +135,13 @@ test("invalid preload values cannot overwrite saved settings", () => {
     store = createStorage(api);
   openSettings(store);
   document.querySelector('[name="preloadPages"]').value = "99";
+  document.querySelector("#vx-settings-tab-images").click();
   document
     .querySelector("form")
     .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(api.writes.length, 0);
   assert.equal(
-    document.querySelector("#vx-settings-tab-display").getAttribute("aria-selected"),
+    document.querySelector("#vx-settings-tab-general").getAttribute("aria-selected"),
     "true",
   );
   assert.equal(document.activeElement.name, "preloadPages");
@@ -156,11 +152,8 @@ test("Apply saves across tabs and keeps the settings panel open", () => {
   const { window } = dom("");
   const store = createStorage(memoryAPI());
   store.saveOptions({ hotReplies: false, hotRepliesLimit: 4 });
-  openSettings(store);
+  openSettings(store, true);
   const dialog = document.querySelector("#vx-settings-dialog");
-  dialog.querySelector('[name="language"]').value = "ja";
-  const display = dialog.querySelector("#vx-settings-tab-display");
-  display.click();
   dialog.querySelector('[name="theme"]').value = "native";
   const hotLimit = dialog.querySelector('select[name="hotReplies"]');
   assert.equal(hotLimit.value, "0");
@@ -171,18 +164,27 @@ test("Apply saves across tabs and keeps the settings panel open", () => {
   assert.equal(hotLimit.options[0].textContent, "关闭");
   hotLimit.value = "2";
   dialog.querySelector('[name="base64Decode"]').checked = false;
+  const images = dialog.querySelector("#vx-settings-tab-images");
+  images.click();
+  dialog.querySelector('[name="imgurClientId"]').value = "custom123";
+  dialog.querySelector('[name="contentFilter"]').checked = true;
+  dialog.querySelector('[name="filterMode"]').value = "hide";
+  dialog.querySelector('[name="filterKeywords"]').value = "spam\n广告\nspam";
   dialog.querySelector('.v2p-modal-footer button[type="button"]').click();
-  assert.equal(store.options().language, "ja");
   assert.equal(store.options().theme, "native");
   assert.equal(store.options().hotRepliesLimit, 2);
   assert.equal(store.options().hotReplies, true);
+  assert.equal(store.options().imgurClientId, "custom123");
+  assert.equal(store.options().contentFilter, true);
+  assert.equal(store.options().filterMode, "hide");
+  assert.deepEqual(store.options().filterKeywords, ["spam", "广告"]);
   hotLimit.value = "0";
   dialog.querySelector('.v2p-modal-footer button[type="button"]').click();
   assert.equal(store.options().hotReplies, false);
   assert.equal(store.options().hotRepliesLimit, 2);
   assert.equal(store.options().base64Decode, false);
   assert.equal(dialog.isConnected, true);
-  assert.equal(display.getAttribute("aria-selected"), "true");
+  assert.equal(images.getAttribute("aria-selected"), "true");
   assert.match(dialog.querySelector('.v2p-modal-footer [role="status"]').textContent, /已保存/);
   window.close();
 });
@@ -199,25 +201,30 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
   assert.deepEqual(
     panels.map((panel) => [...panel.querySelectorAll("[name]")].map((field) => field.name)),
     [
-      ["language", "newTab", "autoCheckIn"],
       [
         "theme",
+        "newTab",
+        "autoCheckIn",
         "preview",
         "userCards",
+        "showMemberRegistration",
         "autoFold",
         "base64Decode",
         "hotReplies",
         "preloadPages",
         "emoji",
+        "replyPreview",
+        "imgurProxy",
       ],
-      ["imgurProxy", "imgurProxyUrl", "upload", "imgurClientId"],
+      ["contentFilter", "filterTopics", "filterReplies", "filterMode", "filterKeywords"],
+      ["upload", "imgurClientId"],
       ["tags"],
       [],
       [],
     ],
   );
-  const language = panels[0].querySelector('[name="language"]');
-  language.value = "ja";
+  const theme = panels[0].querySelector('[name="theme"]');
+  theme.value = "vscode";
   tabs[0].focus();
   tabs[0].dispatchEvent(new window.KeyboardEvent("keydown", { key: "End", bubbles: true }));
   assert.equal(document.activeElement, tabs[5]);
@@ -240,7 +247,7 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
     [true, true, true, true, true, false],
   );
   tabs[0].click();
-  assert.equal(language.value, "ja");
+  assert.equal(theme.value, "vscode");
   document.querySelector(".v2p-modal-close-btn").click();
   window.close();
 });

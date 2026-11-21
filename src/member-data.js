@@ -72,27 +72,28 @@ export async function fetchMemberPage(name, signal, fetcher = fetch) {
   return doc;
 }
 
-export async function fetchMember(name, signal, fetcher = fetch) {
+export async function fetchMemberSummary(name, signal, fetcher = fetch) {
+  if (!/^[a-z0-9_-]{1,64}$/i.test(name)) throw new Error(t("badUsername"));
+  const response = await fetcher(`/api/members/show.json?username=${encodeURIComponent(name)}`, {
+    credentials: "same-origin",
+    signal,
+  });
+  if (!response.ok) {
+    const error = new Error(response.status === 404 ? t("memberMissing") : t("memberFetchFailed"));
+    error.status = response.status;
+    throw error;
+  }
+  const result = await response.json();
+  if (typeof result.username !== "string" || result.username.toLowerCase() !== name.toLowerCase())
+    throw new Error(t("memberMismatch"));
+  return result;
+}
+
+export async function fetchMember(name, signal, fetcher = fetch, summary = null) {
   const [data, page] = await Promise.all([
-    fetcher(`/api/members/show.json?username=${encodeURIComponent(name)}`, {
-      credentials: "same-origin",
-      signal,
-    }).then(async (response) => {
-      if (!response.ok) {
-        const error = new Error(
-          response.status === 404 ? t("memberMissing") : t("memberFetchFailed"),
-        );
-        error.status = response.status;
-        throw error;
-      }
-      const result = await response.json();
-      if (
-        typeof result.username !== "string" ||
-        result.username.toLowerCase() !== name.toLowerCase()
-      )
-        throw new Error(t("memberMismatch"));
-      return result;
-    }),
+    summary
+      ? Promise.resolve(summary).catch(() => fetchMemberSummary(name, signal, fetcher))
+      : fetchMemberSummary(name, signal, fetcher),
     fetchMemberPage(name, signal, fetcher).catch((error) => {
       if (signal.aborted) throw error;
       return null;

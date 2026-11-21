@@ -1,7 +1,8 @@
 import { t } from "./i18n.js";
-import { button, element, modal, owned, safeURL } from "./dom.js";
+import { button, element, modal, owned, replyActions, safeURL } from "./dom.js";
 import { DEFAULT_IMGUR_CLIENT_ID } from "./storage.js";
 import { originalImageURL } from "./imgur-proxy.js";
+import { icon } from "./icons.js";
 
 export function replacePlaceholder(textarea, marker, replacement) {
   const offset = textarea.value.indexOf(marker);
@@ -229,18 +230,16 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
   });
   const messages = element("div");
   messages.setAttribute("aria-live", "polite");
-  const pick = owned(element("a", ` + ${t("insertImage")}`, "vr_upload_image"));
-  pick.tabIndex = 0;
-  pick.setAttribute("role", "button");
-  pick.setAttribute("aria-label", t("uploadToImgur"));
-  pick.style.paddingLeft = "10px";
-  pick.title = t("uploadToImgur");
-  pick.addEventListener("click", () => input.click());
-  pick.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") input.click();
-  });
-  const appendPosition = document.querySelector("#reply-box > div > div") ?? textarea.form;
-  appendPosition?.append(pick);
+  const pick = owned(button("", () => input.click()));
+  pick.classList.add("vr_upload_image", "vx-upload-button", "vx-editor-icon-button");
+  pick.setAttribute("aria-label", t("insertImage"));
+  pick.title = t("insertImage");
+  const graphic = element("span", undefined, "vx-editor-button-icon");
+  graphic.append(icon("image"));
+  pick.append(graphic);
+  const actions = replyActions(textarea);
+  if (actions) actions.root.append(pick);
+  else textarea.form?.append(pick);
   toolbar.append(input, messages);
   textarea.after(toolbar);
   let queue = Promise.resolve();

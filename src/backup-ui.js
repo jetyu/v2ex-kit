@@ -1,5 +1,5 @@
 import { button, currentUser, element } from "./dom.js";
-import { interfaceLanguage, t } from "./i18n.js";
+import { t } from "./i18n.js";
 import { BACKUP_BYTES, TAG_LIMITS, byteLength } from "./storage.js";
 import {
   backupParts,
@@ -47,7 +47,7 @@ export function createBackup(
   store,
   { onTags, onRestored, signedIn = Boolean(currentUser()) } = {},
 ) {
-  const root = element("fieldset", undefined, "vx-backup");
+  const root = element("div", undefined, "vx-backup");
   const mode = select(
     t("backupMode"),
     Object.fromEntries(Object.entries(methods).map(([key, value]) => [key, t(value)])),
@@ -80,7 +80,7 @@ export function createBackup(
         notes ? NOTE_BYTES : BACKUP_BYTES,
         Object.keys(snapshot.members).length,
         TAG_LIMITS.importMembers,
-      ].map((number) => number.toLocaleString(interfaceLanguage())),
+      ].map((number) => number.toLocaleString("zh-CN")),
     );
     details.replaceChildren();
     actions.replaceChildren(...(notes ? [saveNote, restoreNote] : [exportFile, importFile]));
@@ -211,7 +211,6 @@ export function createBackup(
   });
 
   root.append(
-    element("legend", t("backup")),
     element("p", t("storageHelp"), "vx-storage-help"),
     element("p", t("backupHelp")),
     mode.field,

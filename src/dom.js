@@ -26,6 +26,22 @@ export function owned(node) {
   return node;
 }
 
+export function replyActions(textarea) {
+  const form = textarea?.form;
+  if (!form) return null;
+  const existing = form.querySelector(".vx-reply-actions");
+  if (existing) {
+    const submit = existing.querySelector('input[type="submit"],button[type="submit"]');
+    return submit ? { root: existing, submit } : null;
+  }
+  const submit = form.querySelector('input[type="submit"],button[type="submit"]');
+  if (!submit) return null;
+  const root = owned(element("div", undefined, "vx-reply-actions", textarea.ownerDocument));
+  submit.before(root);
+  root.append(submit);
+  return { root, submit };
+}
+
 export function matching(root, selector) {
   return [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)];
 }
@@ -145,7 +161,6 @@ export function modal(title, hasFooter = false) {
   };
   const close = button(t("close"), closeModal);
   close.classList.add("v2p-modal-close-btn");
-  close.append(element("kbd", "Esc"));
   close.setAttribute("aria-label", `${t("close")} ${title}`);
   actions.append(close);
   header.append(heading, actions);

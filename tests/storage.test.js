@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createStorage, normalizeOptions, normalizeTags, parseImport } from "../src/storage.js";
+import {
+  createStorage,
+  normalizeFilterKeywords,
+  normalizeOptions,
+  normalizeTags,
+  parseImport,
+} from "../src/storage.js";
 import { memoryAPI } from "./helpers.js";
 
 test("options reject invalid types and unknown fields", () => {
@@ -19,14 +25,34 @@ test("options reject invalid types and unknown fields", () => {
   assert.equal(normalizeOptions({ theme: "vscode" }).theme, "vscode");
   assert.equal(normalizeOptions({ theme: "native" }).theme, "native");
   assert.equal(normalizeOptions({ theme: ["vscode"] }).theme, "native");
-  assert.equal(options.language, "zh");
-  assert.equal(normalizeOptions({ language: "site" }).language, "site");
+  assert.equal(options.language, undefined);
+  assert.equal(normalizeOptions({ language: "site" }).language, undefined);
   assert.equal(Object.hasOwn(options, "privacy"), false);
   assert.equal(options.preloadPages, 2);
   assert.equal(options.base64Decode, true);
   assert.equal(normalizeOptions({ base64Decode: false }).base64Decode, false);
   assert.equal(options.imgurClientId, "");
   assert.equal(options.injected, undefined);
+  assert.equal(options.contentFilter, false);
+  assert.equal(options.showMemberRegistration, true);
+  assert.equal(options.replyPreview, true);
+  assert.deepEqual(options.filterKeywords, []);
+  assert.equal(normalizeOptions({ filterMode: "invalid" }).filterMode, "collapse");
+  assert.equal(normalizeOptions({ filterMode: "blur" }).filterMode, "collapse");
+});
+
+test("filter keywords are trimmed, deduplicated, bounded, and safely normalized", () => {
+  assert.deepEqual(normalizeFilterKeywords(" Spam \nspam\nＡＤ\n\nword "), [
+    "Spam",
+    "ＡＤ",
+    "word",
+  ]);
+  assert.deepEqual(normalizeFilterKeywords(["ok", null, 7, "also ok"]), ["ok", "also ok"]);
+  assert.equal(normalizeFilterKeywords(["x".repeat(150)])[0].length, 100);
+  assert.equal(
+    normalizeFilterKeywords(Array.from({ length: 250 }, (_, i) => `word-${i}`)).length,
+    200,
+  );
 });
 
 test("Polish import accepts old tag objects and validates the entire file", () => {

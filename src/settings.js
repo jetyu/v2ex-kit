@@ -1,12 +1,17 @@
 import { button, currentUser, element, modal, owned } from "./dom.js";
-import { interfaceLanguage, LANGUAGE_NAMES, t } from "./i18n.js";
+import { t } from "./i18n.js";
 import { createTagManager } from "./tag-manager.js";
 import { openUploadHistory } from "./upload.js";
 import { icon } from "./icons.js";
 import { THEMES } from "./theme.js";
 import { createBackup } from "./backup-ui.js";
-import { DEFAULT_IMGUR_PROXY_URL, normalizeImgurProxyURL } from "./imgur-proxy.js";
-import { MAX_HOT_REPLIES, MAX_PRELOAD_PAGES } from "./storage.js";
+import {
+  FILTER_LIMITS,
+  FILTER_MODES,
+  MAX_HOT_REPLIES,
+  MAX_PRELOAD_PAGES,
+  normalizeFilterKeywords,
+} from "./storage.js";
 import { createAbout } from "./about.js";
 
 function hotReplySelection(options) {
@@ -18,7 +23,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   const options = store.options();
   const dialog = modal(`V2EX Kit ${t("settings")}`, true);
   dialog.root.id = "vx-settings-dialog";
-  dialog.root.lang = interfaceLanguage();
+  dialog.root.lang = "zh-CN";
   const form = element("form");
   form.id = "vx-settings-form";
   form.noValidate = true;
@@ -73,18 +78,23 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   }
   const fields = new Map();
   const groups = {
-    general: ["language", "newTab", "autoCheckIn"],
-    display: [
+    general: [
       "theme",
+      "newTab",
+      "autoCheckIn",
       "preview",
       "userCards",
+      "showMemberRegistration",
       "autoFold",
       "base64Decode",
       "hotReplies",
       "preloadPages",
       "emoji",
+      "replyPreview",
+      "imgurProxy",
     ],
-    images: ["imgurProxy", "imgurProxyUrl", "upload", "imgurClientId"],
+    filtering: ["contentFilter", "filterTopics", "filterReplies", "filterMode", "filterKeywords"],
+    images: ["upload", "imgurClientId"],
     settingsTags: ["tags"],
   };
   const panels = {};
@@ -92,30 +102,22 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   for (const [group, keys] of Object.entries(groups)) {
     const panel = (panels[group] = addPanel(group));
     const grid = element("div", undefined, "vx-settings-grid");
-    const uploads = group === "images" ? element("div", undefined, "vx-settings-grid") : null;
     for (const key of keys) {
       const login = requiresLogin.has(key);
       const wrapper = element("div", undefined, "vx-settings-option");
       const caption = element("label");
       const name = element("span", t(key));
       const control = element(
-        ["language", "theme", "hotReplies", "preloadPages"].includes(key) ? "select" : "input",
+        key === "filterKeywords"
+          ? "textarea"
+          : ["theme", "hotReplies", "preloadPages", "filterMode"].includes(key)
+            ? "select"
+            : "input",
       );
       control.id = `vx-option-${key}`;
       control.name = key;
       control.disabled = login && !signedIn;
-      if (key === "language") {
-        for (const [value, name] of [
-          ...Object.entries(LANGUAGE_NAMES),
-          ["site", t("followSite")],
-        ]) {
-          const option = element("option", name);
-          option.value = value;
-          if (value !== "site") option.lang = value;
-          control.append(option);
-        }
-        control.value = options.language;
-      } else if (key === "theme") {
+      if (key === "theme") {
         for (const value of THEMES) {
           const label = {
             geist: "Geist",
@@ -146,19 +148,22 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
           control.append(option);
         }
         control.value = hot ? hotReplySelection(options) : String(options[key]);
+      } else if (key === "filterMode") {
+        for (const value of FILTER_MODES) {
+          const option = element("option", t(`filterMode_${value}`));
+          option.value = value;
+          control.append(option);
+        }
+        control.value = options.filterMode;
+      } else if (key === "filterKeywords") {
+        control.rows = 8;
+        control.maxLength = FILTER_LIMITS.total;
+        control.placeholder = t("filterKeywordsPlaceholder");
+        control.value = options.filterKeywords.join("\n");
       } else if (key === "imgurClientId") {
         Object.assign(control, { type: "text", autocomplete: "off", pattern: "[A-Za-z0-9]{0,64}" });
         control.value = options[key];
         control.placeholder = t("sharedClient");
-      } else if (key === "imgurProxyUrl") {
-        Object.assign(control, {
-          type: "text",
-          inputMode: "url",
-          autocomplete: "off",
-          spellcheck: false,
-          value: options[key],
-          placeholder: DEFAULT_IMGUR_PROXY_URL,
-        });
       } else {
         control.type = "checkbox";
         control.checked = !control.disabled && options[key];
@@ -169,20 +174,12 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       help.id = `${control.id}-help`;
       control.setAttribute("aria-describedby", help.id);
       wrapper.append(caption, help);
-      (uploads && (key === "upload" || key === "imgurClientId") ? uploads : grid).append(wrapper);
+      grid.append(wrapper);
       fields.set(key, control);
     }
-    if (uploads) {
-      for (const [key, controls] of [
-        ["imageProxyGroup", grid],
-        ["imageUploadGroup", uploads],
-      ]) {
-        const section = element("fieldset", undefined, "vx-image-settings");
-        section.append(element("legend", t(key)), controls);
-        panel.append(section);
-      }
+    panel.append(grid);
+    if (group === "images")
       panel.append(button(t("uploadHistory"), () => openUploadHistory(store)));
-    } else panel.append(grid);
   }
   const message = element("p");
   message.setAttribute("role", "status");
@@ -216,11 +213,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       } else next[key] = control.type === "checkbox" ? control.checked : control.value;
     }
     next.preloadPages = Number(next.preloadPages);
-    if (next.imgurProxyUrl.trim() && !normalizeImgurProxyURL(next.imgurProxyUrl)) {
-      message.textContent = t("imgurProxyUrlInvalid");
-      reveal(fields.get("imgurProxyUrl"));
-      return;
-    }
+    next.filterKeywords = normalizeFilterKeywords(next.filterKeywords);
     try {
       store.saveOptions(next);
       if (refresh) location.reload();
@@ -240,6 +233,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       for (const [key, control] of fields) {
         if (control.disabled) continue;
         if (key === "hotReplies") control.value = hotReplySelection(restored);
+        else if (key === "filterKeywords") control.value = restored[key].join("\n");
         else if (control.type === "checkbox") control.checked = restored[key];
         else control.value = restored[key];
       }

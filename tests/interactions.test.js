@@ -4,7 +4,7 @@ import { createTopics } from "../src/preview.js";
 import { createMembers } from "../src/members.js";
 import { openSettings } from "../src/settings.js";
 import { installPageActions } from "../src/page-actions.js";
-import { setLanguage } from "../src/i18n.js";
+import { t } from "../src/i18n.js";
 import { createStorage } from "../src/storage.js";
 import { enhanceImages, installImageViewer } from "../src/image-viewer.js";
 import { dom, memoryAPI } from "./helpers.js";
@@ -216,7 +216,6 @@ test("topic lists show one author tag when author and latest replier links repea
 
 test("settings edit and delete saved tags without submitting the settings form", async () => {
   const { window } = dom('<div id="Main"><strong><a href="/member/Alice">Alice</a></strong></div>');
-  setLanguage("en");
   const api = memoryAPI();
   const store = createStorage(api);
   store.import(
@@ -227,7 +226,7 @@ test("settings edit and delete saved tags without submitting the settings form",
   members.enhance(document);
   openSettings(store, false, members);
   const details = document.querySelector(".vx-settings-tag-manager");
-  assert.equal(details.querySelector("summary").textContent, "Manage member tags");
+  assert.equal(details.querySelector("summary").textContent, t("manageTags"));
   assert.equal(details.querySelector("input"), null);
   await new Promise((resolve) => {
     details.addEventListener("toggle", resolve, { once: true });
@@ -236,8 +235,8 @@ test("settings edit and delete saved tags without submitting the settings form",
   const list = details.querySelector(".vx-tag-list");
   const manager = details.querySelector(".vx-tag-manager");
   const group = details.querySelector(".vx-tag-group");
-  assert.match(manager.textContent, /20 tags per member.*80 characters.*20,000 members/);
-  assert.match(manager.textContent, /51 tagged members/);
+  assert.match(manager.textContent, /20.*80.*20,000/);
+  assert.match(manager.textContent, new RegExp(t("taggedCount", 51)));
   assert.equal(list.children.length, 50);
   manager.lastElementChild.click();
   assert.equal(list.children.length, 51);
@@ -251,9 +250,9 @@ test("settings edit and delete saved tags without submitting the settings form",
   group.value = "Database";
   group.dispatchEvent(new Event("change"));
   assert.equal(list.children.length, 1);
-  assert.match(manager.querySelector(".vx-tag-count").textContent, /1 of 51/);
+  assert.equal(manager.querySelector(".vx-tag-count").textContent, t("filteredTaggedCount", 1, 51));
   query("BOB");
-  assert.equal(list.textContent, "No matching member tags.");
+  assert.equal(list.textContent, t("noMatchingTags"));
   query("");
   const matchingChip = [...list.querySelectorAll(".vx-tag-filter")].find(
     (chip) => chip.textContent === "Research, Development",
@@ -279,11 +278,11 @@ test("settings edit and delete saved tags without submitting the settings form",
   assert.equal(details.querySelector(".vx-tag-input .sl"), null);
   assert.equal(input.value, "Database");
   const save = [...details.querySelectorAll("button")].find(
-    (button) => button.textContent === "Save tags",
+    (button) => button.textContent === t("saveTags"),
   );
   entry.value = "x".repeat(81);
   save.click();
-  assert.match(details.querySelector('[role="alert"]').textContent, /80 characters/);
+  assert.equal(details.querySelector('[role="alert"]').textContent, t("tagFormat", 80));
   assert.deepEqual(store.getTags("alice"), ["Database", "Research, Development"]);
   entry.select();
   const paste = new Event("paste", { bubbles: true, cancelable: true });
@@ -322,7 +321,7 @@ test("settings edit and delete saved tags without submitting the settings form",
   entry.value = "Pending";
   save.click();
   assert.match(document.querySelector("#Main .vx-tags").textContent, /Backend/);
-  assert.match(details.querySelector('[role="status"]').textContent, /saved for alice/);
+  assert.equal(details.querySelector('[role="status"]').textContent, t("tagsSaved", "alice"));
   assert.deepEqual(store.getTags("alice"), [
     "Backend",
     "Research, Development",
@@ -338,10 +337,10 @@ test("settings edit and delete saved tags without submitting the settings form",
   window.confirm = () => false;
   remove.click();
   assert.match(list.textContent, /alice.*Backend/);
-  window.confirm = (message) => message === "Delete all tags for alice?";
+  window.confirm = (message) => message === t("confirmDeleteTags", "alice");
   remove.click();
-  assert.equal(list.textContent, "No matching member tags.");
-  assert.match(manager.textContent, /0 of 50 tagged members/);
+  assert.equal(list.textContent, t("noMatchingTags"));
+  assert.equal(manager.querySelector(".vx-tag-count").textContent, t("filteredTaggedCount", 0, 50));
   assert.equal(document.querySelector("#Main .vx-tags").hidden, true);
   assert.equal(store.import('{"schema":1,"members":{"Alice":["old"]}}'), 0);
   assert.equal(
@@ -350,5 +349,4 @@ test("settings edit and delete saved tags without submitting the settings form",
   );
   document.querySelector(".v2p-modal-close-btn").click();
   window.close();
-  setLanguage("zh");
 });

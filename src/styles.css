@@ -259,30 +259,23 @@
   max-width: 55%;
 }
 
-.vx-settings-option:has(input[type="text"]) {
+.vx-settings-option:has(:is(input[type="text"], textarea)) {
   grid-column: 1 / -1;
 }
 
-.vx-settings-option:has(input[type="text"]) label {
+.vx-settings-option:has(:is(input[type="text"], textarea)) label {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.vx-settings-option input[type="text"] {
+.vx-settings-option :is(input[type="text"], textarea) {
   width: 100%;
   box-sizing: border-box;
 }
 
-.vx-image-settings {
-  min-inline-size: 0;
-  margin: 0 0 16px;
-  padding: 12px;
-  border: 1px solid var(--box-border-color);
-  border-radius: var(--box-border-radius);
-}
-
-.vx-image-settings .vx-settings-grid {
-  grid-template-columns: minmax(0, 1fr);
+.vx-settings-option textarea {
+  min-height: 150px;
+  resize: vertical;
 }
 
 #vx-settings-dialog p {
@@ -394,7 +387,7 @@
 }
 
 :is(#vx-settings-dialog, .vx-tag-editor-dialog)
-  :is(input[type="text"], input[type="search"], .vx-tag-input) {
+  :is(input[type="text"], input[type="search"], textarea, .vx-tag-input) {
   box-sizing: border-box;
   min-height: 32px;
   min-width: 0;
@@ -407,12 +400,12 @@
 }
 
 :is(#vx-settings-dialog, .vx-tag-editor-dialog)
-  :is(input[type="text"], input[type="search"], .vx-tag-input):hover {
+  :is(input[type="text"], input[type="search"], textarea, .vx-tag-input):hover {
   border-color: var(--box-border-color);
 }
 
 :is(#vx-settings-dialog, .vx-tag-editor-dialog)
-  :is(input[type="text"], input[type="search"]):focus {
+  :is(input[type="text"], input[type="search"], textarea):focus {
   border-color: var(--vx-control-accent);
   outline: 2px solid color-mix(in srgb, var(--vx-control-accent) 22%, transparent);
   outline-offset: 0;
@@ -460,6 +453,31 @@
   accent-color: var(--button-foreground-color, var(--v2p-color-font-secondary));
 }
 
+.vx-content-filtered.vx-filter-hide {
+  display: none !important;
+}
+
+.vx-content-filtered.vx-filter-collapse:not(.vx-filter-revealed) > :not(.vx-filter-notice) {
+  display: none !important;
+}
+
+.vx-filter-notice {
+  display: flex !important;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--v2p-color-font-secondary, #666);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.vx-filter-notice .normal.button {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 #vx-settings-dialog :is(.normal.button, .v2p-modal-close-btn) {
   height: auto;
   margin: 0;
@@ -491,9 +509,6 @@
 
 .vx-settings-tag-manager {
   margin: 0 0 12px;
-  padding: 12px;
-  border: 1px solid var(--box-border-color);
-  border-radius: var(--box-border-radius);
 }
 
 .vx-settings-tag-manager summary {
@@ -777,6 +792,154 @@
   min-width: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.vx-member-inline-meta {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  margin-inline-start: 6px;
+  color: var(--v2p-color-font-tertiary, var(--color-fade, #888));
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.topic_info .vx-topic-list-member-meta {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.vx-member-registration {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: 999px;
+  line-height: 1.35;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.vx-member-registration[hidden] {
+  display: none;
+}
+
+.v2p-lite-reply-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 3px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 7px;
+  background: var(--v2p-color-bg-block, var(--box-background-alt-color));
+}
+
+.v2p-lite-reply-tab {
+  min-width: 54px;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 5px;
+  color: var(--v2p-color-font-secondary, var(--color-fade, #666));
+  font: inherit;
+  font-size: 13px;
+  line-height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.v2p-lite-reply-tab:is(:hover, :focus-visible) {
+  color: var(--v2p-color-foreground, inherit);
+}
+
+.v2p-lite-reply-tab:focus-visible {
+  outline: 2px solid var(--v2p-color-accent-600, Highlight);
+  outline-offset: 1px;
+}
+
+.v2p-lite-reply-tab.is-active {
+  color: var(--v2p-color-foreground, inherit);
+  font-weight: 600;
+  background: var(--v2p-color-bg-content, var(--box-background-color));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+}
+
+.v2p-lite-reply-preview {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid var(--v2p-color-input-border, var(--box-border-color));
+  border-radius: var(--box-border-radius);
+  color: var(--v2p-color-foreground, inherit);
+  font-size: 14px;
+  line-height: 1.7;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  background: var(--v2p-color-bg-input, var(--box-background-alt-color));
+}
+
+.v2p-lite-reply-preview-state {
+  color: var(--v2p-color-font-tertiary, var(--color-fade, #888));
+}
+
+.v2p-lite-preview-image-link {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 8px 0;
+}
+
+.v2p-lite-preview-image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 640px;
+  object-fit: contain;
+}
+
+#reply-box .vx-reply-actions {
+  display: flex;
+  clear: both;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  text-align: start;
+}
+
+#reply-box .vx-reply-actions > :is(button, input) {
+  float: none;
+  margin: 0;
+}
+
+#reply-box .vx-reply-actions .vx-editor-icon-button.normal.button {
+  display: inline-flex;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 !important;
+}
+
+.vx-editor-button-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.vx-editor-button-icon svg {
+  display: block;
 }
 
 .vx-upload-record {

@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { setLanguage } from "../src/i18n.js";
 import { createHTTP, currentUser, safeContent, safeURL, syncOnce } from "../src/dom.js";
 import { dom } from "./helpers.js";
 
@@ -41,19 +40,17 @@ test("current site account cards work without a top navigation username", () => 
 
 test("reward redirects are allowed, but external redirects with identical paths are rejected", async () => {
   dom("");
-  setLanguage("en");
   const get = createHTTP(async (url) => ({
     ok: true,
     url: url.includes("redeem") ? "https://www.v2ex.com/mission/daily" : "https://evil.test/t/123",
     text: async () => '<div id="Main">Daily login reward already redeemed</div>',
   }));
   assert.ok(await get("/mission/daily/redeem?once=123"));
-  await assert.rejects(get("/t/123"), /redirected/);
+  await assert.rejects(get("/t/123"), /重定向/);
 });
 
 test("page requests serialize, survive failures and reject sign-in redirects", async () => {
   dom("<div></div>");
-  setLanguage("en");
   let active = 0;
   let peak = 0;
   const get = createHTTP(async (url) => {
@@ -73,5 +70,5 @@ test("page requests serialize, survive failures and reject sign-in redirects", a
   assert.equal(results[1].value.querySelector("#Main").textContent, "ok");
   assert.equal(results[2].value.querySelector("#Main").textContent, "ok");
   assert.equal(peak, 1);
-  await assert.rejects(get("https://evil.test"), /Cross-origin/);
+  await assert.rejects(get("https://evil.test"), /跨站/);
 });

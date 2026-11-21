@@ -99,6 +99,8 @@ test("saved themes are selected before the first style and recover from invalid 
       autoCheckIn: false,
       preloadPages: 0,
       userCards: false,
+      showMemberRegistration: false,
+      replyPreview: false,
       tags: false,
     };
     Object.assign(window, {
@@ -152,7 +154,13 @@ test("theme applies before DOMContentLoaded and functional initialization", asyn
         GM_getValue: (key, fallback) => {
           reads.push(doc.readyState);
           return key === "v2ex-lite:options"
-            ? { autoCheckIn: false, preloadPages: 0, userCards: false }
+            ? {
+                autoCheckIn: false,
+                preloadPages: 0,
+                userCards: false,
+                showMemberRegistration: false,
+                replyPreview: false,
+              }
             : fallback;
         },
         GM_setValue: () => assert.fail("unexpected storage write"),
@@ -244,7 +252,16 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   });
   const { window } = instance;
   const data = new Map([
-    ["v2ex-lite:options", { autoCheckIn: false, preloadPages: 0, userCards: false }],
+    [
+      "v2ex-lite:options",
+      {
+        autoCheckIn: false,
+        preloadPages: 0,
+        userCards: false,
+        showMemberRegistration: false,
+        replyPreview: false,
+      },
+    ],
   ]);
   const writes = [];
   Object.assign(window, {
@@ -283,7 +300,15 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   assert.equal(home.previousElementSibling.textContent, "V2EX Kit");
   assert.equal(window.document.querySelector("#Bottom .v2p-footer"), null);
   assert.equal(window.document.querySelectorAll(".vx-upload").length, 1);
-  assert.ok(window.document.querySelector('#reply-box button[aria-expanded="false"]'));
+  const emojiButton = window.document.querySelector('#reply-box button[aria-expanded="false"]');
+  const uploadButton = window.document.querySelector("#reply-box .vx-upload-button");
+  const submitButton = window.document.querySelector('#reply-box button[type="submit"]');
+  assert.ok(emojiButton);
+  assert.equal(emojiButton.parentElement, submitButton.parentElement);
+  assert.equal(uploadButton.parentElement, submitButton.parentElement);
+  assert.equal(submitButton.parentElement.classList.contains("vx-reply-actions"), true);
+  assert.equal(uploadButton.className.includes("normal button"), true);
+  assert.ok(uploadButton.querySelector("svg"));
   const draft = window.document.querySelector("#reply_content");
   draft.value = "Existing draft";
   draft.scrollIntoView = () => assert.fail("opening the reply box must preserve scrolling");
@@ -354,6 +379,12 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   row.classList.remove("v2p-blocked-reply");
   await settle();
   assert.ok(hot());
+  row.classList.add("vx-content-filtered");
+  await settle();
+  assert.equal(hot(), null);
+  row.classList.remove("vx-content-filtered");
+  await settle();
+  assert.ok(hot());
   row.style.display = "none";
   await settle();
   assert.equal(hot(), null);
@@ -418,58 +449,53 @@ test("Cloudflare and error pages do not run V2EX Kit", async () => {
   instance.window.close();
 });
 
-test("script language preferences localize modules and guests skip account features", async () => {
-  const translations = {
-    enus: ["Script Settings", "Preview", "Top replies"],
-    zhcn: ["脚本设置", "预览", "高赞回复"],
-    jajp: ["設定", "プレビュー", "高評価の返信"],
-  };
-  for (const [language, locale, expected] of [
-    [undefined, "enus", "zhcn"],
-    ["en", "jajp", "enus"],
-    ["ja", "enus", "jajp"],
-    ...Object.keys(translations).map((locale) => ["site", locale, locale]),
-  ]) {
-    const instance = new JSDOM(
-      fixture
-        .replace("<html>", '<html lang="zh-CN">')
-        .replaceAll('href="/member/reader"', 'href="/signin"'),
-      { url: "https://www.v2ex.com/t/123", runScripts: "outside-only", pretendToBeVisual: true },
-    );
-    const { window } = instance;
-    window.document.cookie = `V2EX_LANG=${locale}`;
-    let menu;
-    const requests = [];
-    Object.assign(window, {
-      GM_getValue: (key, fallback) =>
-        key === "v2ex-lite:options"
-          ? { language, preloadPages: 0, autoCheckIn: true, emoji: true, upload: true }
-          : fallback,
-      GM_setValue: () => assert.fail("guest settings should not write on startup"),
-      GM_deleteValue: () => assert.fail("guest settings should not delete on startup"),
-      GM_listValues: () => [],
-      GM_addValueChangeListener: () => {},
-      GM_addStyle: () => {},
-      GM_registerMenuCommand: (label) => (menu = label),
-      GM_xmlhttpRequest: () => requests.push("imgur"),
-      fetch: (url) => requests.push(url),
-      matchMedia: () => ({ matches: false, addEventListener() {} }),
-    });
-    window.eval(built);
-    await new Promise((resolve) => window.setTimeout(resolve, 0));
-    const [settings, preview, popular] = translations[expected];
-    assert.equal(menu, `V2EX Kit ${settings}`);
-    assert.equal(window.document.querySelector(".v2p-topic-preview-btn").textContent, preview);
-    assert.equal(window.document.querySelector("#top_replies > .cell").textContent, popular);
-    assert.equal(window.document.querySelector(".vx-upload"), null);
-    assert.equal(window.document.querySelector(".vx-quick-reply"), null);
-    assert.equal(window.document.querySelector('#reply-box button[type="button"]'), null);
-    window.document.querySelector("#vx-settings").click();
-    assert.equal(window.document.querySelector('[name="language"]').value, language ?? "zh");
-    assert.ok(window.document.querySelector(".vx-settings-tag-manager summary"));
-    assert.equal(window.document.querySelector('[name="autoCheckIn"]').disabled, true);
-    assert.equal(window.document.querySelector('[name="autoFold"]').checked, true);
-    assert.deepEqual(requests, []);
-    instance.window.close();
-  }
+test("script uses Chinese and guests skip account features", async () => {
+  const instance = new JSDOM(
+    fixture
+      .replace("<html>", '<html lang="en-US">')
+      .replaceAll('href="/member/reader"', 'href="/signin"'),
+    { url: "https://www.v2ex.com/t/123", runScripts: "outside-only", pretendToBeVisual: true },
+  );
+  const { window } = instance;
+  window.document.cookie = "V2EX_LANG=enus";
+  let menu;
+  const requests = [];
+  Object.assign(window, {
+    GM_getValue: (key, fallback) =>
+      key === "v2ex-lite:options"
+        ? {
+            language: "en",
+            preloadPages: 0,
+            autoCheckIn: true,
+            emoji: true,
+            upload: true,
+            showMemberRegistration: false,
+            replyPreview: false,
+          }
+        : fallback,
+    GM_setValue: () => assert.fail("guest settings should not write on startup"),
+    GM_deleteValue: () => assert.fail("guest settings should not delete on startup"),
+    GM_listValues: () => [],
+    GM_addValueChangeListener: () => {},
+    GM_addStyle: () => {},
+    GM_registerMenuCommand: (label) => (menu = label),
+    GM_xmlhttpRequest: () => requests.push("imgur"),
+    fetch: (url) => requests.push(url),
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+  });
+  window.eval(built);
+  await new Promise((resolve) => window.setTimeout(resolve, 0));
+  assert.equal(menu, "V2EX Kit 脚本设置");
+  assert.equal(window.document.querySelector(".v2p-topic-preview-btn").textContent, "预览");
+  assert.equal(window.document.querySelector("#top_replies > .cell").textContent, "热门回复");
+  assert.equal(window.document.querySelector(".vx-upload"), null);
+  assert.equal(window.document.querySelector(".vx-quick-reply"), null);
+  assert.equal(window.document.querySelector('#reply-box button[type="button"]'), null);
+  window.document.querySelector("#vx-settings").click();
+  assert.equal(window.document.querySelector('[name="language"]'), null);
+  assert.ok(window.document.querySelector(".vx-settings-tag-manager summary"));
+  assert.equal(window.document.querySelector('[name="autoCheckIn"]').disabled, true);
+  assert.equal(window.document.querySelector('[name="autoFold"]').checked, true);
+  assert.deepEqual(requests, []);
+  instance.window.close();
 });

@@ -1,8 +1,9 @@
 import { t } from "./i18n.js";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import groups from "./vendor/polish/emoticons.json" with { type: "json" };
-import { button, element, matching, owned } from "./dom.js";
+import { button, element, matching, owned, replyActions } from "./dom.js";
 import { originalImageURL } from "./imgur-proxy.js";
+import { icon } from "./icons.js";
 
 const groupLabels = {
   "\u6d41\u884c": "emojiPopular",
@@ -51,14 +52,16 @@ export function initEmoji(options, doc = document) {
     'textarea#reply_content, #reply-box textarea, textarea[name="content"]',
   );
   if (!textarea) return;
-  const submit = textarea.form?.querySelector('input[type="submit"],button[type="submit"]');
-  if (!submit) return;
+  const actions = replyActions(textarea);
+  if (!actions) return;
   const trigger = owned(button("", () => {}, doc));
+  trigger.classList.add("v2p-lite-emoji-trigger", "vx-editor-icon-button");
   trigger.setAttribute("aria-label", t("insertEmoji"));
   trigger.title = t("insertEmoji");
-  trigger.innerHTML =
-    '<span style="width:18px;height:18px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></span>';
-  submit.after(trigger);
+  const graphic = element("span", undefined, "vx-editor-button-icon", doc);
+  graphic.append(icon("smile"));
+  trigger.append(graphic);
+  actions.root.append(trigger);
   const popup = owned(element("div", undefined, "v2p-popup", doc));
   popup.hidden = true;
   popup.append(element("div", undefined, "v2p-popup-content", doc));

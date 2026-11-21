@@ -2,7 +2,6 @@ import { applyTheme, THEME_STYLE_ID } from "./theme.js";
 import { themeStyles } from "./theme-styles.js";
 import { enhanceEmojis, initEmoji } from "./emoji.js";
 import { createStorage, PREFIX } from "./storage.js";
-import { setLanguage } from "./i18n.js";
 import { createHTTP, currentUser, isV2EXPage, matching } from "./dom.js";
 import { createMembers } from "./members.js";
 import { createTopics } from "./preview.js";
@@ -16,6 +15,8 @@ import { enhanceImages, installImageViewer } from "./image-viewer.js";
 import { installImgurProxy } from "./imgur-proxy.js";
 import { installPlusNavigation } from "./plus-navigation.js";
 import { enhanceBase64 } from "./base64.js";
+import { createContentFilter } from "./content-filter.js";
+import { initReplyPreview } from "./reply-preview.js";
 
 let themeReady = false;
 
@@ -49,12 +50,12 @@ function start() {
     listen: GM_addValueChangeListener,
   });
   const options = store.options();
-  setLanguage(options.language);
   const name = currentUser();
   const getDocument = createHTTP();
   const topics = createTopics(options, getDocument);
   const members = createMembers(store, options, topics, name);
   const folding = createReplyFolding(options.autoFold);
+  const contentFilter = createContentFilter(options);
   if (options.theme === "plus-emerald")
     installPlusNavigation(document, () => openSettings(store, Boolean(name), members));
   const main = document.getElementById("Main");
@@ -68,6 +69,7 @@ function start() {
     enhanceReplyActions(root);
     folding.enhance(root);
     if (options.base64Decode) enhanceBase64(root);
+    contentFilter.enhance(root);
   };
   enhance(document);
   if (options.imgurProxy) installImgurProxy(document, options.imgurProxyUrl);
@@ -78,6 +80,7 @@ function start() {
     initUpload(options, store);
     initEmoji(options);
   }
+  initReplyPreview(options);
   if (main) {
     const roots = new Set();
     const changed = new Set();
@@ -113,7 +116,11 @@ function start() {
             replies?.add(root);
           }
         }
-        for (const node of changed) if (node.isConnected) folding.enhance(node);
+        for (const node of changed)
+          if (node.isConnected) {
+            folding.enhance(node);
+            contentFilter.enhance(node);
+          }
         replies?.update(changed);
         roots.clear();
         changed.clear();

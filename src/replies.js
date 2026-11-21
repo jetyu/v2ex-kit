@@ -217,7 +217,8 @@ export function initReplies({ options, getDocument, enhance }) {
         ({ node }) =>
           !node.hidden &&
           node.style.display !== "none" &&
-          !node.classList.contains("v2p-blocked-reply"),
+          !node.classList.contains("v2p-blocked-reply") &&
+          !node.classList.contains("vx-content-filtered"),
       ),
       hotLimit,
     );

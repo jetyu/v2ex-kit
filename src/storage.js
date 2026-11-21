@@ -1,4 +1,4 @@
-import { DEFAULT_LANGUAGE, LANGUAGE_NAMES, t } from "./i18n.js";
+import { t } from "./i18n.js";
 import { DEFAULT_THEME, normalizeTheme } from "./theme.js";
 import { DEFAULT_IMGUR_PROXY_URL, normalizeImgurProxyURL } from "./imgur-proxy.js";
 export const PREFIX = "v2ex-lite:";
@@ -7,6 +7,8 @@ export const TAG_LIMITS = Object.freeze({ perMember: 20, length: 80, importMembe
 export const BACKUP_BYTES = 2_000_000;
 export const MAX_HOT_REPLIES = 5;
 export const MAX_PRELOAD_PAGES = 5;
+export const FILTER_LIMITS = Object.freeze({ count: 200, length: 100, total: 10_000 });
+export const FILTER_MODES = Object.freeze(["collapse", "hide"]);
 export function normalizeHotRepliesLimit(value) {
   return Number.isInteger(value) && value >= 1 && value <= MAX_HOT_REPLIES
     ? value
@@ -14,11 +16,11 @@ export function normalizeHotRepliesLimit(value) {
 }
 export const byteLength = (text) => new TextEncoder().encode(text).length;
 export const DEFAULTS = Object.freeze({
-  language: DEFAULT_LANGUAGE,
   theme: DEFAULT_THEME,
   newTab: true,
   preview: true,
   userCards: true,
+  showMemberRegistration: true,
   tags: true,
   preloadPages: 2,
   hotReplies: true,
@@ -26,8 +28,14 @@ export const DEFAULTS = Object.freeze({
   autoCheckIn: true,
   upload: true,
   emoji: true,
+  replyPreview: true,
   autoFold: true,
   base64Decode: true,
+  contentFilter: false,
+  filterTopics: true,
+  filterReplies: true,
+  filterMode: "collapse",
+  filterKeywords: [],
   imgurClientId: "",
   imgurProxy: false,
   imgurProxyUrl: DEFAULT_IMGUR_PROXY_URL,
@@ -41,12 +49,8 @@ export function normalizeOptions(input = {}) {
   output.theme = normalizeTheme(input.theme);
   output.hotRepliesLimit = normalizeHotRepliesLimit(input.hotRepliesLimit);
   output.imgurProxyUrl = normalizeImgurProxyURL(input.imgurProxyUrl) ?? DEFAULT_IMGUR_PROXY_URL;
-  if (
-    typeof input.language === "string" &&
-    (input.language === "site" || Object.hasOwn(LANGUAGE_NAMES, input.language))
-  ) {
-    output.language = input.language;
-  }
+  output.filterMode = FILTER_MODES.includes(input.filterMode) ? input.filterMode : "collapse";
+  output.filterKeywords = normalizeFilterKeywords(input.filterKeywords);
   for (const key of Object.keys(DEFAULTS)) {
     if (typeof DEFAULTS[key] === "boolean" && typeof input[key] === "boolean")
       output[key] = input[key];
@@ -62,6 +66,26 @@ export function normalizeOptions(input = {}) {
     output.imgurClientId = input.imgurClientId;
   }
   return output;
+}
+
+export function normalizeFilterKeywords(value) {
+  const source = typeof value === "string" ? value.split(/\r?\n/) : value;
+  if (!Array.isArray(source)) return [];
+  const result = [];
+  const seen = new Set();
+  let total = 0;
+  for (const item of source.slice(0, FILTER_LIMITS.count)) {
+    if (typeof item !== "string") continue;
+    const keyword = item.trim().slice(0, FILTER_LIMITS.length);
+    if (!keyword) continue;
+    const normalized = keyword.normalize("NFKC").toLocaleLowerCase("zh-CN");
+    if (seen.has(normalized)) continue;
+    if (total + keyword.length > FILTER_LIMITS.total) break;
+    seen.add(normalized);
+    result.push(keyword);
+    total += keyword.length;
+  }
+  return result;
 }
 
 export function normalizeTags(value) {
