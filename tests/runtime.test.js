@@ -257,6 +257,10 @@ test("bundled script initializes, enhances only new nodes, and settles without s
         preloadPages: 0,
         userCards: false,
         replyPreview: false,
+        hotReplies: true,
+        tags: true,
+        emoji: true,
+        upload: true,
       },
     ],
   ]);
@@ -468,6 +472,7 @@ test("script uses Chinese and guests skip account features", async () => {
         ? {
             language: "en",
             preloadPages: 0,
+            hotReplies: true,
             autoCheckIn: true,
             emoji: true,
             upload: true,

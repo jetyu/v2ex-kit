@@ -28,12 +28,13 @@ test("options reject invalid types and unknown fields", () => {
   assert.equal(options.language, undefined);
   assert.equal(normalizeOptions({ language: "site" }).language, undefined);
   assert.equal(Object.hasOwn(options, "privacy"), false);
-  assert.equal(options.preloadPages, 2);
+  assert.equal(options.preloadPages, 0);
+  for (const key of ["hotReplies", "autoCheckIn", "tags", "upload", "contentFilter"])
+    assert.equal(options[key], false, key);
   assert.equal(options.base64Decode, true);
   assert.equal(normalizeOptions({ base64Decode: false }).base64Decode, false);
   assert.equal(options.imgurClientId, "");
   assert.equal(options.injected, undefined);
-  assert.equal(options.contentFilter, false);
   assert.equal(options.replyPreview, true);
   assert.deepEqual(options.filterKeywords, []);
   assert.equal(normalizeOptions({ filterMode: "invalid" }).filterMode, "collapse");
