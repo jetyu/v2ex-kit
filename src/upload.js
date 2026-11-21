@@ -1,5 +1,5 @@
 import { t } from "./i18n.js";
-import { button, element, owned, replyActions, safeURL } from "./dom.js";
+import { button, element, onEditorActions, owned, replyActions, safeURL } from "./dom.js";
 import { DEFAULT_IMGUR_CLIENT_ID } from "./storage.js";
 import { originalImageURL } from "./imgur-proxy.js";
 
@@ -238,7 +238,10 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
   pick.title = t("insertImage");
   const actions = replyActions(textarea);
   if (actions) actions.append(pick);
-  else textarea.form?.append(pick);
+  else {
+    textarea.form?.append(pick);
+    onEditorActions(textarea, (ready) => ready.append(pick));
+  }
   toolbar.append(input, messages);
   textarea.after(toolbar);
   let queue = Promise.resolve();

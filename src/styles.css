@@ -271,9 +271,27 @@
   grid-column: 1 / -1;
 }
 
+#vx-settings-panel-images .vx-settings-option:has(input[type="text"]) {
+  grid-column: auto;
+}
+
 .vx-settings-option:has(:is(input[type="text"], textarea)) label {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+}
+
+#vx-settings-panel-images .vx-settings-option {
+  grid-row: auto;
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+
+#vx-settings-panel-images .vx-settings-option:has(input[type="text"]) label {
+  grid-template-rows: 32px auto;
+}
+
+#vx-settings-panel-images .vx-settings-option:has(input[type="text"]) label > span {
+  align-self: center;
 }
 
 .vx-settings-option :is(input[type="text"], textarea) {
@@ -879,7 +897,7 @@
   object-fit: contain;
 }
 
-#reply-box .vx-reply-actions {
+.vx-reply-actions {
   display: flex;
   clear: both;
   align-items: center;
@@ -890,12 +908,24 @@
   text-align: start;
 }
 
-#reply-box .vx-reply-actions > :is(button, input) {
-  float: none;
-  margin: 0;
+.vx-reply-actions > * {
+  float: none !important;
+  margin: 0 !important;
 }
 
-#reply-box .vx-reply-actions .vx-editor-action-button.normal.button {
+.vx-reply-actions > .vx-editor-primary-action {
+  order: 0;
+}
+
+.vx-reply-actions > .v2p-lite-emoji-trigger {
+  order: 1;
+}
+
+.vx-reply-actions > .vx-upload-button {
+  order: 2;
+}
+
+.vx-reply-actions .vx-editor-action-button.normal.button {
   display: inline-flex;
   flex: 0 0 var(--vx-reply-action-width, auto);
   align-items: center;
@@ -1043,40 +1073,19 @@
   transition-delay: 0s;
 }
 
-.vx-settings-shortcut {
-  position: fixed;
-  z-index: 60;
-  inset-inline-start: 0;
-  bottom: 0;
-  padding: max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+#vx-settings.vx-settings-menu svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
 }
 
-.vx-settings-shortcut > .vx-page-actions {
-  position: relative;
-  inset: auto;
-  transform: translateY(6px);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 0.16s ease-out,
-    transform 0.16s ease-out;
+#vx-settings.vx-settings-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.vx-settings-shortcut:hover > .vx-page-actions,
-.vx-settings-shortcut:has(button:focus-visible) > .vx-page-actions {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.vx-settings-shortcut .vx-page-action-hint {
-  --vx-hint-offset: -4px;
-
-  inset-inline-start: calc(100% + 12px);
-  inset-inline-end: auto;
-}
-
-.v2p-modal-open :is(.vx-page-actions, .vx-settings-shortcut) {
+.v2p-modal-open .vx-page-actions {
   display: none;
 }
 
@@ -1093,14 +1102,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .vx-page-actions button,
-  .vx-page-action-hint,
-  .vx-settings-shortcut > .vx-page-actions {
+  .vx-page-action-hint {
     animation: none;
     transition: none;
-  }
-
-  .vx-settings-shortcut > .vx-page-actions {
-    transform: none;
   }
 
   .vx-page-action-hint {

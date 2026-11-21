@@ -9,7 +9,7 @@ import { enhanceReplyActions, initReplies, REPLY } from "./replies.js";
 import { createCheckIn } from "./check-in.js";
 import { initUpload } from "./upload.js";
 import { createReplyFolding } from "./folding.js";
-import { installSettings, openSettings } from "./settings.js";
+import { installSettings } from "./settings.js";
 import { installPageActions } from "./page-actions.js";
 import { enhanceImages, installImageViewer } from "./image-viewer.js";
 import { installImgurProxy } from "./imgur-proxy.js";
@@ -56,8 +56,7 @@ function start() {
   const members = createMembers(store, options, topics, name);
   const folding = createReplyFolding(options.autoFold);
   const contentFilter = createContentFilter(options);
-  if (options.theme === "plus-emerald")
-    installPlusNavigation(document, () => openSettings(store, Boolean(name), members));
+  if (options.theme === "plus-emerald") installPlusNavigation(document);
   const main = document.getElementById("Main");
   const isTopic = document.documentElement.dataset.v2pPage === "topic";
   if (isTopic) installImageViewer(main);
@@ -74,8 +73,8 @@ function start() {
   enhance(document);
   if (options.imgurProxy) installImgurProxy(document, options.imgurProxyUrl);
   const replies = initReplies({ options, getDocument, enhance });
-  installSettings(store, Boolean(name), members);
   installPageActions(Boolean(name));
+  installSettings(store, Boolean(name), members);
   if (name) {
     initEmoji(options);
     initUpload(options, store);

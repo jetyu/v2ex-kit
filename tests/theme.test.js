@@ -177,6 +177,29 @@ test("native reply groups remain visible through transparent reply items", () =>
   );
 });
 
+test("hot replies keep author and time on one line with normalized avatar columns", () => {
+  dom(`<div id="Main"><div id="top_replies">
+    <div class="cell vx-hot-reply"><div class="vr_wrapper"><table><tbody><tr>
+      <td><img class="avatar"></td><td></td><td><div class="flex-one-row">
+        <div class="flex-one-row"><strong>very-long-member-name</strong><span class="ago">1 天前</span></div>
+        <div class="vx-hot-meta">2 · 7</div>
+      </div></td>
+    </tr></tbody></table></div></div>
+  </div></div>`);
+  const style = document.createElement("style");
+  style.textContent = compile("src/vendor/rep/content.scss").css;
+  document.head.append(style);
+  const info = window.getComputedStyle(
+    document.querySelector("#top_replies td > .flex-one-row > .flex-one-row"),
+  );
+  const author = window.getComputedStyle(document.querySelector("#top_replies strong"));
+  const time = window.getComputedStyle(document.querySelector("#top_replies .ago"));
+  assert.equal(info.flexWrap, "nowrap");
+  assert.equal(author.flexGrow, "0");
+  assert.equal(time.flexShrink, "0");
+  assert.equal(time.whiteSpace, "nowrap");
+});
+
 test("tag filters use their grid columns instead of V2EX's fixed input width", () => {
   dom(`<style>.sl { width: 320px; }</style>
     <input class="sl" id="native">
@@ -197,6 +220,27 @@ test("tag filters use their grid columns instead of V2EX's fixed input width", (
   assert.equal(computed(".vx-tag-group").width, "100%");
   assert.equal(computed(".vx-tag-count").gridColumn, "1 / -1");
   assert.equal(computed("#native").width, "320px");
+});
+
+test("image upload switch aligns with the Imgur Client ID heading", () => {
+  dom(`<div id="vx-settings-dialog"><section id="vx-settings-panel-images">
+    <div class="vx-settings-grid">
+      <div class="vx-settings-option"><label>Image upload<input name="upload" type="checkbox"></label><p>Upload help</p></div>
+      <div class="vx-settings-option"><label>Client ID<input name="imgurClientId" type="text"></label><p>Client help</p></div>
+    </div>
+  </section></div>`);
+  const style = document.createElement("style");
+  style.textContent = readFileSync("src/styles.css", "utf8");
+  document.head.append(style);
+  const upload = document.querySelector('[name="upload"]');
+  const clientId = document.querySelector('[name="imgurClientId"]');
+  const uploadOption = window.getComputedStyle(upload.closest(".vx-settings-option"));
+  const clientOption = window.getComputedStyle(clientId.closest(".vx-settings-option"));
+  const clientLabel = window.getComputedStyle(clientId.closest("label"));
+  assert.equal(uploadOption.gridRow, "auto");
+  assert.equal(uploadOption.gridTemplateRows, "auto auto");
+  assert.equal(clientOption.gridColumn, "auto");
+  assert.equal(clientLabel.gridTemplateRows, "32px auto");
 });
 
 test("post-list member tags paint above the topic metadata overlay", () => {
@@ -250,4 +294,33 @@ test("editor text buttons follow the active theme's Reply button size and stylin
     assert.equal(computed.padding, "0px 24px");
     assert.equal(computed.borderRadius, "9px");
   }
+});
+
+test("topic editor actions follow a non-submit publication button", () => {
+  dom(`<style>
+    .topic-actions { text-align: right; }
+    .publish-theme { float: right; height: 42px; padding: 0 20px; border-radius: 7px; }
+  </style><form><textarea name="content"></textarea><div class="topic-actions">
+    <input type="button" class="super normal button publish-theme" value="发布主题">
+  </div></form>`);
+  const style = document.createElement("style");
+  style.textContent = readFileSync("src/styles.css", "utf8");
+  document.head.append(style);
+  const publish = document.querySelector('input[value="发布主题"]');
+  publish.getBoundingClientRect = () => ({ width: 108, height: 42 });
+  const { append } = replyActions(document.querySelector("textarea"));
+  const control = document.createElement("button");
+  control.className = "normal button vx-editor-action-button";
+  control.textContent = "图片";
+  append(control);
+  const actions = window.getComputedStyle(document.querySelector(".vx-reply-actions"));
+  const computed = window.getComputedStyle(control);
+  assert.equal(actions.display, "flex");
+  assert.equal(actions.justifyContent, "flex-start");
+  assert.equal(computed.cssFloat, "none");
+  assert.equal(control.classList.contains("publish-theme"), true);
+  assert.equal(computed.width, "108px");
+  assert.equal(computed.height, "42px");
+  assert.equal(computed.padding, "0px 20px");
+  assert.equal(computed.borderRadius, "7px");
 });

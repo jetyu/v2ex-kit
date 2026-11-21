@@ -24,6 +24,11 @@
   --v2p-focus-ring: #059669;
 }
 
+#Main #top_replies {
+  --vx-hot-reply-avatar-size: 40px;
+  --vx-hot-reply-avatar-gap: 15px;
+}
+
 :root:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"])
   body
   #search-container {
@@ -2251,28 +2256,10 @@ html.v2p-tabs-pending #Tabs {
   flex: 0 0 14px;
 }
 
-.v2p-nav-settings-btn,
 #v2p-lite-theme-toggle {
   border: 0;
   padding: 0;
   background: none;
-}
-
-.v2p-nav-settings-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin: 3px 4px 3px 8px;
-  border-radius: 20px;
-  color: var(--v2p-color-font-tertiary);
-  cursor: pointer;
-}
-
-.v2p-nav-settings-btn:hover {
-  color: var(--v2p-color-foreground);
-  background-color: var(--v2p-color-bg-hover-btn);
 }
 
 #v2p-nav-menu {

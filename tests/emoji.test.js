@@ -38,3 +38,43 @@ test("emoji picker preserves the current selection and draft", async () => {
   assert.equal(document.querySelector(".v2p-popup").hidden, true);
   await new Promise(setImmediate);
 });
+
+test("topic emoji entry shares the publication action and converts tokens before its click", () => {
+  dom(`<form><textarea name="content">[doge]</textarea><div class="topic-actions">
+    <input type="button" class="super normal button publish-theme" value="发布主题">
+  </div></form>`);
+  const publish = document.querySelector('input[value="发布主题"]');
+  let publishedContent;
+  publish.addEventListener(
+    "click",
+    () => (publishedContent = document.querySelector("textarea").value),
+  );
+  initEmoji({ emoji: true });
+  const trigger = document.querySelector('[aria-label="插入表情"]');
+  assert.equal(publish.parentElement.className, "vx-reply-actions");
+  assert.equal(publish.nextElementSibling, trigger);
+  assert.equal(trigger.classList.contains("publish-theme"), true);
+  publish.click();
+  assert.notEqual(publishedContent, "[doge]");
+  assert.match(publishedContent, /^https:\/\//);
+});
+
+test("topic emoji waits for an asynchronously rendered publication control outside the form", async () => {
+  dom(
+    '<div id="Main"><form><textarea name="content"></textarea></form><div id="footer"></div></div>',
+  );
+  initEmoji({ emoji: true });
+  assert.equal(document.querySelector('[aria-label="插入表情"]'), null);
+  document
+    .querySelector("#footer")
+    .insertAdjacentHTML(
+      "beforeend",
+      '<button type="button" class="normal button">发布主题</button>',
+    );
+  await new Promise(setImmediate);
+  const publish = document.querySelector("#footer button");
+  const trigger = document.querySelector('[aria-label="插入表情"]');
+  assert.equal(publish.parentElement.className, "vx-reply-actions");
+  assert.equal(trigger.parentElement, publish.parentElement);
+  assert.equal(publish.nextElementSibling, trigger);
+});

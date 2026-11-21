@@ -42,10 +42,12 @@ test("Plus theme initializes on mobile markup and switches the native site color
   assert.equal(doc.querySelector("#Wrapper > #Main").className, "content");
   assert.equal(doc.documentElement.dataset.v2pMobile, "true");
   assert.ok(doc.querySelector("#Tabs .tab_current svg"));
-  assert.equal(
-    doc.querySelector('#menu-body a.top[href="/"]').previousElementSibling.id,
-    "vx-settings",
-  );
+  const settings = doc.querySelector("#menu-body #vx-settings");
+  assert.equal(settings.textContent.trim(), "V2EX Kit 设置");
+  assert.ok(settings.querySelector("svg"));
+  assert.equal(doc.querySelector('#menu-body a.top[href="/"]').nextElementSibling, settings);
+  assert.equal(doc.querySelector("#Tabs .v2p-nav-settings-btn"), null);
+  assert.equal(doc.querySelector(".vx-settings-shortcut"), null);
   assert.match(doc.querySelector("#v2ex-kit-theme").textContent, /#1c2128/);
   const control = doc.getElementById("v2p-lite-theme-toggle");
   assert.equal(control.nextElementSibling.id, "site-header-menu");
@@ -290,15 +292,16 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   assert.equal(window.document.querySelector(".item_title a").target, "_blank");
   assert.equal(window.document.querySelectorAll(".vx-tags").length, 3);
   assert.equal(window.document.querySelectorAll("#vx-settings").length, 1);
-  const settingsShortcut = window.document.querySelector(".vx-settings-shortcut button");
-  assert.ok(settingsShortcut.querySelector("svg"));
-  assert.equal(settingsShortcut.getAttribute("aria-label"), "脚本设置");
-  settingsShortcut.click();
+  const settingsEntry = window.document.querySelector("#vx-settings");
+  assert.ok(settingsEntry.querySelector("svg"));
+  assert.equal(settingsEntry.className, "vx-open-settings");
+  assert.equal(settingsEntry.getAttribute("aria-label"), "V2EX Kit 设置");
+  assert.equal(settingsEntry, window.document.querySelector(".vx-page-actions").lastElementChild);
+  assert.equal(window.document.querySelector("#Top .tools #vx-settings"), null);
+  assert.equal(window.document.querySelector(".vx-settings-shortcut"), null);
+  settingsEntry.click();
   assert.equal(window.document.querySelectorAll("#vx-settings-dialog").length, 1);
   window.document.querySelector("#vx-settings-dialog .v2p-modal-close-btn").click();
-  const home = window.document.querySelector('#Top .tools a.top[href="/"]');
-  assert.equal(home.previousElementSibling.id, "vx-settings");
-  assert.equal(home.previousElementSibling.textContent, "V2EX Kit");
   assert.equal(window.document.querySelector("#Bottom .v2p-footer"), null);
   assert.equal(window.document.querySelectorAll(".vx-upload").length, 1);
   const emojiButton = window.document.querySelector('#reply-box button[aria-expanded="false"]');

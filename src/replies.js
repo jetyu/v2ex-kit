@@ -36,6 +36,54 @@ export function rankReplies(replies, limit = Infinity) {
     .slice(0, limit);
 }
 
+function directReplyNode(reply, selector) {
+  return [...reply.node.querySelectorAll(selector)].find(
+    (node) => node.closest(REPLY) === reply.node,
+  );
+}
+
+function enableHotThank(likes, reply) {
+  const area = directReplyNode(reply, ".thank_area");
+  const action = [...(area?.querySelectorAll("a") ?? [])].find((anchor) => {
+    if (anchor.querySelector(".v2p-control-thank")) return true;
+    const source = `${anchor.getAttribute("href") ?? ""} ${anchor.getAttribute("onclick") ?? ""}`;
+    return /thankReply\s*\(|\/thank\/reply\//.test(source);
+  });
+  if (!action || area.classList.contains("thanked")) return;
+  likes.classList.add("vx-hot-thank");
+  likes.setAttribute("role", "button");
+  likes.setAttribute("aria-label", t("thankReply"));
+  likes.title = t("thankReply");
+  likes.tabIndex = 0;
+  let pending = false;
+  const activate = (event) => {
+    if (
+      pending ||
+      likes.getAttribute("aria-disabled") === "true" ||
+      (event.type === "keydown" && !["Enter", " "].includes(event.key))
+    )
+      return;
+    event.preventDefault();
+    pending = true;
+    likes.classList.add("v2p-thank-pending");
+    likes.setAttribute("aria-disabled", "true");
+    action.click();
+    reply.node.ownerDocument.defaultView.setTimeout(() => {
+      pending = false;
+      if (!likes.isConnected) return;
+      likes.classList.remove("v2p-thank-pending");
+      if (area.classList.contains("thanked") || !action.isConnected) {
+        likes.classList.add("v2p-thanked");
+        likes.setAttribute("aria-label", t("thanked"));
+        likes.title = t("thanked");
+        likes.tabIndex = -1;
+      } else likes.removeAttribute("aria-disabled");
+    }, 1_500);
+  };
+  likes.addEventListener("click", activate);
+  likes.addEventListener("keydown", activate);
+}
+
 export function pageCount(doc, path) {
   const pages = [1];
   for (const link of doc.querySelectorAll("a.page_normal[href], a.page_current[href]")) {
@@ -131,6 +179,18 @@ export function importReply(row, base) {
 export function cloneTopReply(reply) {
   const cloned = reply.node.cloneNode(true);
   cloned.id = `top_${reply.id}`;
+  cloned.classList.add("vx-hot-reply");
+  cloned.classList.remove(
+    "v2p-indent",
+    "v2p-reply-last",
+    "v2p-reply-leaf",
+    "reply-group-item",
+    "nested",
+  );
+  for (const name of ["data-depth", "data-reply-id", "data-v2p-reply-depth"])
+    cloned.removeAttribute(name);
+  for (const name of ["--depth", "--level", "--tree-top", "--tree-bottom"])
+    cloned.style.removeProperty(name);
   for (const child of cloned.querySelectorAll(
     ".cell,.v2p-topic-reply-ref,.nested,.thank_area,.reply-toggle,.reply-tree-line,.reply-tree-join,.reply-tree-more",
   ))
@@ -151,7 +211,10 @@ export function cloneTopReply(reply) {
     toolbox.replaceChildren(jump);
     toolbox.classList.add("vx-hot-meta");
     const likes = cloned.querySelector(".v2p-likes-box");
-    if (likes) toolbox.prepend(likes);
+    if (likes) {
+      enableHotThank(likes, reply);
+      toolbox.prepend(likes);
+    }
   }
   for (const node of cloned.querySelectorAll("[id]")) node.removeAttribute("id");
   const table = cloned.firstElementChild;
@@ -159,13 +222,6 @@ export function cloneTopReply(reply) {
     const wrapper = element("div", undefined, "vr_wrapper");
     table.after(wrapper);
     wrapper.append(table);
-  }
-  const info = cloned.querySelector("td > .flex-one-row .flex-one-row:first-child");
-  if (info) {
-    const wrapper = element("div", undefined, "flex-one-row gap10");
-    wrapper.style.width = "100%";
-    for (const child of [...info.children]) if (child.tagName !== "STRONG") wrapper.append(child);
-    info.append(wrapper);
   }
   return cloned;
 }

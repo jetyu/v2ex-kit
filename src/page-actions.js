@@ -49,7 +49,7 @@ export function installPageActions(signedIn, pageWindow = globalThis.unsafeWindo
   const sync = () => {
     const nearTop = window.scrollY < 160;
     top.hidden = nearTop;
-    controls.hidden = nearTop && !editor;
+    controls.hidden = nearTop && !editor && !controls.querySelector("#vx-settings");
   };
   document.body.append(controls);
   window.addEventListener("scroll", sync, { passive: true });

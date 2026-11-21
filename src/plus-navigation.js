@@ -108,7 +108,7 @@ function installThemeSwitch(doc) {
   draw();
 }
 
-export function installPlusNavigation(doc, openSettings) {
+export function installPlusNavigation(doc) {
   for (const link of doc.querySelectorAll("#Top .tools > a.top, #menu-body a.top")) {
     const href = link.getAttribute("href") ?? "";
     const name = topIcons.find(([pattern]) => pattern.test(href))?.[1];
@@ -145,14 +145,6 @@ export function installPlusNavigation(doc, openSettings) {
       }
       if (Object.hasOwn(TAB_ICONS, label)) prependIcon(tab, TAB_ICONS[label]);
     }
-
-    const settings = doc.createElement("button");
-    settings.type = "button";
-    settings.className = "v2p-nav-settings-btn";
-    settings.setAttribute("aria-label", t("settings"));
-    prependIcon(settings, iconPaths.settings);
-    settings.addEventListener("click", openSettings);
-    tabs.append(settings);
   }
 
   if (!doc.documentElement.hasAttribute("data-v2p-mobile")) return;

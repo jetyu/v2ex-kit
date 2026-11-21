@@ -87,6 +87,39 @@ test("upload entry sits beside Reply with the same button styling as editor cont
   assert.equal(document.querySelector(".vx-upload .vr_upload_image"), null);
 });
 
+test("topic image entry sits beside the non-submit publication control", () => {
+  dom(`<form><textarea name="content"></textarea><div class="topic-actions">
+    <input type="button" class="super normal button publish-theme" value="发布主题">
+  </div></form>`);
+  initUpload({ upload: true }, createStorage(memoryAPI()), () => assert.fail());
+  const publish = document.querySelector('input[value="发布主题"]');
+  const pick = document.querySelector(".vx-upload-button");
+  assert.equal(publish.parentElement.className, "vx-reply-actions");
+  assert.equal(publish.nextElementSibling, pick);
+  assert.equal(pick.classList.contains("publish-theme"), true);
+  assert.equal(pick.textContent, "图片");
+});
+
+test("topic image entry moves beside an asynchronously rendered publication control", async () => {
+  dom(
+    '<div id="Main"><form><textarea name="content"></textarea></form><div id="footer"></div></div>',
+  );
+  initUpload({ upload: true }, createStorage(memoryAPI()), () => assert.fail());
+  const pick = document.querySelector(".vx-upload-button");
+  assert.equal(pick.parentElement.tagName, "FORM");
+  document
+    .querySelector("#footer")
+    .insertAdjacentHTML(
+      "beforeend",
+      '<button type="button" class="normal button">发布主题</button>',
+    );
+  await new Promise(setImmediate);
+  const publish = document.querySelector("#footer button");
+  assert.equal(publish.parentElement.className, "vx-reply-actions");
+  assert.equal(pick.parentElement, publish.parentElement);
+  assert.equal(publish.nextElementSibling, pick);
+});
+
 test("rate limiting stops the queue and persists the pause without rotating IDs", async () => {
   dom(
     '<form><textarea id="reply_content">Existing draft</textarea><button type="submit">Reply</button></form>',

@@ -204,6 +204,17 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   }
   contentFilter.addEventListener("change", syncFilterDependencies);
   syncFilterDependencies();
+  const upload = fields.get("upload");
+  const imgurClientId = fields.get("imgurClientId");
+  function syncUploadDependency() {
+    const disabled = !signedIn || !upload.checked;
+    imgurClientId.disabled = disabled;
+    imgurClientId
+      .closest(".vx-settings-option")
+      .classList.toggle("vx-settings-option-disabled", disabled);
+  }
+  upload.addEventListener("change", syncUploadDependency);
+  syncUploadDependency();
   const message = element("p");
   message.setAttribute("role", "status");
   const save = element("button", t("save"), "normal button special");
@@ -261,6 +272,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
         else control.value = restored[key];
       }
       syncFilterDependencies();
+      syncUploadDependency();
     },
   });
   if (tagActions) {
@@ -286,30 +298,36 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
 export function installSettings(store, signedIn, tagActions) {
   const open = () => openSettings(store, signedIn, tagActions);
   GM_registerMenuCommand(`V2EX Kit ${t("settings")}`, open);
-  const shortcut = owned(element("div", undefined, "vx-settings-shortcut"));
-  const controls = element("div", undefined, "vx-page-actions");
-  const trigger = button("", open);
-  trigger.className = "vx-open-settings";
-  trigger.setAttribute("aria-label", t("settings"));
-  const hint = element("span", t("settings"), "vx-page-action-hint");
-  hint.setAttribute("aria-hidden", "true");
-  trigger.append(icon("settings"), hint);
-  controls.append(trigger);
-  shortcut.append(controls);
-  document.body.append(shortcut);
-  const nav = document.querySelector("#Top .tools, #menu-body .cell, #site-header");
-  if (!nav) return;
-  const entry = owned(element("a", "V2EX Kit", "top"));
+  const mobileNav = document.documentElement.hasAttribute("data-v2p-mobile")
+    ? document.querySelector("#menu-body .cell")
+    : null;
+  const label = "V2EX Kit 设置";
+  if (!mobileNav) {
+    const controls = document.querySelector(".vx-page-actions");
+    if (!controls) return;
+    const entry = owned(button("", open));
+    entry.id = "vx-settings";
+    entry.className = "vx-open-settings";
+    entry.setAttribute("aria-haspopup", "dialog");
+    entry.setAttribute("aria-label", label);
+    entry.title = label;
+    const hint = element("span", label, "vx-page-action-hint");
+    hint.setAttribute("aria-hidden", "true");
+    entry.append(icon("settings"), hint);
+    controls.append(entry);
+    controls.hidden = false;
+    return;
+  }
+  const entry = owned(element("a", label, "top vx-settings-menu"));
   entry.id = "vx-settings";
   entry.href = "#vx-settings-dialog";
   entry.setAttribute("aria-haspopup", "dialog");
-  entry.setAttribute("aria-label", `V2EX Kit ${t("settings")}`);
-  entry.title = entry.getAttribute("aria-label");
+  entry.setAttribute("aria-label", label);
+  entry.title = label;
   entry.addEventListener("click", (event) => {
     event.preventDefault();
     open();
   });
-  const home = nav.querySelector('a.top[href="/"]');
-  if (home) home.before(entry);
-  else nav.prepend(entry);
+  entry.prepend(icon("settings"));
+  mobileNav.append(entry);
 }

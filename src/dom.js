@@ -52,22 +52,64 @@ export function whenPageIdle(callback, doc = document) {
 export function replyActions(textarea) {
   const form = textarea?.form;
   if (!form) return null;
-  const existing = form.querySelector(".vx-reply-actions");
+  const existing = textarea.vxEditorActions?.isConnected
+    ? textarea.vxEditorActions
+    : form.querySelector(".vx-reply-actions");
   if (existing) {
-    const submit = existing.querySelector('input[type="submit"],button[type="submit"]');
+    const submit = editorSubmit(existing);
     return submit ? createReplyActions(existing, submit) : null;
   }
-  const submit = form.querySelector('input[type="submit"],button[type="submit"]');
+  const submit =
+    editorSubmit(form) ??
+    topicPublishAction(textarea.ownerDocument.querySelector("#Main")) ??
+    topicPublishAction(textarea.ownerDocument);
   if (!submit) return null;
   const root = owned(element("div", undefined, "vx-reply-actions", textarea.ownerDocument));
   submit.before(root);
   root.append(submit);
+  textarea.vxEditorActions = root;
   return createReplyActions(root, submit);
+}
+
+export function onEditorActions(textarea, callback) {
+  const attach = () => {
+    const actions = replyActions(textarea);
+    if (!actions) return false;
+    observer?.disconnect();
+    callback(actions);
+    return true;
+  };
+  let observer;
+  if (attach()) return () => {};
+  observer = new textarea.ownerDocument.defaultView.MutationObserver(attach);
+  observer.observe(textarea.ownerDocument.body, { childList: true, subtree: true });
+  attach();
+  return () => observer.disconnect();
+}
+
+function editorSubmit(root) {
+  const submit = root.querySelector(
+    'input[type="submit"],button[type="submit"],button:not([type])',
+  );
+  if (submit) return submit;
+  return topicPublishAction(root);
+}
+
+function topicPublishAction(root) {
+  if (!root) return null;
+  return [
+    ...root.querySelectorAll('input[type="button"],button,a.button,[role="button"],.button'),
+  ].find((control) =>
+    /(?:发布|创建).*主题|publish.*topic/i.test(
+      (control.getAttribute("value") || control.textContent || "").trim(),
+    ),
+  );
 }
 
 function createReplyActions(root, submit) {
   const doc = submit.ownerDocument;
   const view = doc.defaultView;
+  submit.classList.add("vx-editor-primary-action");
   const sync = () => {
     const { width, height } = submit.getBoundingClientRect();
     if (width > 0) root.style.setProperty("--vx-reply-action-width", `${width}px`);

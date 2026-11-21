@@ -119,25 +119,62 @@ test("hot reply metadata shares the first row without moving the original likes"
     <div class="flex-one-row"><div class="flex-one-row gap10"><strong><a href="/member/Alice">Alice</a></strong>
     <span class="ago">now</span><span class="small fade flex-one-row gap5"><img src="/heart.png">123</span></div>
     <div class="fr"><span class="no">12</span></div></div><div class="reply_content">Reply</div>
-    </td></tr></tbody></table></div></div>`);
+    </td></tr></tbody></table><div class="thank_area"><a href="#;" onclick="thankReply(12)">Thank</a></div></div></div>`);
+  let thankClicks = 0;
+  document
+    .querySelector('.thank_area a[onclick^="thankReply"]')
+    .addEventListener("click", (event) => {
+      event.preventDefault();
+      thankClicks++;
+    });
   enhanceReplyActions(document);
   const source = document.querySelector("#r_12");
   const likes = source.querySelector(".v2p-likes-box");
   const originalParent = likes.parentElement;
   const hot = cloneTopReply(parseReply(source));
   const meta = hot.querySelector(".vx-hot-meta");
+  const info = hot.querySelector("td > .flex-one-row > .flex-one-row:first-child");
   assert.equal(meta.firstElementChild.classList.contains("v2p-likes-box"), true);
+  assert.equal(meta.firstElementChild.classList.contains("vx-hot-thank"), true);
+  assert.equal(meta.firstElementChild.getAttribute("role"), "button");
+  assert.equal(meta.firstElementChild.getAttribute("aria-label"), "感谢回复");
   assert.equal(meta.firstElementChild.textContent, "123");
   assert.equal(meta.lastElementChild.getAttribute("href"), "#r_12");
   assert.equal(meta.parentElement.querySelector("strong a").textContent, "Alice");
-  assert.equal(hot.querySelector(".ago").parentElement.parentElement, meta.previousElementSibling);
+  assert.equal(hot.querySelector(".ago").parentElement, meta.previousElementSibling);
+  assert.equal(info.querySelector(".ago").parentElement, info);
+  assert.equal(info.style.width, "");
   assert.equal(likes.parentElement, originalParent);
   assert.equal(parseReply(source).thanks, 123);
+  meta.firstElementChild.click();
+  meta.firstElementChild.click();
+  assert.equal(thankClicks, 1);
+  assert.equal(meta.firstElementChild.getAttribute("aria-disabled"), "true");
   let jumped = false;
   source.scrollIntoView = () => (jumped = true);
   meta.lastElementChild.click();
   assert.equal(jumped, true);
   window.close();
+});
+
+test("hot reply clones discard nested indentation and keep mention content in normal columns", () => {
+  dom(`<div class="cell v2p-indent v2p-reply-last reply-group-item" id="r_7"
+    data-depth="1" data-reply-id="7" data-v2p-reply-depth="1" style="--depth:1;--tree-top:12px">
+    <table width="100%"><tbody><tr>
+      <td width="28"><img class="avatar" width="28"></td><td width="10"></td><td>
+        <div class="flex-one-row"><div class="flex-one-row gap10"><strong><a href="/member/tkit">tkit</a></strong><span class="ago">1 天前</span></div><div class="fr"><span class="no">7</span></div></div>
+        <div class="reply_content"><a class="v2p-member-ref" href="/member/phrack">@phrack</a> 回复正文</div>
+      </td>
+    </tr></tbody></table>
+  </div>`);
+  const hot = cloneTopReply(parseReply(document.querySelector("#r_7")));
+  assert.equal(hot.classList.contains("vx-hot-reply"), true);
+  assert.equal(hot.matches(".v2p-indent,.v2p-reply-last,.reply-group-item,.nested"), false);
+  assert.equal(hot.hasAttribute("data-depth"), false);
+  assert.equal(hot.hasAttribute("data-reply-id"), false);
+  assert.equal(hot.hasAttribute("data-v2p-reply-depth"), false);
+  assert.equal(hot.style.cssText, "");
+  assert.match(hot.querySelector(".reply_content").textContent, /@phrack.*回复正文/);
 });
 
 test("hot replies retain unchanged rows and update counts, ordering and empty states", () => {

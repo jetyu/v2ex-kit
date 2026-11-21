@@ -121,6 +121,35 @@ test("content filter controls retain their values while the master switch is off
   window.close();
 });
 
+test("Imgur Client ID follows the image upload switch without losing its value", () => {
+  const { window } = dom("");
+  const store = createStorage(memoryAPI());
+  store.saveOptions({ upload: false, imgurClientId: "custom123" });
+  openSettings(store, true);
+  const upload = document.querySelector('[name="upload"]');
+  const clientId = document.querySelector('[name="imgurClientId"]');
+  const wrapper = clientId.closest(".vx-settings-option");
+  assert.equal(upload.checked, false);
+  assert.equal(clientId.disabled, true);
+  assert.equal(clientId.value, "custom123");
+  assert.equal(wrapper.classList.contains("vx-settings-option-disabled"), true);
+
+  upload.checked = true;
+  upload.dispatchEvent(new Event("change", { bubbles: true }));
+  assert.equal(clientId.disabled, false);
+  assert.equal(wrapper.classList.contains("vx-settings-option-disabled"), false);
+  clientId.value = "updated456";
+  upload.checked = false;
+  upload.dispatchEvent(new Event("change", { bubbles: true }));
+  assert.equal(clientId.disabled, true);
+  assert.equal(clientId.value, "updated456");
+
+  document.querySelector('.v2p-modal-footer button[type="button"]').click();
+  assert.equal(store.options().upload, false);
+  assert.equal(store.options().imgurClientId, "updated456");
+  window.close();
+});
+
 test("guest settings retain saved preferences and show account dependencies", () => {
   dom('<html lang="zh-CN">');
   const original = createStorage(memoryAPI()).options();

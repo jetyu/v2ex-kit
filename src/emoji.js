@@ -1,7 +1,7 @@
 import { t } from "./i18n.js";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import groups from "./vendor/polish/emoticons.json" with { type: "json" };
-import { button, element, matching, owned, replyActions } from "./dom.js";
+import { button, element, matching, onEditorActions, owned, replyActions } from "./dom.js";
 import { originalImageURL } from "./imgur-proxy.js";
 
 const groupLabels = {
@@ -61,7 +61,17 @@ export function initEmoji(options, doc = document) {
   );
   if (!textarea) return;
   const actions = replyActions(textarea);
-  if (!actions) return;
+  if (!actions) {
+    if (textarea.vxEmojiActionsPending) return;
+    textarea.vxEmojiActionsPending = true;
+    onEditorActions(textarea, () => {
+      textarea.vxEmojiActionsPending = false;
+      initEmoji(options, doc);
+    });
+    return;
+  }
+  if (textarea.vxEmojiInitialized) return;
+  textarea.vxEmojiInitialized = true;
   const trigger = owned(button(t("replyEmoji"), () => {}, doc));
   trigger.classList.add("v2p-lite-emoji-trigger", "vx-editor-action-button");
   trigger.setAttribute("aria-label", t("insertEmoji"));
@@ -154,10 +164,17 @@ export function initEmoji(options, doc = document) {
       close();
     }
   });
+  const applyEmoji = () => {
+    const transformed = transformEmoji(textarea.value);
+    if (transformed === textarea.value) return;
+    textarea.value = transformed;
+    textarea.dispatchEvent(new doc.defaultView.Event("input", { bubbles: true }));
+  };
+  actions.submit.addEventListener("click", applyEmoji, true);
   textarea.form?.addEventListener(
     "submit",
     (event) => {
-      if (!event.defaultPrevented) textarea.value = transformEmoji(textarea.value);
+      if (!event.defaultPrevented) applyEmoji();
     },
     true,
   );

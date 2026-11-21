@@ -1,6 +1,6 @@
 {
   "name": "v2ex-kit",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "private": true,
   "type": "module",
   "description": "改善 V2EX 阅读与回复体验，提供主题切换、帖子预览、关键字过滤、用户标签、自动签到和图片上传等功能。",
