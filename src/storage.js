@@ -20,7 +20,6 @@ export const DEFAULTS = Object.freeze({
   newTab: true,
   preview: true,
   userCards: true,
-  showMemberRegistration: true,
   tags: true,
   preloadPages: 2,
   hotReplies: true,

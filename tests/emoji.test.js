@@ -13,7 +13,7 @@ test("Polish emoji groups retain image tokens and native emoji", () => {
   );
   dom(`<img class="embedded_image" src="${image.url}">`);
   enhanceEmojis(document);
-  assert.equal(document.querySelector("img").src, image.image);
+  assert.equal(document.querySelector("img").src, image.url);
   assert.equal(document.querySelector("img").classList.contains("v2p-emoji-img"), true);
 });
 
@@ -25,8 +25,9 @@ test("emoji picker preserves the current selection and draft", async () => {
   textarea.setSelectionRange(7, 7);
   initEmoji({ emoji: true });
   const trigger = document.querySelector('[aria-label="\u63d2\u5165\u8868\u60c5"]');
-  assert.equal(trigger.classList.contains("vx-editor-icon-button"), true);
-  assert.ok(trigger.querySelector(".vx-editor-button-icon svg"));
+  assert.equal(trigger.classList.contains("vx-editor-action-button"), true);
+  assert.equal(trigger.textContent, "表情");
+  assert.equal(trigger.querySelector("svg"), null);
   trigger.click();
   assert.equal(document.querySelectorAll(".v2p-emoji-group").length, 5);
   const face = groups[1].items[0].value;

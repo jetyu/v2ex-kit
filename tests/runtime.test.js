@@ -99,7 +99,6 @@ test("saved themes are selected before the first style and recover from invalid 
       autoCheckIn: false,
       preloadPages: 0,
       userCards: false,
-      showMemberRegistration: false,
       replyPreview: false,
       tags: false,
     };
@@ -158,7 +157,6 @@ test("theme applies before DOMContentLoaded and functional initialization", asyn
                 autoCheckIn: false,
                 preloadPages: 0,
                 userCards: false,
-                showMemberRegistration: false,
                 replyPreview: false,
               }
             : fallback;
@@ -258,7 +256,6 @@ test("bundled script initializes, enhances only new nodes, and settles without s
         autoCheckIn: false,
         preloadPages: 0,
         userCards: false,
-        showMemberRegistration: false,
         replyPreview: false,
       },
     ],
@@ -308,7 +305,12 @@ test("bundled script initializes, enhances only new nodes, and settles without s
   assert.equal(uploadButton.parentElement, submitButton.parentElement);
   assert.equal(submitButton.parentElement.classList.contains("vx-reply-actions"), true);
   assert.equal(uploadButton.className.includes("normal button"), true);
-  assert.ok(uploadButton.querySelector("svg"));
+  assert.deepEqual(
+    [...submitButton.parentElement.children].map((control) => control.textContent),
+    ["Reply", "表情", "图片"],
+  );
+  assert.equal(emojiButton.querySelector("svg"), null);
+  assert.equal(uploadButton.querySelector("svg"), null);
   const draft = window.document.querySelector("#reply_content");
   draft.value = "Existing draft";
   draft.scrollIntoView = () => assert.fail("opening the reply box must preserve scrolling");
@@ -469,7 +471,6 @@ test("script uses Chinese and guests skip account features", async () => {
             autoCheckIn: true,
             emoji: true,
             upload: true,
-            showMemberRegistration: false,
             replyPreview: false,
           }
         : fallback,

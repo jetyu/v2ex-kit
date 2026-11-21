@@ -26,20 +26,81 @@ export function owned(node) {
   return node;
 }
 
+export function whenPageIdle(callback, doc = document) {
+  const view = doc.defaultView ?? globalThis;
+  let idle;
+  let timer;
+  let cancelled = false;
+  const run = () => {
+    if (cancelled) return;
+    if (typeof view.requestIdleCallback === "function") {
+      idle = view.requestIdleCallback(() => !cancelled && callback(), { timeout: 2_000 });
+    } else {
+      timer = view.setTimeout(() => !cancelled && callback(), 50);
+    }
+  };
+  if (doc.readyState === "complete") run();
+  else view.addEventListener("load", run, { once: true });
+  return () => {
+    cancelled = true;
+    view.removeEventListener?.("load", run);
+    if (idle !== undefined) view.cancelIdleCallback?.(idle);
+    if (timer !== undefined) view.clearTimeout?.(timer);
+  };
+}
+
 export function replyActions(textarea) {
   const form = textarea?.form;
   if (!form) return null;
   const existing = form.querySelector(".vx-reply-actions");
   if (existing) {
     const submit = existing.querySelector('input[type="submit"],button[type="submit"]');
-    return submit ? { root: existing, submit } : null;
+    return submit ? createReplyActions(existing, submit) : null;
   }
   const submit = form.querySelector('input[type="submit"],button[type="submit"]');
   if (!submit) return null;
   const root = owned(element("div", undefined, "vx-reply-actions", textarea.ownerDocument));
   submit.before(root);
   root.append(submit);
-  return { root, submit };
+  return createReplyActions(root, submit);
+}
+
+function createReplyActions(root, submit) {
+  const doc = submit.ownerDocument;
+  const view = doc.defaultView;
+  const sync = () => {
+    const { width, height } = submit.getBoundingClientRect();
+    if (width > 0) root.style.setProperty("--vx-reply-action-width", `${width}px`);
+    if (height > 0) root.style.setProperty("--vx-reply-action-height", `${height}px`);
+  };
+  if (!root.vxReplyActionsSync) {
+    root.vxReplyActionsSync = sync;
+    const resizeObserver = view?.ResizeObserver ? new view.ResizeObserver(sync) : null;
+    resizeObserver?.observe(submit);
+    const mutationObserver = view?.MutationObserver ? new view.MutationObserver(sync) : null;
+    if (mutationObserver && doc.documentElement) {
+      mutationObserver.observe(doc.documentElement, {
+        attributes: true,
+        attributeFilter: ["class", "data-vx-theme", "data-v2p-theme", "style"],
+      });
+    }
+    if (mutationObserver && doc.body) {
+      mutationObserver.observe(doc.body, {
+        attributes: true,
+        attributeFilter: ["class", "style"],
+      });
+    }
+    view?.addEventListener?.("resize", sync);
+  }
+  const append = (control) => {
+    control.classList.add(...submit.classList);
+    root.append(control);
+    root.vxReplyActionsSync();
+    view?.requestAnimationFrame?.(root.vxReplyActionsSync);
+    return control;
+  };
+  sync();
+  return { root, submit, append };
 }
 
 export function matching(root, selector) {

@@ -65,7 +65,8 @@
   }
 
   body :is(#Top, #Main, #Rightbar) .button.special:not(:disabled),
-  body #reply-box :is(input, button)[type="submit"]:enabled {
+  body #reply-box :is(input, button)[type="submit"]:enabled,
+  body #reply-box .vx-editor-action-button:enabled {
     border: 1px solid transparent;
     border-radius: var(--v2p-button-radius);
     color: #fff;

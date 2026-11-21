@@ -3,12 +3,10 @@ import { button, element, matching, memberName, modal, owned, safeURL } from "./
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { blockMember, fetchMember, setMemberFollow } from "./member-data.js";
 import { normalizeTags, TAG_LIMITS } from "./storage.js";
-import { createMemberRegistration } from "./member-registration.js";
 
 export function createMembers(store, options, topics, currentAccount) {
   const registered = new WeakSet(),
     byName = new Map();
-  const registration = createMemberRegistration(store, options);
   function updateTags(name, tags) {
     store.setTags(name, tags);
     draw(name);
@@ -172,7 +170,6 @@ export function createMembers(store, options, topics, currentAccount) {
     }
   }
   function enhance(root) {
-    registration.enhance(root);
     if (!options.tags) return;
     for (const link of matching(root, 'strong a[href^="/member/"], .header a[href^="/member/"]')) {
       const name = memberName(link);
@@ -478,7 +475,7 @@ export function createMembers(store, options, topics, currentAccount) {
         controller = task;
         const timeout = setTimeout(() => task.abort(), 10_000);
         try {
-          const data = await fetchMember(name, task.signal, fetch, registration.summary(name));
+          const data = await fetchMember(name, task.signal, fetch);
           if (request !== sequence || task.signal.aborted) return;
           if (cache.size >= 100) cache.delete(cache.keys().next().value);
           cache.set(key, { data, expires: Date.now() + 600_000 });

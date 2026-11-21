@@ -4,39 +4,25 @@ import { openSettings } from "../src/settings.js";
 import { createStorage } from "../src/storage.js";
 import { dom, memoryAPI } from "./helpers.js";
 
-test("closing upload history returns to settings and preserves unsaved fields", () => {
+test("upload history renders lazily inside the image settings tab", () => {
   const { window } = dom("");
   const api = memoryAPI();
   openSettings(createStorage(api), true);
   const settings = document.querySelector("#vx-settings-dialog");
-  assert.equal(settings.querySelector(".v2p-modal-close-btn").textContent, "关闭");
   settings.querySelector('[name="theme"]').value = "vscode";
-  settings.querySelector("#vx-settings-tab-images").click();
-  const history = settings.querySelector("#vx-settings-panel-images > button");
-  for (const method of ["button", "escape", "backdrop"]) {
-    history.focus();
-    history.click();
-    const child = [...document.querySelectorAll(".v2p-modal-mask")].at(-1);
-    assert.notEqual(child, settings);
-    assert.equal(settings.hasAttribute("inert"), true);
-    if (method === "button") child.querySelector(".v2p-modal-close-btn").click();
-    else if (method === "escape")
-      document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    else {
-      child.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true }));
-      child.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
-    }
-    assert.equal(document.querySelectorAll(".v2p-modal-mask").length, 1);
-    assert.equal(settings.isConnected, true);
-    assert.equal(settings.hasAttribute("inert"), false);
-    assert.equal(settings.querySelector('[name="theme"]').value, "vscode");
-    assert.equal(document.activeElement, history);
-    assert.equal(document.body.classList.contains("v2p-modal-open"), true);
-  }
+  const tab = settings.querySelector("#vx-settings-tab-images");
+  assert.equal(settings.querySelector(".vx-upload-history-list"), null);
+  tab.click();
+  const history = settings.querySelector(".vx-upload-history-list");
+  assert.ok(history);
+  assert.match(history.textContent, /暂无上传记录/);
+  assert.equal(document.querySelectorAll(".v2p-modal-mask").length, 1);
+  assert.equal(settings.querySelector('[name="theme"]').value, "vscode");
+  settings.querySelector("#vx-settings-tab-general").click();
+  tab.click();
+  assert.equal(settings.querySelector(".vx-upload-history-list"), history);
   assert.deepEqual(api.writes, []);
   settings.querySelector(".v2p-modal-close-btn").click();
-  assert.equal(document.querySelector(".v2p-modal-mask"), null);
-  assert.equal(document.body.classList.contains("v2p-modal-open"), false);
   window.close();
 });
 
@@ -51,7 +37,7 @@ test("settings give every option a Chinese label and an associated description",
   });
   openSettings(store);
   const controls = [...document.querySelectorAll("form :is(input,select,textarea)[name]")];
-  assert.equal(controls.length, 21);
+  assert.equal(controls.length, 20);
   assert.equal(document.querySelectorAll('[role="tabpanel"]').length, 6);
   assert.equal(
     document.querySelector(".v2p-modal-footer [type=submit]").form.id,
@@ -94,6 +80,45 @@ test("settings give every option a Chinese label and an associated description",
   assert.equal(document.querySelector('[name="imgurProxy"]').closest("fieldset"), null);
   assert.equal(document.querySelector("#vx-settings-form fieldset"), null);
   document.querySelector(".v2p-modal-close-btn").click();
+});
+
+test("content filter controls retain their values while the master switch is off", () => {
+  const { window } = dom("");
+  const store = createStorage(memoryAPI());
+  openSettings(store, true);
+  const master = document.querySelector('[name="contentFilter"]');
+  const dependencies = ["filterTopics", "filterReplies", "filterMode", "filterKeywords"].map(
+    (name) => document.querySelector(`[name="${name}"]`),
+  );
+  assert.equal(master.checked, false);
+  assert.ok(dependencies.every((control) => control.disabled));
+  assert.ok(
+    dependencies.every((control) =>
+      control.closest(".vx-settings-option").classList.contains("vx-settings-option-disabled"),
+    ),
+  );
+  assert.equal(dependencies[0].checked, true);
+  assert.equal(dependencies[1].checked, true);
+
+  master.checked = true;
+  master.dispatchEvent(new Event("change", { bubbles: true }));
+  assert.ok(dependencies.every((control) => !control.disabled));
+  dependencies[0].checked = false;
+  dependencies[2].value = "hide";
+  dependencies[3].value = "spam\n广告";
+  master.checked = false;
+  master.dispatchEvent(new Event("change", { bubbles: true }));
+  assert.ok(dependencies.every((control) => control.disabled));
+  assert.equal(dependencies[0].checked, false);
+  assert.equal(dependencies[2].value, "hide");
+  assert.equal(dependencies[3].value, "spam\n广告");
+
+  document.querySelector('.v2p-modal-footer button[type="button"]').click();
+  assert.equal(store.options().contentFilter, false);
+  assert.equal(store.options().filterTopics, false);
+  assert.equal(store.options().filterMode, "hide");
+  assert.deepEqual(store.options().filterKeywords, ["spam", "广告"]);
+  window.close();
 });
 
 test("guest settings retain saved preferences and show account dependencies", () => {
@@ -207,7 +232,6 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
         "autoCheckIn",
         "preview",
         "userCards",
-        "showMemberRegistration",
         "autoFold",
         "base64Decode",
         "hotReplies",

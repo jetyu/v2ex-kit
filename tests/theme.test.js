@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { compile } from "sass";
 import { readFileSync } from "node:fs";
+import { replyActions } from "../src/dom.js";
 import { dom } from "./helpers.js";
 
 test("requested padding stays scoped to the topic list and top-level replies", () => {
@@ -214,49 +215,39 @@ test("post-list member tags paint above the topic metadata overlay", () => {
   assert.equal(list.lineHeight, reply.lineHeight);
 });
 
-test("member registration dates use the same compact capsule label everywhere", () => {
-  dom(
-    '<span class="vx-member-inline-meta"><span class="vx-member-registration">注册于 2012-12-20</span></span>',
-  );
-  const style = document.createElement("style");
-  style.textContent = readFileSync("src/styles.css", "utf8");
-  document.head.append(style);
-  const label = window.getComputedStyle(document.querySelector(".vx-member-registration"));
-  // JSDOM normalizes inline-flex to flex in computed styles.
-  assert.equal(label.display, "flex");
-  assert.equal(label.padding, "1px 6px");
-  assert.equal(label.borderStyle, "solid");
-  assert.equal(label.borderRadius, "999px");
-  assert.equal(label.lineHeight, "14.85px");
-});
-
-test("shared editor actions stay left-aligned and equally sized over theme rules", () => {
+test("editor text buttons follow the active theme's Reply button size and styling", () => {
   dom(`<style>
     #reply-box form { text-align: right; }
-    #reply-box button { float: right; padding: 0 24px !important; }
+    #reply-box button { float: right; }
+    #reply-box .reply-theme { height: 38px; padding: 0 24px; border: 2px solid blue; border-radius: 9px; }
   </style><div id="reply-box"><form>
-    <div class="vx-reply-actions" data-vx-owned>
-      <button type="submit">回复</button>
-      <button type="button" class="normal button vx-editor-icon-button"><span class="vx-editor-button-icon"></span></button>
-      <button type="button" class="normal button vx-editor-icon-button"><span class="vx-editor-button-icon"></span></button>
-    </div>
+    <textarea id="reply_content"></textarea>
+    <button type="submit" class="normal button reply-theme">回复</button>
   </form></div>`);
   const style = document.createElement("style");
   style.textContent = readFileSync("src/styles.css", "utf8");
   document.head.append(style);
+  const submit = document.querySelector('[type="submit"]');
+  submit.getBoundingClientRect = () => ({ width: 76, height: 38 });
+  const { append } = replyActions(document.querySelector("textarea"));
+  for (let index = 0; index < 2; index++) {
+    const control = document.createElement("button");
+    control.className = "normal button vx-editor-action-button";
+    control.textContent = index ? "图片" : "表情";
+    append(control);
+  }
   const actions = window.getComputedStyle(document.querySelector(".vx-reply-actions"));
   assert.equal(actions.display, "flex");
   assert.equal(actions.justifyContent, "flex-start");
   assert.equal(actions.textAlign, "start");
   assert.equal(actions.width, "100%");
-  for (const control of document.querySelectorAll(".vx-editor-icon-button")) {
+  for (const control of document.querySelectorAll(".vx-editor-action-button")) {
     const computed = window.getComputedStyle(control);
     assert.equal(computed.cssFloat, "none");
-    assert.equal(computed.width, "34px");
-    assert.equal(computed.height, "32px");
-    assert.equal(computed.padding, "0px");
-    const graphic = window.getComputedStyle(control.querySelector(".vx-editor-button-icon"));
-    assert.equal(graphic.width, "20px");
-    assert.equal(graphic.height, "20px");
+    assert.equal(control.classList.contains("reply-theme"), true);
+    assert.equal(computed.width, "76px");
+    assert.equal(computed.height, "38px");
+    assert.equal(computed.padding, "0px 24px");
+    assert.equal(computed.borderRadius, "9px");
   }
 });

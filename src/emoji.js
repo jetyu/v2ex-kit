@@ -3,7 +3,6 @@ import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import groups from "./vendor/polish/emoticons.json" with { type: "json" };
 import { button, element, matching, owned, replyActions } from "./dom.js";
 import { originalImageURL } from "./imgur-proxy.js";
-import { icon } from "./icons.js";
 
 const groupLabels = {
   "\u6d41\u884c": "emojiPopular",
@@ -25,7 +24,17 @@ const tokens = new Map(
     .filter((item) => item.url)
     .map((item) => [item.value, item.url]),
 );
+const tokenPictures = new Map(
+  groups
+    .flatMap((group) => group.items)
+    .filter((item) => item.image)
+    .map((item) => [item.value, item.image]),
+);
 const emojiSources = new Set([...pictures.keys(), ...pictures.values()]);
+
+export function emojiPicture(token) {
+  return tokenPictures.get(token) ?? null;
+}
 
 export function transformEmoji(text) {
   return text.replace(/\[[^\]]+\]/g, (token) =>
@@ -37,7 +46,6 @@ export function enhanceEmojis(root) {
   for (const image of matching(root, "img.embedded_image")) {
     const source = originalImageURL(image.getAttribute("src") ?? "", image.ownerDocument);
     const high = pictures.get(source);
-    if (high) image.src = high;
     if (high || emojiSources.has(source)) {
       image.classList.add("v2p-emoji-img");
       image.style.width = "var(--v2p-emoji-size)";
@@ -54,14 +62,11 @@ export function initEmoji(options, doc = document) {
   if (!textarea) return;
   const actions = replyActions(textarea);
   if (!actions) return;
-  const trigger = owned(button("", () => {}, doc));
-  trigger.classList.add("v2p-lite-emoji-trigger", "vx-editor-icon-button");
+  const trigger = owned(button(t("replyEmoji"), () => {}, doc));
+  trigger.classList.add("v2p-lite-emoji-trigger", "vx-editor-action-button");
   trigger.setAttribute("aria-label", t("insertEmoji"));
   trigger.title = t("insertEmoji");
-  const graphic = element("span", undefined, "vx-editor-button-icon", doc);
-  graphic.append(icon("smile"));
-  trigger.append(graphic);
-  actions.root.append(trigger);
+  actions.append(trigger);
   const popup = owned(element("div", undefined, "v2p-popup", doc));
   popup.hidden = true;
   popup.append(element("div", undefined, "v2p-popup-content", doc));

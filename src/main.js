@@ -2,7 +2,7 @@ import { applyTheme, THEME_STYLE_ID } from "./theme.js";
 import { themeStyles } from "./theme-styles.js";
 import { enhanceEmojis, initEmoji } from "./emoji.js";
 import { createStorage, PREFIX } from "./storage.js";
-import { createHTTP, currentUser, isV2EXPage, matching } from "./dom.js";
+import { createHTTP, currentUser, isV2EXPage, matching, whenPageIdle } from "./dom.js";
 import { createMembers } from "./members.js";
 import { createTopics } from "./preview.js";
 import { enhanceReplyActions, initReplies, REPLY } from "./replies.js";
@@ -77,8 +77,8 @@ function start() {
   installSettings(store, Boolean(name), members);
   installPageActions(Boolean(name));
   if (name) {
-    initUpload(options, store);
     initEmoji(options);
+    initUpload(options, store);
   }
   initReplyPreview(options);
   if (main) {
@@ -146,9 +146,9 @@ function start() {
         void checkIn(name).catch((error) => report(error.message));
     };
     document.addEventListener("visibilitychange", runDaily);
-    runDaily();
+    whenPageIdle(runDaily);
   }
-  void replies?.preload();
+  whenPageIdle(() => void replies?.preload());
 }
 
 if (window.self === window.top) {

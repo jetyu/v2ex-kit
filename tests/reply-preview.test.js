@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { initReplyPreview, renderReplyPreview } from "../src/reply-preview.js";
+import groups from "../src/vendor/polish/emoticons.json" with { type: "json" };
 import { dom } from "./helpers.js";
 
 test("reply editor switches between editing and a safe formatted preview", () => {
@@ -71,6 +72,39 @@ test("preview updates while active, preserves line breaks, and never creates uns
     controls.output.querySelector('a[href="http://example.com/a.jpg"]').textContent,
     "http://example.com/a.jpg",
   );
+});
+
+test("preview renders supported emoji tokens as the same emoji images used in replies", () => {
+  dom('<form id="reply-box"><textarea id="reply_content"></textarea></form>');
+  const controls = initReplyPreview({ replyPreview: true });
+  const items = groups.flatMap((group) => group.items);
+  const doge = items.find((item) => item.value === "[doge]");
+  const wow = items.find((item) => item.value === "[哇R]");
+  controls.textarea.value = `开始 ${wow.value} ${doge.value} [unknown] 结束`;
+  controls.preview.click();
+
+  const emojis = [...controls.output.querySelectorAll("img.v2p-emoji-img")];
+  assert.deepEqual(
+    emojis.map((image) => [image.alt, image.src]),
+    [
+      [wow.value, wow.image],
+      [doge.value, doge.image],
+    ],
+  );
+  assert.equal(
+    emojis.every((image) => image.classList.contains("embedded_image")),
+    true,
+  );
+  assert.equal(
+    emojis.every((image) => image.style.width === "var(--v2p-emoji-size)"),
+    true,
+  );
+  assert.match(controls.output.textContent, /\[unknown\]/);
+  assert.equal(
+    [...controls.output.querySelectorAll("a")].some((anchor) => anchor.textContent === "[unknown]"),
+    false,
+  );
+  assert.doesNotMatch(controls.output.textContent, /\[哇R\]|\[doge\]/);
 });
 
 test("empty, disabled, and repeated initialization remain stable", () => {

@@ -34,7 +34,6 @@ test("options reject invalid types and unknown fields", () => {
   assert.equal(options.imgurClientId, "");
   assert.equal(options.injected, undefined);
   assert.equal(options.contentFilter, false);
-  assert.equal(options.showMemberRegistration, true);
   assert.equal(options.replyPreview, true);
   assert.deepEqual(options.filterKeywords, []);
   assert.equal(normalizeOptions({ filterMode: "invalid" }).filterMode, "collapse");

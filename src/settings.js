@@ -1,7 +1,7 @@
 import { button, currentUser, element, modal, owned } from "./dom.js";
 import { t } from "./i18n.js";
 import { createTagManager } from "./tag-manager.js";
-import { openUploadHistory } from "./upload.js";
+import { createUploadHistory } from "./upload.js";
 import { icon } from "./icons.js";
 import { THEMES } from "./theme.js";
 import { createBackup } from "./backup-ui.js";
@@ -33,11 +33,13 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   dialog.content.before(tablist);
   const tabs = [];
   function activate(index, focus = false) {
-    tabs.forEach(({ tab, panel }, position) => {
+    tabs.forEach((entry, position) => {
+      const { tab, panel } = entry;
       const selected = position === index;
       tab.tabIndex = selected ? 0 : -1;
       tab.setAttribute("aria-selected", String(selected));
       panel.hidden = !selected;
+      if (selected) entry.onActivate?.();
     });
     dialog.content.scrollTop = 0;
     if (focus) tabs[index].tab.focus();
@@ -54,7 +56,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
     tab.setAttribute("aria-controls", panel.id);
     panel.setAttribute("role", "tabpanel");
     panel.setAttribute("aria-labelledby", tab.id);
-    tabs.push({ tab, panel });
+    tabs.push({ tab, panel, onActivate: undefined });
     tablist.append(tab);
     form.append(panel);
     return panel;
@@ -84,7 +86,6 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       "autoCheckIn",
       "preview",
       "userCards",
-      "showMemberRegistration",
       "autoFold",
       "base64Decode",
       "hotReplies",
@@ -99,6 +100,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   };
   const panels = {};
   const requiresLogin = new Set(["autoCheckIn", "emoji", "upload", "imgurClientId"]);
+  const filterDependencies = ["filterTopics", "filterReplies", "filterMode", "filterKeywords"];
   for (const [group, keys] of Object.entries(groups)) {
     const panel = (panels[group] = addPanel(group));
     const grid = element("div", undefined, "vx-settings-grid");
@@ -178,9 +180,30 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       fields.set(key, control);
     }
     panel.append(grid);
-    if (group === "images")
-      panel.append(button(t("uploadHistory"), () => openUploadHistory(store)));
+    if (group === "images") {
+      const history = element("section", undefined, "vx-upload-history");
+      history.append(element("h2", t("uploadHistory")));
+      panel.append(history);
+      const entry = tabs.at(-1);
+      entry.onActivate = () => {
+        entry.onActivate = undefined;
+        history.append(createUploadHistory(store, entry.tab));
+      };
+    }
   }
+  const contentFilter = fields.get("contentFilter");
+  function syncFilterDependencies() {
+    const disabled = !contentFilter.checked;
+    for (const key of filterDependencies) {
+      const control = fields.get(key);
+      control.disabled = disabled;
+      control
+        .closest(".vx-settings-option")
+        .classList.toggle("vx-settings-option-disabled", disabled);
+    }
+  }
+  contentFilter.addEventListener("change", syncFilterDependencies);
+  syncFilterDependencies();
   const message = element("p");
   message.setAttribute("role", "status");
   const save = element("button", t("save"), "normal button special");
@@ -205,7 +228,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
     }
     const next = { ...store.options() };
     for (const [key, control] of fields) {
-      if (control.disabled) continue;
+      if (requiresLogin.has(key) && !signedIn) continue;
       if (key === "hotReplies") {
         const count = Number(control.value);
         next.hotReplies = count > 0;
@@ -231,12 +254,13 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       if (!settings) return;
       const restored = store.options();
       for (const [key, control] of fields) {
-        if (control.disabled) continue;
+        if (requiresLogin.has(key) && !signedIn) continue;
         if (key === "hotReplies") control.value = hotReplySelection(restored);
         else if (key === "filterKeywords") control.value = restored[key].join("\n");
         else if (control.type === "checkbox") control.checked = restored[key];
         else control.value = restored[key];
       }
+      syncFilterDependencies();
     },
   });
   if (tagActions) {

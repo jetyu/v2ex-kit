@@ -1,7 +1,8 @@
 import { element, owned, safeURL } from "./dom.js";
+import { emojiPicture } from "./emoji.js";
 import { t } from "./i18n.js";
 
-const TOKEN = /https?:\/\/[^\s<>"']+|@[a-z0-9_-]{1,64}\b|\/t\/\d+(?:#reply\d+)?/gi;
+const TOKEN = /\[[^\]\r\n]+\]|https?:\/\/[^\s<>"']+|@[a-z0-9_-]{1,64}\b|\/t\/\d+(?:#reply\d+)?/gi;
 const TRAILING_PUNCTUATION = /[.,!?;:，。！？；：、）)\]}]+$/u;
 const IMAGE_PATH = /\.(?:avif|gif|jpe?g|png|webp)$/i;
 
@@ -30,6 +31,19 @@ function image(doc, text, href) {
   return anchor;
 }
 
+function emoji(doc, text, href) {
+  const target = safeURL(href, doc.location?.href ?? location.href, true);
+  if (!target) return null;
+  const picture = element("img", undefined, "embedded_image v2p-emoji-img", doc);
+  picture.src = target;
+  picture.alt = text;
+  picture.loading = "lazy";
+  picture.referrerPolicy = "no-referrer";
+  picture.style.width = "var(--v2p-emoji-size)";
+  picture.style.height = "var(--v2p-emoji-size)";
+  return picture;
+}
+
 export function renderReplyPreview(container, value) {
   const doc = container.ownerDocument;
   const text = String(value ?? "");
@@ -47,7 +61,12 @@ export function renderReplyPreview(container, value) {
       trailing = TRAILING_PUNCTUATION.exec(token)?.[0] ?? "";
       if (trailing) token = token.slice(0, -trailing.length);
     }
-    if (token.startsWith("@")) {
+    const emojiSource = token.startsWith("[") ? emojiPicture(token) : null;
+    if (emojiSource) {
+      container.append(emoji(doc, token, emojiSource) ?? doc.createTextNode(token));
+    } else if (token.startsWith("[")) {
+      container.append(doc.createTextNode(token));
+    } else if (token.startsWith("@")) {
       container.append(link(doc, token, `/member/${token.slice(1)}`));
     } else if (token.startsWith("/t/")) {
       container.append(link(doc, token, token));

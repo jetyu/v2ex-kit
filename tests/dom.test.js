@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createHTTP, currentUser, safeContent, safeURL, syncOnce } from "../src/dom.js";
+import {
+  createHTTP,
+  currentUser,
+  safeContent,
+  safeURL,
+  syncOnce,
+  whenPageIdle,
+} from "../src/dom.js";
 import { dom } from "./helpers.js";
 
 test("remote content drops executable elements, handlers, unsafe URLs and styles", () => {
@@ -36,6 +43,27 @@ test("current site account cards work without a top navigation username", () => 
   assert.equal(currentUser(), "reader");
   document.querySelector('a[href="/balance"]').remove();
   assert.equal(currentUser(), null);
+});
+
+test("deferred work waits for page load and an idle callback", () => {
+  dom("");
+  let phase = "loading";
+  let idleTask;
+  let calls = 0;
+  Object.defineProperty(document, "readyState", { configurable: true, get: () => phase });
+  window.requestIdleCallback = (callback) => {
+    idleTask = callback;
+    return 1;
+  };
+  whenPageIdle(() => calls++);
+  assert.equal(idleTask, undefined);
+  assert.equal(calls, 0);
+  phase = "complete";
+  window.dispatchEvent(new Event("load"));
+  assert.equal(typeof idleTask, "function");
+  assert.equal(calls, 0);
+  idleTask();
+  assert.equal(calls, 1);
 });
 
 test("reward redirects are allowed, but external redirects with identical paths are rejected", async () => {

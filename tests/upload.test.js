@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { initUpload, openUploadHistory, replacePlaceholder, uploadImage } from "../src/upload.js";
+import { createUploadHistory, initUpload, replacePlaceholder, uploadImage } from "../src/upload.js";
 import { createStorage, DEFAULT_IMGUR_CLIENT_ID } from "../src/storage.js";
 import { dom, memoryAPI } from "./helpers.js";
 
@@ -78,8 +78,9 @@ test("upload entry sits beside Reply with the same button styling as editor cont
   assert.equal(submit.nextElementSibling, pick);
   assert.equal(pick.tagName, "BUTTON");
   assert.equal(pick.type, "button");
-  assert.equal(pick.textContent, "");
-  assert.ok(pick.querySelector(".vx-editor-button-icon svg"));
+  assert.equal(pick.textContent, "图片");
+  assert.equal(pick.classList.contains("vx-editor-action-button"), true);
+  assert.equal(pick.querySelector("svg"), null);
   assert.equal(pick.getAttribute("aria-label"), "插入图片");
   assert.equal(pick.classList.contains("normal"), true);
   assert.equal(pick.classList.contains("button"), true);
@@ -154,21 +155,23 @@ test("rejected image drops cancel browser navigation and preserve the draft", ()
 
 test("upload history links lazy Imgur previews and preserves original and deletion links", () => {
   dom("");
-  openUploadHistory({
-    uploads: () => [
-      {
-        link: "https://i.imgur.com/example.png",
-        deleteHash: "remove123",
-        fileName: "example.png",
-        sourceTopic: { title: "Example topic", url: "https://v2ex.com/t/123?p=2#r_1" },
-      },
-      {
-        link: "https://other.test/example.png",
-        fileName: "other.png",
-        sourceTopic: { title: "External link", url: "https://v2ex.com.other.test/t/123" },
-      },
-    ],
-  });
+  document.body.append(
+    createUploadHistory({
+      uploads: () => [
+        {
+          link: "https://i.imgur.com/example.png",
+          deleteHash: "remove123",
+          fileName: "example.png",
+          sourceTopic: { title: "Example topic", url: "https://v2ex.com/t/123?p=2#r_1" },
+        },
+        {
+          link: "https://other.test/example.png",
+          fileName: "other.png",
+          sourceTopic: { title: "External link", url: "https://v2ex.com.other.test/t/123" },
+        },
+      ],
+    }),
+  );
   const images = document.querySelectorAll(".vx-upload-record img");
   assert.equal(images.length, 1);
   const [image] = images;
@@ -188,7 +191,6 @@ test("upload history links lazy Imgur previews and preserves original and deleti
     "Example topic",
   );
   assert.equal(document.querySelector('a[href*="other.test"]'), null);
-  document.querySelector(".v2p-modal-close-btn").click();
 });
 
 test("uploads record the source topic with the image in one write", async () => {
@@ -235,7 +237,7 @@ test("history removes confirmed Imgur deletions and lets users remove local reco
       : { status: 404, redirected: false, url };
   };
   try {
-    openUploadHistory(store);
+    document.body.append(createUploadHistory(store));
     for (const preview of document.querySelectorAll(".vx-upload-record-preview img"))
       preview.dispatchEvent(new Event("load"));
     await new Promise(setImmediate);
@@ -255,8 +257,7 @@ test("history removes confirmed Imgur deletions and lets users remove local reco
     assert.deepEqual(store.uploads(), []);
     assert.equal(requests.length, 2);
     assert.equal(document.querySelector(".vx-upload-record"), null);
-    assert.match(document.querySelector(".v2p-modal-content").textContent, /暂无上传记录/);
-    document.querySelector(".v2p-modal-close-btn").click();
+    assert.match(document.querySelector(".vx-upload-history-list").textContent, /暂无上传记录/);
   } finally {
     globalThis.fetch = previousFetch;
     window.close();

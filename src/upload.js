@@ -1,8 +1,7 @@
 import { t } from "./i18n.js";
-import { button, element, modal, owned, replyActions, safeURL } from "./dom.js";
+import { button, element, owned, replyActions, safeURL } from "./dom.js";
 import { DEFAULT_IMGUR_CLIENT_ID } from "./storage.js";
 import { originalImageURL } from "./imgur-proxy.js";
-import { icon } from "./icons.js";
 
 export function replacePlaceholder(textarea, marker, replacement) {
   const offset = textarea.value.indexOf(marker);
@@ -97,9 +96,8 @@ function sourceTopicURL(value) {
   return url.origin + url.pathname.replace(/\/$/, "");
 }
 
-export function openUploadHistory(store) {
-  const dialog = modal(t("uploadHistory"));
-  const content = element("div", undefined, "v2p-topic-preview");
+export function createUploadHistory(store, focusFallback) {
+  const content = element("div", undefined, "v2p-topic-preview vx-upload-history-list");
   const records = store.uploads();
   const status = element("p", undefined, "vx-upload-history-status");
   status.setAttribute("role", "status");
@@ -114,10 +112,14 @@ export function openUploadHistory(store) {
       status.textContent = t("removeUploadFailed");
       return;
     }
-    if (row.contains(document.activeElement)) dialog.main.focus();
+    const restoreFocus = row.contains(document.activeElement);
+    const nextFocus =
+      row.nextElementSibling?.querySelector(".vx-upload-remove") ??
+      row.previousElementSibling?.querySelector(".vx-upload-remove");
     row.remove();
     empty.hidden = !!content.querySelector(".vx-upload-record");
     status.textContent = t(message);
+    if (restoreFocus) (nextFocus ?? focusFallback)?.focus();
   }
   for (const record of records) {
     const row = element("div", undefined, "cell vx-upload-record");
@@ -199,7 +201,7 @@ export function openUploadHistory(store) {
     row.append(details);
     content.append(row);
   }
-  dialog.content.append(content);
+  return content;
 }
 
 export function initUpload(options, store, request = GM_xmlhttpRequest) {
@@ -230,15 +232,12 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
   });
   const messages = element("div");
   messages.setAttribute("aria-live", "polite");
-  const pick = owned(button("", () => input.click()));
-  pick.classList.add("vr_upload_image", "vx-upload-button", "vx-editor-icon-button");
+  const pick = owned(button(t("replyImage"), () => input.click()));
+  pick.classList.add("vr_upload_image", "vx-upload-button", "vx-editor-action-button");
   pick.setAttribute("aria-label", t("insertImage"));
   pick.title = t("insertImage");
-  const graphic = element("span", undefined, "vx-editor-button-icon");
-  graphic.append(icon("image"));
-  pick.append(graphic);
   const actions = replyActions(textarea);
-  if (actions) actions.root.append(pick);
+  if (actions) actions.append(pick);
   else textarea.form?.append(pick);
   toolbar.append(input, messages);
   textarea.after(toolbar);
