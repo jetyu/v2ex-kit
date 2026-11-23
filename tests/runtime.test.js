@@ -6,6 +6,10 @@ import { currentUser } from "../src/dom.js";
 
 const fixture = readFileSync(new URL("./fixtures/topic.html", import.meta.url), "utf8");
 const built = readFileSync(new URL("../dist/v2ex-kit.user.js", import.meta.url), "utf8");
+const plusStyles = readFileSync(
+  new URL("../dist/v2ex-kit.plus-emerald.css", import.meta.url),
+  "utf8",
+);
 
 test("Plus theme initializes on mobile markup and switches the native site color mode", async () => {
   const instance = new JSDOM(
@@ -24,6 +28,10 @@ test("Plus theme initializes on mobile markup and switches the native site color
   const saved = [];
   view.GM_getValue = (key, fallback) =>
     key === "v2ex-lite:options" ? { theme: "plus-emerald" } : fallback;
+  view.GM_getResourceText = (name) => {
+    assert.equal(name, "v2ex-kit-theme-plus-emerald");
+    return plusStyles;
+  };
   view.GM_addStyle = (css) => {
     const style = doc.createElement("style");
     style.textContent = css;
@@ -80,6 +88,7 @@ test("saved themes are selected before the first style and recover from invalid 
     ["warm-sand", "native", false],
     ["mist-violet", "native", false],
     ["native", "native", false],
+    ["plus-emerald", "native", false],
     [undefined, "native", false],
     ["unknown", "native", false],
     ["vscode", "native", true],
@@ -137,6 +146,54 @@ test("saved themes are selected before the first style and recover from invalid 
     assert.equal(doc.documentElement.hasAttribute("data-vx-privacy"), false);
     assert.equal(doc.querySelector("#Logo svg"), null);
     assert.equal(doc.querySelectorAll("#v2ex-kit-theme").length, 1);
+    instance.window.close();
+  }
+});
+
+test("external themes use cached resources without runtime CSS imports", async () => {
+  for (const theme of ["geist", "claude"]) {
+    const instance = new JSDOM(fixture, {
+      url: "https://www.v2ex.com/t/123",
+      runScripts: "outside-only",
+      pretendToBeVisual: true,
+    });
+    const { window } = instance;
+    const { document } = window;
+    const resources = [];
+    Object.assign(window, {
+      GM_getValue: (key, fallback) =>
+        key === "v2ex-lite:options" ? { theme, preloadPages: 0 } : fallback,
+      GM_getResourceText(name) {
+        resources.push(name);
+        return `:root{--vx-${theme}-resource:loaded}`;
+      },
+      GM_setValue() {},
+      GM_deleteValue() {},
+      GM_listValues: () => [],
+      GM_addValueChangeListener() {},
+      GM_addStyle(css) {
+        const style = document.createElement("style");
+        style.textContent = css;
+        document.head.append(style);
+        return style;
+      },
+      GM_registerMenuCommand() {},
+      GM_xmlhttpRequest: () => assert.fail("unexpected upload"),
+      fetch: () => assert.fail("external theme CSS should not be fetched at runtime"),
+      matchMedia: () => ({ matches: false, addEventListener() {} }),
+      unsafeWindow: window,
+    });
+    window.eval(built);
+    await new Promise(setImmediate);
+    const style = document.querySelector("#v2ex-kit-theme");
+    assert.equal(document.documentElement.dataset.vxTheme, theme);
+    assert.deepEqual(resources, [`v2ex-kit-theme-${theme}`]);
+    assert.match(style.textContent, new RegExp(`^:root\\{--vx-${theme}-resource:loaded\\}`));
+    assert.doesNotMatch(style.textContent, /@import\s/);
+    assert.equal(
+      window.getComputedStyle(document.documentElement).getPropertyValue(`--vx-${theme}-resource`),
+      "loaded",
+    );
     instance.window.close();
   }
 });
@@ -242,6 +299,40 @@ test("V2EX navigation applies the theme while the main panel is still streaming"
     assert.equal(doc.querySelectorAll("#v2ex-kit-theme").length, 1, url);
     window.close();
   }
+});
+
+test("the default main observer watches structural changes only", async () => {
+  const instance = new JSDOM(fixture, {
+    url: "https://www.v2ex.com/t/123",
+    runScripts: "outside-only",
+    pretendToBeVisual: true,
+  });
+  const { window } = instance;
+  const observations = [];
+  const NativeMutationObserver = window.MutationObserver;
+  window.MutationObserver = class extends NativeMutationObserver {
+    observe(target, options) {
+      if (target.id === "Main") observations.push(structuredClone(options));
+      return super.observe(target, options);
+    }
+  };
+  Object.assign(window, {
+    GM_getValue: (key, fallback) => (key === "v2ex-lite:options" ? { preloadPages: 0 } : fallback),
+    GM_setValue() {},
+    GM_deleteValue() {},
+    GM_listValues: () => [],
+    GM_addValueChangeListener() {},
+    GM_addStyle() {},
+    GM_registerMenuCommand() {},
+    GM_xmlhttpRequest: () => assert.fail("unexpected upload"),
+    fetch: () => assert.fail("unexpected network request"),
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    unsafeWindow: window,
+  });
+  window.eval(built);
+  await new Promise(setImmediate);
+  assert.deepEqual(observations, [{ childList: true, subtree: true }]);
+  instance.window.close();
 });
 
 test("bundled script initializes, enhances only new nodes, and settles without storage writes", async () => {

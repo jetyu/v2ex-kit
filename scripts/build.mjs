@@ -8,6 +8,7 @@ const output = "dist/v2ex-kit";
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const entryPoint = fileURLToPath(new URL("../src/main.js", import.meta.url));
 const userScript = fileURLToPath(new URL(`../${output}.user.js`, import.meta.url));
+const plusTheme = fileURLToPath(new URL(`../${output}.plus-emerald.css`, import.meta.url));
 const repository = "jetyu/v2ex-kit";
 const homepage = `https://github.com/${repository}`;
 const base = `https://raw.githubusercontent.com/${repository}/main/${output}`;
@@ -36,13 +37,33 @@ const header = `// ==UserScript==
 // @grant        GM_listValues
 // @grant        GM_addValueChangeListener
 // @grant        GM_addStyle
+// @grant        GM_getResourceText
 // @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      api.imgur.com
+// @resource     v2ex-kit-theme-plus-emerald ${base}.plus-emerald.css?v=${version}
+// @resource     v2ex-kit-theme-geist https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-geist.css
+// @resource     v2ex-kit-theme-claude https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-claude.css
 // ==/UserScript==`;
 
+const minifyCSS = async (source) =>
+  (
+    await transform(source, {
+      loader: "css",
+      minify: true,
+      target,
+      legalComments: "inline",
+    })
+  ).code;
+
 await mkdir(new URL("../dist", import.meta.url), { recursive: true });
+await writeFile(
+  plusTheme,
+  await minifyCSS(
+    await readFile(new URL("../src/themes/plus-emerald.css", import.meta.url), "utf8"),
+  ),
+);
 await build({
   absWorkingDir: projectRoot,
   entryPoints: [entryPoint],
@@ -64,13 +85,7 @@ await build({
           const source = args.path.endsWith(".scss")
             ? compile(args.path).css
             : await readFile(args.path, "utf8");
-          const { code } = await transform(source, {
-            loader: "css",
-            minify: true,
-            target,
-            legalComments: "inline",
-          });
-          return { contents: code, loader: "text" };
+          return { contents: await minifyCSS(source), loader: "text" };
         });
       },
     },

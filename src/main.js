@@ -1,5 +1,5 @@
-import { applyTheme, THEME_STYLE_ID } from "./theme.js";
-import { themeStyles } from "./theme-styles.js";
+import { applyTheme, DEFAULT_THEME, THEME_STYLE_ID } from "./theme.js";
+import { themeResourceName, themeStyles } from "./theme-styles.js";
 import { enhanceEmojis, initEmoji } from "./emoji.js";
 import { createStorage, PREFIX } from "./storage.js";
 import { createHTTP, currentUser, isV2EXPage, matching, whenPageIdle } from "./dom.js";
@@ -29,8 +29,18 @@ function prepareTheme() {
       // A storage failure must not prevent the fallback theme from loading.
     }
     applyTheme(document, theme);
+    let resource = "";
+    const resourceName = themeResourceName(document.documentElement.dataset.vxTheme);
+    if (resourceName) {
+      try {
+        resource = GM_getResourceText(resourceName);
+      } catch {
+        // A missing manager resource falls back to the native theme instead of partial styling.
+      }
+      if (!resource) applyTheme(document, DEFAULT_THEME);
+    }
     if (!document.getElementById(THEME_STYLE_ID)) {
-      const style = GM_addStyle(themeStyles(document.documentElement.dataset.vxTheme));
+      const style = GM_addStyle(themeStyles(document.documentElement.dataset.vxTheme, resource));
       if (style) style.id = THEME_STYLE_ID;
     }
     themeReady = true;
@@ -56,10 +66,10 @@ function start() {
   const members = createMembers(store, options, topics, name);
   const folding = createReplyFolding(options.autoFold);
   const contentFilter = createContentFilter(options);
-  if (options.theme === "plus-emerald") installPlusNavigation(document);
   const main = document.getElementById("Main");
+  if (document.documentElement.dataset.vxTheme === "plus-emerald") installPlusNavigation(document);
   const isTopic = document.documentElement.dataset.v2pPage === "topic";
-  if (isTopic) installImageViewer(main);
+  if (isTopic && main) installImageViewer(main);
   const enhance = (root) => {
     members.enhance(root);
     topics.enhance(root);
@@ -70,7 +80,7 @@ function start() {
     if (options.base64Decode) enhanceBase64(root);
     contentFilter.enhance(root);
   };
-  enhance(document);
+  enhance(main ?? document);
   if (options.imgurProxy) installImgurProxy(document, options.imgurProxyUrl);
   const replies = initReplies({ options, getDocument, enhance });
   installPageActions(Boolean(name));
@@ -125,13 +135,20 @@ function start() {
         changed.clear();
       });
     });
-    observer.observe(main, {
+    const watchReplyText =
+      Boolean(replies) &&
+      (options.hotReplies ||
+        (options.contentFilter && options.filterReplies && options.filterKeywords.length));
+    const observerOptions = {
       childList: true,
       subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ["class", "style", "hidden"],
-    });
+    };
+    if (watchReplyText) observerOptions.characterData = true;
+    if (replies && options.hotReplies) {
+      observerOptions.attributes = true;
+      observerOptions.attributeFilter = ["class", "style", "hidden"];
+    }
+    observer.observe(main, observerOptions);
   }
   if (name && options.autoCheckIn) {
     const report = (message) => {

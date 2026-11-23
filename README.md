@@ -56,7 +56,7 @@ V2EX Kit 是运行在 V2EX 页面内的用户脚本。主题美化、内容预�
 
 构建目标为 Chrome 130+ 与 Firefox 150+。其他 Chromium / Firefox 衍生浏览器通常也可运行，但不在持续测试范围内。
 
-脚本使用 `GM_*` 存储、菜单、样式与跨域请求 API；若使用 Tampermonkey 之外的管理器，请确认这些 API 可用。
+脚本使用 `GM_*` 存储、菜单、样式、资源读取与跨域请求 API；若使用 Tampermonkey 之外的管理器，请确认这些 API 可用。
 
 ## 本地开发
 
@@ -88,7 +88,8 @@ npm run check
 构建会生成：
 
 - `dist/v2ex-kit.user.js`：完整可安装脚本；
-- `dist/v2ex-kit.meta.js`：供脚本管理器检查更新的元数据。
+- `dist/v2ex-kit.meta.js`：供脚本管理器检查更新的元数据；
+- `dist/v2ex-kit.plus-emerald.css`：由脚本管理器缓存、按需读取的 Plus 主题样式。
 
 ## 设计与依赖
 

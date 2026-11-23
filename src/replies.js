@@ -374,7 +374,7 @@ export function initReplies({ options, getDocument, enhance }) {
     render();
     return task;
   }
-  add(document);
+  add(container);
   render();
   return {
     add,

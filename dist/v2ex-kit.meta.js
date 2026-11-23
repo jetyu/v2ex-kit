@@ -21,8 +21,12 @@
 // @grant        GM_listValues
 // @grant        GM_addValueChangeListener
 // @grant        GM_addStyle
+// @grant        GM_getResourceText
 // @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      api.imgur.com
+// @resource     v2ex-kit-theme-plus-emerald https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.plus-emerald.css?v=1.3.6
+// @resource     v2ex-kit-theme-geist https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-geist.css
+// @resource     v2ex-kit-theme-claude https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-claude.css
 // ==/UserScript==
