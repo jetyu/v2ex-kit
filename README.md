@@ -88,8 +88,7 @@ npm run check
 构建会生成：
 
 - `dist/v2ex-kit.user.js`：完整可安装脚本；
-- `dist/v2ex-kit.meta.js`：供脚本管理器检查更新的元数据；
-- `dist/v2ex-kit.plus-emerald.css`：由脚本管理器缓存、按需读取的 Plus 主题样式。
+- `dist/v2ex-kit.meta.js`：供脚本管理器检查更新的元数据。
 
 ## 设计与依赖
 

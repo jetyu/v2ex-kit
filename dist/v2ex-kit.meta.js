@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         V2EX Kit
 // @namespace    https://github.com/jetyu/v2ex-kit
-// @version      1.3.6
+// @version      1.3.7
 // @description  Improve V2EX reading and replies with themes, previews, tags, check-in and image uploads.
 // @description:zh-CN  改善 V2EX 阅读与回复体验，提供主题切换、帖子预览、用户标签、自动签到和图片上传。
 // @author       jetyu
@@ -26,7 +26,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      api.imgur.com
-// @resource     v2ex-kit-theme-plus-emerald https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit.plus-emerald.css?v=1.3.6
+// @resource     v2ex-kit-theme-plus-emerald https://raw.githubusercontent.com/jetyu/v2ex-kit/main/src/themes/plus-emerald.css?v=1.3.7
 // @resource     v2ex-kit-theme-geist https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-geist.css
 // @resource     v2ex-kit-theme-claude https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-claude.css
 // ==/UserScript==

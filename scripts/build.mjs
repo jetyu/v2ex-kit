@@ -8,11 +8,11 @@ const output = "dist/v2ex-kit";
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const entryPoint = fileURLToPath(new URL("../src/main.js", import.meta.url));
 const userScript = fileURLToPath(new URL(`../${output}.user.js`, import.meta.url));
-const plusTheme = fileURLToPath(new URL(`../${output}.plus-emerald.css`, import.meta.url));
 const repository = "jetyu/v2ex-kit";
 const homepage = `https://github.com/${repository}`;
-const base = `https://raw.githubusercontent.com/${repository}/main/${output}`;
-const icon = `https://raw.githubusercontent.com/${repository}/main/assets/v2ex-kit.png`;
+const raw = `https://raw.githubusercontent.com/${repository}/main`;
+const base = `${raw}/${output}`;
+const icon = `${raw}/assets/v2ex-kit.png`;
 const target = ["chrome120", "firefox121"];
 const header = `// ==UserScript==
 // @name         V2EX Kit
@@ -42,7 +42,7 @@ const header = `// ==UserScript==
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      api.imgur.com
-// @resource     v2ex-kit-theme-plus-emerald ${base}.plus-emerald.css?v=${version}
+// @resource     v2ex-kit-theme-plus-emerald ${raw}/src/themes/plus-emerald.css?v=${version}
 // @resource     v2ex-kit-theme-geist https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-geist.css
 // @resource     v2ex-kit-theme-claude https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-claude.css
 // ==/UserScript==`;
@@ -58,12 +58,6 @@ const minifyCSS = async (source) =>
   ).code;
 
 await mkdir(new URL("../dist", import.meta.url), { recursive: true });
-await writeFile(
-  plusTheme,
-  await minifyCSS(
-    await readFile(new URL("../src/themes/plus-emerald.css", import.meta.url), "utf8"),
-  ),
-);
 await build({
   absWorkingDir: projectRoot,
   entryPoints: [entryPoint],

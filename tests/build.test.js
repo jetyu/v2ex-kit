@@ -5,10 +5,6 @@ import test from "node:test";
 test("release artifact retains metadata within its size budget", () => {
   const built = readFileSync(new URL("../dist/v2ex-kit.user.js", import.meta.url), "utf8");
   const metadata = readFileSync(new URL("../dist/v2ex-kit.meta.js", import.meta.url), "utf8");
-  const plusTheme = readFileSync(
-    new URL("../dist/v2ex-kit.plus-emerald.css", import.meta.url),
-    "utf8",
-  );
   const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   assert.ok(built.startsWith(metadata));
   assert.doesNotMatch(built.slice(metadata.length), /^\/\/ (?:@\w+\s|==\/?UserScript==)/m);
@@ -33,18 +29,16 @@ test("release artifact retains metadata within its size budget", () => {
   }
   assert.match(metadata, /^\/\/ @connect\s+api\.imgur\.com$/m);
   const base = "https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit";
+  const plusTheme =
+    "https://raw.githubusercontent.com/jetyu/v2ex-kit/main/src/themes/plus-emerald.css";
   assert.ok(metadata.includes(`// @downloadURL  ${base}.user.js\n`));
   assert.ok(metadata.includes(`// @updateURL    ${base}.meta.js\n`));
   assert.ok(
-    metadata.includes(
-      `// @resource     v2ex-kit-theme-plus-emerald ${base}.plus-emerald.css?v=${version}\n`,
-    ),
+    metadata.includes(`// @resource     v2ex-kit-theme-plus-emerald ${plusTheme}?v=${version}\n`),
   );
   assert.match(metadata, /^\/\/ @resource\s+v2ex-kit-theme-geist https:\/\/cdn\.jsdelivr\.net\//m);
   assert.match(metadata, /^\/\/ @resource\s+v2ex-kit-theme-claude https:\/\/cdn\.jsdelivr\.net\//m);
   assert.ok(Buffer.byteLength(built) <= 300 * 1024, "Release userscript exceeds 300 KiB");
-  assert.ok(Buffer.byteLength(plusTheme) <= 100 * 1024, "Plus theme exceeds 100 KiB");
-  assert.match(plusTheme, /#1c2128/);
   assert.doesNotMatch(built, /Generator: Adobe Illustrator 29\.1\.0/);
   assert.doesNotMatch(
     built,

@@ -6,10 +6,7 @@ import { currentUser } from "../src/dom.js";
 
 const fixture = readFileSync(new URL("./fixtures/topic.html", import.meta.url), "utf8");
 const built = readFileSync(new URL("../dist/v2ex-kit.user.js", import.meta.url), "utf8");
-const plusStyles = readFileSync(
-  new URL("../dist/v2ex-kit.plus-emerald.css", import.meta.url),
-  "utf8",
-);
+const plusStyles = readFileSync(new URL("../src/themes/plus-emerald.css", import.meta.url), "utf8");
 
 test("Plus theme initializes on mobile markup and switches the native site color mode", async () => {
   const instance = new JSDOM(
