@@ -107,7 +107,7 @@ test("saved themes are selected before the first style and recover from invalid 
       autoCheckIn: false,
       preloadPages: 0,
       userCards: false,
-      replyPreview: false,
+      replyPreview: true,
       tags: false,
     };
     Object.assign(window, {
@@ -141,6 +141,8 @@ test("saved themes are selected before the first style and recover from invalid 
     assert.deepEqual(reads, ["loading", "interactive"]);
     assert.equal(doc.documentElement.dataset.vxTheme, expected);
     assert.equal(doc.documentElement.hasAttribute("data-vx-privacy"), false);
+    assert.equal(doc.querySelector(".v2p-lite-reply-tabs"), null);
+    assert.equal(doc.querySelector("#reply_content").hidden, false);
     assert.equal(doc.querySelector("#Logo svg"), null);
     assert.equal(doc.querySelectorAll("#v2ex-kit-theme").length, 1);
     instance.window.close();
@@ -213,7 +215,6 @@ test("theme applies before DOMContentLoaded and functional initialization", asyn
                 autoCheckIn: false,
                 preloadPages: 0,
                 userCards: false,
-                replyPreview: false,
               }
             : fallback;
         },
@@ -346,7 +347,6 @@ test("bundled script initializes, enhances only new nodes, and settles without s
         autoCheckIn: false,
         preloadPages: 0,
         userCards: false,
-        replyPreview: false,
         unreadReplies: false,
         hotReplies: true,
         tags: true,
@@ -572,7 +572,6 @@ test("script uses Chinese and guests skip account features", async () => {
             autoCheckIn: true,
             emoji: true,
             upload: true,
-            replyPreview: false,
           }
         : fallback,
     GM_setValue: () => assert.fail("guest settings should not write on startup"),
@@ -627,7 +626,6 @@ test("preloaded replies are enhanced once without triggering redundant mutation 
             tags: true,
             base64Decode: true,
             userCards: false,
-            replyPreview: false,
             autoFold: false,
           }
         : fallback,
@@ -673,7 +671,7 @@ test("preloaded replies are enhanced once without triggering redundant mutation 
   instance.window.close();
 });
 
-test("bundled script renders OP join hint, syncs only-OP actions, and persists unread markers", async () => {
+test("bundled script renders OP join hint, omits removed only-OP controls, and persists unread markers", async () => {
   const html = fixture.replace(
     '<div class="header"><h1>Fixture topic</h1></div>',
     '<div class="header"><h1>Fixture topic</h1><small class="gray"><a href="/member/Alice">Alice</a> · now</small></div>',
@@ -692,7 +690,6 @@ test("bundled script renders OP join hint, syncs only-OP actions, and persists u
         autoCheckIn: false,
         preloadPages: 0,
         userCards: false,
-        replyPreview: false,
         opCreated: true,
         onlyOp: true,
         unreadReplies: true,
@@ -737,14 +734,7 @@ test("bundled script renders OP join hint, syncs only-OP actions, and persists u
 
   const actionButtons = doc.querySelector(".vx-page-actions");
   assert.equal(actionButtons.lastElementChild.id, "vx-settings");
-  const floatingOp = doc.querySelector(".vx-only-op-action");
-  const barOp = doc.querySelector(".vx-only-op-btn");
-  assert.ok(floatingOp);
-  assert.equal(barOp.textContent, "只看楼主（2）");
-  floatingOp.click();
-  assert.equal(barOp.getAttribute("aria-pressed"), "true");
-  assert.equal(floatingOp.getAttribute("aria-pressed"), "true");
-  assert.equal(doc.querySelector("#replies").classList.contains("vx-only-op"), true);
+  assert.equal(doc.querySelector(".vx-only-op-action, .vx-only-op-btn"), null);
 
   assert.deepEqual(
     [...doc.querySelectorAll(".vx-reply-unread")].map((node) => node.id),

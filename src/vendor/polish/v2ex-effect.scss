@@ -48,10 +48,6 @@ body {
       width: 0;
     }
   }
-
-  #reply-box .v2p-reply-preview {
-    @include share.text-content;
-  }
 }
 
 #Main,

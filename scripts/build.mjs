@@ -19,7 +19,7 @@ const header = `// ==UserScript==
 // @namespace    ${homepage}
 // @version      ${version}
 // @description  Improve V2EX reading and replies with themes, previews, tags, check-in and image uploads.
-// @description:zh-CN  让V2EX浏览体验更好，优化V2EX 阅读与回复体验，提供主题切换、帖子预览、关键字过滤、用户标签、自动签到和图片上传等功能。
+// @description:zh-CN  让 V2EX 更好用，提供主题切换、帖子预览、用户标签、自动签到和图片上传等实用功能。
 // @author       jetyu
 // @license      MIT
 // @homepageURL  ${homepage}
@@ -42,6 +42,7 @@ const header = `// ==UserScript==
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      api.imgur.com
+// @connect      catbox.moe
 // @resource     v2ex-kit-theme-plus-emerald ${raw}/src/themes/plus-emerald.css?v=${version}
 // @resource     v2ex-kit-theme-geist https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-geist.css
 // @resource     v2ex-kit-theme-claude https://cdn.jsdelivr.net/gh/yuyinws/v2ex-theme@v1.5.0/v2ex-claude.css

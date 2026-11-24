@@ -131,7 +131,7 @@ export function createBackup(
     const settings = checkbox(t("backupRestoreSettings"), false, !data.options);
     const local = store.options();
     const changedSettings = Object.keys(data.options ?? {}).filter(
-      (key) => key !== "imgurClientId" && data.options[key] !== local[key],
+      (key) => Object.hasOwn(local, key) && data.options[key] !== local[key],
     );
     const apply = button(t("backupRestoreApply"), () => {
       if (busy) return;

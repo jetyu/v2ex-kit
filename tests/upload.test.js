@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createUploadHistory, initUpload, replacePlaceholder, uploadImage } from "../src/upload.js";
+import {
+  createUploadHistory,
+  initUpload,
+  replacePlaceholder,
+  uploadImage,
+  uploadToProvider,
+} from "../src/upload.js";
 import { createStorage, DEFAULT_IMGUR_CLIENT_ID } from "../src/storage.js";
 import { dom, memoryAPI } from "./helpers.js";
 
@@ -20,10 +26,10 @@ test("upload completion preserves concurrent typing and removed markers", () => 
 test("upload validates files and response URLs before changing the draft", async () => {
   dom("");
   const image = new File(["image"], "test.png", { type: "image/png" });
-  const result = await uploadImage(image, "client123", (request) => {
+  const result = await uploadImage(image, (request) => {
     assert.equal(request.url, "https://api.imgur.com/3/image");
     assert.equal(request.anonymous, true);
-    assert.equal(request.headers.Authorization, "Client-ID client123");
+    assert.equal(request.headers.Authorization, `Client-ID ${DEFAULT_IMGUR_CLIENT_ID}`);
     request.onload({
       status: 200,
       responseText:
@@ -32,15 +38,11 @@ test("upload validates files and response URLs before changing the draft", async
   });
   assert.equal(result.link, "https://i.imgur.com/a.png");
   await assert.rejects(
-    uploadImage(image, "invalid\r\nid", () => assert.fail()),
-    /Client ID/,
-  );
-  await assert.rejects(
-    uploadImage(new File(["x"], "x.svg", { type: "image/svg+xml" }), "client", () => assert.fail()),
+    uploadImage(new File(["x"], "x.svg", { type: "image/svg+xml" }), () => assert.fail()),
     /PNG/,
   );
   await assert.rejects(
-    uploadImage(image, "client", (request) =>
+    uploadImage(image, (request) =>
       request.onload({
         status: 200,
         responseText: '{"success":true,"data":{"link":"https://evil.test/a.png"}}',
@@ -49,22 +51,29 @@ test("upload validates files and response URLs before changing the draft", async
     /上传失败/,
   );
   await assert.rejects(
-    uploadImage(image, "client", (request) => request.ontimeout()),
+    uploadImage(image, (request) => request.ontimeout()),
     /上传超时/,
   );
 });
 
-test("empty custom Client ID uses the upstream public default", async () => {
+test("Catbox sends anonymous file uploads and accepts only its file host", async () => {
   dom("");
-  const image = new File(["image"], "image.png", { type: "image/png" });
-  await uploadImage(image, "", (request) => {
-    assert.equal(request.headers.Authorization, `Client-ID ${DEFAULT_IMGUR_CLIENT_ID}`);
-    request.onload({
-      status: 200,
-      responseText:
-        '{"success":true,"data":{"link":"https://i.imgur.com/a.png","deletehash":"hash123"}}',
-    });
+  const file = new File(["image"], "image.png", { type: "image/png" });
+  const options = { uploadProvider: "catbox" };
+  const result = await uploadToProvider(file, options, (request) => {
+    assert.equal(request.url, "https://catbox.moe/user/api.php");
+    assert.equal(request.anonymous, true);
+    assert.equal(request.data.get("reqtype"), "fileupload");
+    assert.equal(request.data.get("fileToUpload").name, "image.png");
+    assert.equal(request.data.get("userhash"), null);
+    request.onload({ status: 200, responseText: "https://files.catbox.moe/abc123.png" });
   });
+  assert.deepEqual(result, { provider: "catbox", link: "https://files.catbox.moe/abc123.png" });
+  await assert.rejects(
+    uploadToProvider(file, options, (request) =>
+      request.onload({ status: 200, responseText: "https://evil.test/abc123.png" }),
+    ),
+  );
 });
 
 test("upload entry sits beside Reply with the same button styling as editor controls", () => {
@@ -126,7 +135,7 @@ test("rate limiting stops the queue and persists the pause without rotating IDs"
   );
   const store = createStorage(memoryAPI());
   let calls = 0;
-  initUpload({ upload: true, imgurClientId: "" }, store, (request) => {
+  initUpload({ upload: true }, store, (request) => {
     calls++;
     request.onload({
       status: 429,
@@ -148,6 +157,28 @@ test("rate limiting stops the queue and persists the pause without rotating IDs"
   assert.doesNotMatch(document.querySelector("textarea").value, /vx-upload/);
   assert.match(document.querySelector("textarea").value, /Existing draft/);
   assert.equal(store.uploads().length, 0);
+});
+
+test("the upload queue uses the selected host even while another host is paused", async () => {
+  const { window } = dom('<form><textarea id="reply_content"></textarea></form>');
+  const store = createStorage(memoryAPI());
+  store.set("upload-paused-until", Date.now() + 60_000);
+  initUpload({ upload: true, uploadProvider: "catbox" }, store, (request) => {
+    assert.equal(request.url, "https://catbox.moe/user/api.php");
+    request.onload({ status: 200, responseText: "https://files.catbox.moe/uploaded.png" });
+  });
+  const input = document.querySelector('input[type="file"]');
+  Object.defineProperty(input, "files", {
+    value: [new File(["image"], "uploaded.png", { type: "image/png" })],
+  });
+  input.dispatchEvent(new Event("change"));
+  await new Promise(setImmediate);
+  assert.equal(
+    document.querySelector("textarea").value.trim(),
+    "https://files.catbox.moe/uploaded.png",
+  );
+  assert.equal(store.uploads()[0].provider, "catbox");
+  window.close();
 });
 
 test("upload records survive another storage instance and stay out of tag backups", () => {
@@ -224,6 +255,34 @@ test("upload history links lazy Imgur previews and preserves original and deleti
     "Example topic",
   );
   assert.equal(document.querySelector('a[href*="other.test"]'), null);
+});
+
+test("upload history previews ImgBB and Catbox and validates ImgBB deletion links", () => {
+  dom("");
+  document.body.append(
+    createUploadHistory({
+      uploads: () => [
+        {
+          link: "https://i.ibb.co/abc/a.png",
+          deleteURL: "https://ibb.co/abc/delete/token",
+          fileName: "a.png",
+        },
+        {
+          link: "https://files.catbox.moe/b.png",
+          deleteURL: "https://evil.test/delete",
+          fileName: "b.png",
+        },
+      ],
+    }),
+  );
+  const images = [...document.querySelectorAll(".vx-upload-record-preview img")];
+  assert.deepEqual(
+    images.map((image) => image.src),
+    ["https://i.ibb.co/abc/a.png", "https://files.catbox.moe/b.png"],
+  );
+  assert.ok(document.querySelector('a[href="https://ibb.co/abc/delete/token"]'));
+  assert.equal(document.querySelector('a[href="https://evil.test/delete"]'), null);
+  assert.match(document.querySelector(".vx-upload-record").textContent, /ImgBB/);
 });
 
 test("uploads record the source topic with the image in one write", async () => {

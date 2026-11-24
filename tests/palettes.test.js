@@ -187,10 +187,6 @@ test("VS Code theme styles workbench tabs, breadcrumbs, code blocks, widgets and
           <div class="subtle">Supplement</div>
         </div>
         <div id="reply-box" class="box">
-          <div class="v2p-lite-reply-tabs">
-            <button type="button" class="v2p-lite-reply-tab is-active">编辑</button>
-            <button type="button" class="v2p-lite-reply-tab">预览</button>
-          </div>
           <form>
             <textarea id="reply_content"></textarea>
             <button type="submit" class="normal button">回复</button>
@@ -238,9 +234,6 @@ test("VS Code theme styles workbench tabs, breadcrumbs, code blocks, widgets and
   assert.equal(computed("#Tabs .tab_current").color, "rgb(255, 255, 255)");
   assert.equal(computed("#Tabs .tab_current").backgroundColor, "rgb(0, 95, 184)");
   assert.equal(computed("#Tabs .tab_current").boxShadow, "none");
-  assert.equal(computed(".v2p-lite-reply-tab.is-active").backgroundColor, "rgb(0, 95, 184)");
-  assert.equal(computed(".v2p-lite-reply-tab.is-active").color, "rgb(255, 255, 255)");
-  assert.equal(computed(".v2p-lite-reply-tab.is-active").boxShadow, "none");
   assert.equal(computed("#SecondaryTabs").borderRadius, "0px");
   assert.equal(computed("#SecondaryTabs").backgroundColor, "rgb(248, 248, 248)");
   assert.equal(computed("#SecondaryTabs").marginInlineStart, "-12px");
@@ -290,7 +283,6 @@ test("VS Code theme styles workbench tabs, breadcrumbs, code blocks, widgets and
   assert.equal(computed("#Tabs .tab_current").color, "rgb(255, 255, 255)");
   assert.equal(computed("#Tabs .tab_current").backgroundColor, "rgb(0, 120, 212)");
   assert.equal(computed("#Tabs .tab_current").boxShadow, "none");
-  assert.equal(computed(".v2p-lite-reply-tab.is-active").backgroundColor, "rgb(0, 120, 212)");
   assert.equal(computed("#SecondaryTabs").backgroundColor, "rgb(24, 24, 24)");
   assert.equal(computed(".topic_content a").color, "rgb(77, 170, 252)");
   assert.equal(computed(".topic_content pre").backgroundColor, "rgb(24, 24, 24)");

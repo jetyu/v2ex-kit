@@ -3,6 +3,7 @@ import test from "node:test";
 import { compile } from "sass";
 import { readFileSync } from "node:fs";
 import { replyActions } from "../src/dom.js";
+import { installPlusNavigation } from "../src/plus-navigation.js";
 import { dom } from "./helpers.js";
 
 test("requested padding stays scoped to the topic list and top-level replies", () => {
@@ -244,25 +245,24 @@ test("tag filters use their grid columns instead of V2EX's fixed input width", (
   assert.equal(computed("#native").width, "320px");
 });
 
-test("image upload switch aligns with the Imgur Client ID heading", () => {
+test("image upload switch and host selector share the settings grid", () => {
   dom(`<div id="vx-settings-dialog"><section id="vx-settings-panel-images">
     <div class="vx-settings-grid">
       <div class="vx-settings-option"><label>Image upload<input name="upload" type="checkbox"></label><p>Upload help</p></div>
-      <div class="vx-settings-option"><label>Client ID<input name="imgurClientId" type="text"></label><p>Client help</p></div>
+      <div class="vx-settings-option"><label>Host<select name="uploadProvider"><option>Imgur</option></select></label><p>Host help</p></div>
     </div>
   </section></div>`);
   const style = document.createElement("style");
   style.textContent = readFileSync("src/styles.css", "utf8");
   document.head.append(style);
   const upload = document.querySelector('[name="upload"]');
-  const clientId = document.querySelector('[name="imgurClientId"]');
+  const provider = document.querySelector('[name="uploadProvider"]');
   const uploadOption = window.getComputedStyle(upload.closest(".vx-settings-option"));
-  const clientOption = window.getComputedStyle(clientId.closest(".vx-settings-option"));
-  const clientLabel = window.getComputedStyle(clientId.closest("label"));
+  const providerOption = window.getComputedStyle(provider.closest(".vx-settings-option"));
   assert.equal(uploadOption.gridRow, "auto");
   assert.equal(uploadOption.gridTemplateRows, "auto auto");
-  assert.equal(clientOption.gridColumn, "auto");
-  assert.equal(clientLabel.gridTemplateRows, "32px auto");
+  assert.equal(providerOption.gridRow, "auto");
+  assert.equal(providerOption.gridTemplateRows, "auto auto");
 });
 
 test("post-list member tags paint above the topic metadata overlay", () => {
@@ -347,66 +347,23 @@ test("topic editor actions follow a non-submit publication button", () => {
   assert.equal(computed.borderRadius, "7px");
 });
 
-test("Plus Emerald keeps unread notifications and coin balance on a single row", () => {
-  dom(`<div id="Rightbar"><div class="box">
-    <div class="cell" id="member-activity"><div class="member-activity-bar"></div></div>
-    <div class="cell flex-one-row" id="member-balance-row">
-      <a href="/notifications" class="fade" id="direct-unread">1 未读提醒</a>
-      <input type="button" class="super special button" value="1 未读提醒" onclick="location.href = '/notifications';">
-      <div id="balance-wrap">
-        <a href="/balance" class="balance_area">7 <img src="/static/img/gold@2x.png"> 81 <img src="/static/img/silver@2x.png"> 73 <img src="/static/img/bronze@2x.png"></a>
-        <a href="/help/currency">?</a>
-      </div>
-    </div>
-  </div></div>`);
-  document.documentElement.dataset.vxTheme = "plus-emerald";
-  const legacyCachedRules = `
-    #Rightbar > .box:has(#member-activity) > .cell > a[href="/notifications"] { display: none !important; }
-    #Rightbar > .box:has(#member-activity) > .cell:has(.balance_area) { justify-content: center; padding: 8px 16px 12px !important; }
-    #Rightbar > .box:has(#member-activity) .balance_area { gap: 10px; }
-  `;
-  const style = document.createElement("style");
-  style.textContent = `${readFileSync("src/styles.css", "utf8")}\n${readFileSync(
-    "src/themes/plus-emerald.css",
-    "utf8",
-  )}\n${legacyCachedRules}`;
-  document.head.append(style);
-  const row = window.getComputedStyle(document.getElementById("member-balance-row"));
-  const directUnread = window.getComputedStyle(document.getElementById("direct-unread"));
-  const unreadBtn = window.getComputedStyle(
-    document.querySelector('#member-balance-row input[type="button"]'),
-  );
-  const balanceWrap = window.getComputedStyle(document.getElementById("balance-wrap"));
-  const balance = window.getComputedStyle(document.querySelector(".balance_area"));
-  assert.equal(row.display, "flex");
-  assert.equal(row.flexWrap, "nowrap");
-  assert.equal(row.paddingLeft, "8px");
-  assert.equal(row.paddingRight, "8px");
-  assert.notEqual(directUnread.display, "none");
-  assert.equal(directUnread.whiteSpace, "nowrap");
-  assert.equal(unreadBtn.whiteSpace, "nowrap");
-  assert.equal(unreadBtn.height, "24px");
-  assert.equal(unreadBtn.fontSize, "12px");
-  assert.equal(balanceWrap.display, "flex");
-  assert.equal(balanceWrap.marginLeft, "auto");
-  assert.equal(balanceWrap.whiteSpace, "nowrap");
-  assert.equal(balance.flexWrap, "nowrap");
-  assert.equal(balance.whiteSpace, "nowrap");
-  assert.equal(balance.gap, "3px");
-});
+test("Plus Emerald leaves the native login card in its natural sidebar layout", () => {
+  dom(`<div id="Wrapper"><div class="content"><div id="Main"></div><div id="Rightbar">
+    <div class="box" id="member-card"><div class="cell"><a href="/member/alice">alice</a><div id="member-activity"></div></div></div>
+  </div></div></div>`);
+  const card = document.getElementById("member-card");
+  const original = card.innerHTML;
+  installPlusNavigation(document);
+  assert.equal(card.innerHTML, original);
+  assert.equal(card.children.length, 1);
 
-test("Plus Emerald pins the coin balance to the right edge even when it is alone", () => {
-  dom(`<div id="Rightbar"><div class="box">
-    <div class="cell" id="member-activity"></div>
-    <div class="cell flex-one-row" id="solo-row"><a href="/balance" class="balance_area">7 <img src="/g.png"> 81 <img src="/s.png"></a></div>
-  </div></div>`);
-  document.documentElement.dataset.vxTheme = "plus-emerald";
   const style = document.createElement("style");
-  style.textContent = `${readFileSync("src/styles.css", "utf8")}\n${readFileSync(
-    "src/themes/plus-emerald.css",
-    "utf8",
-  )}`;
+  style.textContent = readFileSync("src/themes/plus-emerald.css", "utf8");
   document.head.append(style);
-  const balance = window.getComputedStyle(document.querySelector("#solo-row .balance_area"));
-  assert.equal(balance.marginLeft, "auto");
+  assert.equal(
+    window.getComputedStyle(document.getElementById("Rightbar")).alignSelf,
+    "flex-start",
+  );
+  assert.notEqual(window.getComputedStyle(card).position, "fixed");
+  assert.equal(card.style.height, "");
 });

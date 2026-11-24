@@ -10,6 +10,7 @@ import {
   FILTER_MODES,
   MAX_HOT_REPLIES,
   MAX_PRELOAD_PAGES,
+  UPLOAD_PROVIDERS,
   normalizeFilterKeywords,
 } from "./storage.js";
 import { createAbout } from "./about.js";
@@ -89,20 +90,18 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       "opCreated",
       "autoFold",
       "base64Decode",
-      "onlyOp",
       "unreadReplies",
       "hotReplies",
       "preloadPages",
       "emoji",
-      "replyPreview",
       "imgurProxy",
     ],
     filtering: ["contentFilter", "filterTopics", "filterReplies", "filterMode", "filterKeywords"],
-    images: ["upload", "imgurClientId"],
+    images: ["upload", "uploadProvider"],
     settingsTags: ["tags"],
   };
   const panels = {};
-  const requiresLogin = new Set(["autoCheckIn", "emoji", "upload", "imgurClientId"]);
+  const requiresLogin = new Set(["autoCheckIn", "emoji", "upload", "uploadProvider"]);
   const filterDependencies = ["filterTopics", "filterReplies", "filterMode", "filterKeywords"];
   for (const [group, keys] of Object.entries(groups)) {
     const panel = (panels[group] = addPanel(group));
@@ -115,7 +114,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
       const control = element(
         key === "filterKeywords"
           ? "textarea"
-          : ["theme", "hotReplies", "preloadPages", "filterMode"].includes(key)
+          : ["theme", "hotReplies", "preloadPages", "filterMode", "uploadProvider"].includes(key)
             ? "select"
             : "input",
       );
@@ -167,15 +166,18 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
           control.append(option);
         }
         control.value = options.filterMode;
+      } else if (key === "uploadProvider") {
+        for (const value of UPLOAD_PROVIDERS) {
+          const option = element("option", t(`uploadProvider_${value}`));
+          option.value = value;
+          control.append(option);
+        }
+        control.value = options.uploadProvider;
       } else if (key === "filterKeywords") {
         control.rows = 8;
         control.maxLength = FILTER_LIMITS.total;
         control.placeholder = t("filterKeywordsPlaceholder");
         control.value = options.filterKeywords.join("\n");
-      } else if (key === "imgurClientId") {
-        Object.assign(control, { type: "text", autocomplete: "off", pattern: "[A-Za-z0-9]{0,64}" });
-        control.value = options[key];
-        control.placeholder = t("sharedClient");
       } else {
         control.type = "checkbox";
         control.checked = !control.disabled && options[key];
@@ -215,11 +217,11 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   contentFilter.addEventListener("change", syncFilterDependencies);
   syncFilterDependencies();
   const upload = fields.get("upload");
-  const imgurClientId = fields.get("imgurClientId");
+  const uploadProvider = fields.get("uploadProvider");
   function syncUploadDependency() {
     const disabled = !signedIn || !upload.checked;
-    imgurClientId.disabled = disabled;
-    imgurClientId
+    uploadProvider.disabled = disabled;
+    uploadProvider
       .closest(".vx-settings-option")
       .classList.toggle("vx-settings-option-disabled", disabled);
   }

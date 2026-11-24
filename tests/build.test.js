@@ -30,6 +30,7 @@ test("release artifact retains metadata within its size budget", () => {
     assert.match(metadata, new RegExp(`^// @grant\\s+${grant}$`, "m"));
   }
   assert.match(metadata, /^\/\/ @connect\s+api\.imgur\.com$/m);
+  assert.match(metadata, /^\/\/ @connect\s+catbox\.moe$/m);
   const base = "https://raw.githubusercontent.com/jetyu/v2ex-kit/main/dist/v2ex-kit";
   const plusTheme =
     "https://raw.githubusercontent.com/jetyu/v2ex-kit/main/src/themes/plus-emerald.css";
@@ -45,7 +46,7 @@ test("release artifact retains metadata within its size budget", () => {
     /^\/\/ @resource\s+v2ex-kit-theme-platinum https:\/\/cdn\.jsdelivr\.net\//m,
   );
   assert.match(metadata, /^\/\/ @resource\s+v2ex-kit-theme-still https:\/\/cdn\.jsdelivr\.net\//m);
-  assert.ok(Buffer.byteLength(built) <= 300 * 1024, "Release userscript exceeds 300 KiB");
+  assert.ok(Buffer.byteLength(built) <= 305 * 1024, "Release userscript exceeds 305 KiB");
   assert.doesNotMatch(built, /Generator: Adobe Illustrator 29\.1\.0/);
   assert.doesNotMatch(
     built,

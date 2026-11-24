@@ -1,30 +1,66 @@
 import { t } from "./i18n.js";
 import { button, element, onEditorActions, owned, replyActions, safeURL } from "./dom.js";
 import { createEditor, replaceTextareaRange } from "./editor.js";
-import { DEFAULT_IMGUR_CLIENT_ID } from "./storage.js";
+import { DEFAULT_IMGUR_CLIENT_ID, UPLOAD_PROVIDERS } from "./storage.js";
 import { originalImageURL } from "./imgur-proxy.js";
 
 export function replacePlaceholder(textarea, marker, replacement) {
   return replaceTextareaRange(textarea, marker, replacement);
 }
 
-export function uploadImage(file, clientId = DEFAULT_IMGUR_CLIENT_ID, request = GM_xmlhttpRequest) {
-  clientId ||= DEFAULT_IMGUR_CLIENT_ID;
-  if (!/^[a-z0-9]{1,64}$/i.test(clientId)) return Promise.reject(new Error(t("invalidClient")));
+function uploadFileError(file) {
   if (
-    !/^image\/(png|jpeg|gif|webp)$/.test(file.type) ||
+    !/^image\/(png|jpeg|gif|webp)$/.test(file?.type) ||
     file.size > 10 * 1024 * 1024 ||
     file.size === 0
-  ) {
-    return Promise.reject(new Error(t("imageFormat")));
+  )
+    return new Error(t("imageFormat"));
+  return null;
+}
+
+function imageHostURL(value, hostname) {
+  const link = safeURL(value, `https://${hostname}/`, true);
+  return link && new URL(link).hostname === hostname ? link : null;
+}
+
+function uploadedImageProvider(value) {
+  for (const [provider, hostname] of [
+    ["imgur", "i.imgur.com"],
+    ["imgbb", "i.ibb.co"],
+    ["catbox", "files.catbox.moe"],
+  ]) {
+    const link = imageHostURL(value, hostname);
+    if (link) return { provider, link };
   }
+  return null;
+}
+
+function deletionURL(record, provider) {
+  if (provider === "imgur" && /^[a-z0-9]+$/i.test(record.deleteHash ?? ""))
+    return `https://imgur.com/delete/${record.deleteHash}`;
+  if (provider === "imgbb") return imageHostURL(record.deleteURL, "ibb.co");
+  return null;
+}
+
+function rateLimitError(response, message) {
+  const retry = /^retry-after:\s*(.+)$/im.exec(response.responseHeaders ?? "")?.[1]?.trim();
+  const delay = Number(retry) > 0 ? Number(retry) * 1000 : Date.parse(retry) - Date.now();
+  const error = new Error(message);
+  error.rateLimited = true;
+  error.retryAt = Date.now() + (Number.isFinite(delay) && delay > 0 ? delay : 3_600_000);
+  return error;
+}
+
+export function uploadImage(file, request = GM_xmlhttpRequest) {
+  const fileError = uploadFileError(file);
+  if (fileError) return Promise.reject(fileError);
   return new Promise((resolve, reject) => {
     const data = new FormData();
     data.append("image", file);
     request({
       method: "POST",
       url: "https://api.imgur.com/3/image",
-      headers: { Authorization: `Client-ID ${clientId}` },
+      headers: { Authorization: `Client-ID ${DEFAULT_IMGUR_CLIENT_ID}` },
       data,
       anonymous: true,
       timeout: 30_000,
@@ -34,14 +70,7 @@ export function uploadImage(file, clientId = DEFAULT_IMGUR_CLIENT_ID, request = 
             response.status === 429 ||
             (response.status === 403 && /rate.?limit|quota|credits/i.test(response.responseText))
           ) {
-            const retry = /^retry-after:\s*(.+)$/im
-              .exec(response.responseHeaders ?? "")?.[1]
-              ?.trim();
-            const delay = Number(retry) > 0 ? Number(retry) * 1000 : Date.parse(retry) - Date.now();
-            const error = new Error(t("imgurRateLimit"));
-            error.rateLimited = true;
-            error.retryAt = Date.now() + (Number.isFinite(delay) && delay > 0 ? delay : 3_600_000);
-            throw error;
+            throw rateLimitError(response, t("imgurRateLimit"));
           }
           let body;
           try {
@@ -74,6 +103,52 @@ export function uploadImage(file, clientId = DEFAULT_IMGUR_CLIENT_ID, request = 
       onabort: () => reject(new Error(t("imgurAborted"))),
     });
   });
+}
+
+function uploadCatboxImage(file, request) {
+  const fileError = uploadFileError(file);
+  if (fileError) return Promise.reject(fileError);
+  const label = t("uploadProvider_catbox");
+  return new Promise((resolve, reject) => {
+    const data = new FormData();
+    data.append("reqtype", "fileupload");
+    data.append("fileToUpload", file);
+    request({
+      method: "POST",
+      url: "https://catbox.moe/user/api.php",
+      data,
+      anonymous: true,
+      timeout: 30_000,
+      onload(response) {
+        try {
+          if (response.status === 429)
+            throw rateLimitError(response, t("imageHostRateLimit", label));
+          if (response.status < 200 || response.status >= 300)
+            throw new Error(t("imageHostHTTP", label, response.status));
+          const link = imageHostURL(response.responseText?.trim(), "files.catbox.moe");
+          if (!link) throw new Error(t("imageHostResponse", label));
+          resolve({ provider: "catbox", link });
+        } catch (error) {
+          reject(error);
+        }
+      },
+      onerror: () => reject(new Error(t("imageHostNetwork", label))),
+      ontimeout: () => reject(new Error(t("imageHostTimeout", label))),
+      onabort: () => reject(new Error(t("imageHostAborted", label))),
+    });
+  });
+}
+
+export function uploadToProvider(file, options = {}, request = GM_xmlhttpRequest) {
+  const provider = UPLOAD_PROVIDERS.includes(options.uploadProvider)
+    ? options.uploadProvider
+    : "imgur";
+  if (provider === "imgur")
+    return uploadImage(file, request).then((result) => ({
+      provider,
+      ...result,
+    }));
+  return uploadCatboxImage(file, request);
 }
 
 function sourceTopicURL(value) {
@@ -132,8 +207,10 @@ export function createUploadHistory(store, focusFallback) {
     const row = element("div", undefined, "cell vx-upload-record");
     const details = element("div", undefined, "vx-upload-record-details");
     details.append(element("p", `${record.createdAt} · ${record.fileName}`));
-    const url = safeURL(record.link, "https://i.imgur.com", true);
-    if (url && new URL(url).origin === "https://i.imgur.com") {
+    const uploaded = uploadedImageProvider(record.link);
+    if (uploaded) {
+      const { provider, link: url } = uploaded;
+      details.firstElementChild.append(` 路 ${t(`uploadProvider_${provider}`)}`);
       const link = element("a", url);
       link.href = url;
       link.target = "_blank";
@@ -146,15 +223,16 @@ export function createUploadHistory(store, focusFallback) {
       image.setAttribute("decoding", "async");
       image.setAttribute("referrerpolicy", "no-referrer");
       const thumbnail = new URL(url);
-      thumbnail.pathname = thumbnail.pathname.replace(
-        /^\/([a-z0-9]+)\.(jpe?g|png|gif|webp)$/i,
-        "/$1m.$2",
-      );
+      if (provider === "imgur")
+        thumbnail.pathname = thumbnail.pathname.replace(
+          /^\/([a-z0-9]+)\.(jpe?g|png|gif|webp)$/i,
+          "/$1m.$2",
+        );
       image.addEventListener("error", () => {
-        if (originalImageURL(image.src) === url) preview.remove();
+        if (provider !== "imgur" || originalImageURL(image.src) === url) preview.remove();
         else image.src = url;
       });
-      if (record.id) {
+      if (provider === "imgur" && record.id) {
         image.addEventListener(
           "load",
           () =>
@@ -182,9 +260,10 @@ export function createUploadHistory(store, focusFallback) {
       row.append(preview);
       details.append(link);
     }
-    if (/^[a-z0-9]+$/i.test(record.deleteHash ?? "")) {
+    const deleteLink = uploaded && deletionURL(record, uploaded.provider);
+    if (deleteLink) {
       const link = element("a", t("deleteImage"));
-      link.href = `https://imgur.com/delete/${record.deleteHash}`;
+      link.href = deleteLink;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       details.append(" · ", link);
@@ -277,8 +356,12 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
   anchor.after(toolbar);
   let queue = Promise.resolve();
   let pending = 0;
-  let pausedUntil = store.get("upload-paused-until", 0);
-  const paused = () => Math.max(pausedUntil, store.get("upload-paused-until", 0)) > Date.now();
+  const provider = UPLOAD_PROVIDERS.includes(options.uploadProvider)
+    ? options.uploadProvider
+    : "imgur";
+  const pauseKey = provider === "imgur" ? "upload-paused-until" : `upload-paused-until:${provider}`;
+  let pausedUntil = store.get(pauseKey, 0);
+  const paused = () => Math.max(pausedUntil, store.get(pauseKey, 0)) > Date.now();
 
   function enqueue(files) {
     const images = [...files].filter((file) => file.type.startsWith("image/"));
@@ -307,7 +390,7 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
         }
         row.textContent = t("uploading", file.name || t("pastedImage"));
         try {
-          const result = await uploadImage(file, options.imgurClientId, request);
+          const result = await uploadToProvider(file, options, request);
           const replaced = editor.replaceMarker(marker, result.link);
           row.textContent = replaced ? t("uploaded") : t("draftMarkerRemoved");
           const link = element("a", result.link);
@@ -315,9 +398,10 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
           link.target = "_blank";
           link.rel = "noopener noreferrer";
           row.append(link);
-          if (result.deleteHash) {
+          const deleteLink = deletionURL(result, result.provider);
+          if (deleteLink) {
             const deletion = element("a", ` ${t("saveDelete")}`);
-            deletion.href = `https://imgur.com/delete/${result.deleteHash}`;
+            deletion.href = deleteLink;
             deletion.target = "_blank";
             deletion.rel = "noopener noreferrer";
             row.append(deletion);
@@ -333,7 +417,7 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
           if (error.rateLimited) {
             pausedUntil = error.retryAt;
             try {
-              store.set("upload-paused-until", error.retryAt);
+              store.set(pauseKey, error.retryAt);
             } catch {
               /* Keep this page paused even when storage is full. */
             }

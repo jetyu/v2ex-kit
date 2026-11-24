@@ -16,7 +16,6 @@ import { installImgurProxy } from "./imgur-proxy.js";
 import { installPlusNavigation } from "./plus-navigation.js";
 import { enhanceBase64 } from "./base64.js";
 import { createContentFilter } from "./content-filter.js";
-import { initReplyPreview } from "./reply-preview.js";
 import { createTopicUnread, enhanceUnreadList } from "./unread-replies.js";
 
 let themeReady = false;
@@ -121,18 +120,12 @@ function start() {
         })
       : null;
   const replies = initReplies({ options, getDocument, enhance, batch, unread });
-  const pageActions = installPageActions(
-    Boolean(name),
-    undefined,
-    replies?.hasOpFilter ? { onToggleOnlyOp: () => replies.toggleOnlyOp() } : {},
-  );
-  replies?.bindOnlyOpSync?.((active) => pageActions?.syncOnlyOp(active));
+  installPageActions(Boolean(name));
   installSettings(store, Boolean(name), members);
   if (name) {
     initEmoji(options);
     initUpload(options, store);
   }
-  initReplyPreview(options);
   if (main) {
     const roots = new Set();
     const changed = new Set();

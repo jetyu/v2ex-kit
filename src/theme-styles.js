@@ -1,4 +1,5 @@
 import themeVariables from "./vendor/polish/v2ex-theme-var.scss";
+import plusCompatibility from "./themes/plus-compat.scss";
 import foundation from "./vendor/polish/v2ex-theme-default.scss";
 import features from "./vendor/polish/v2ex-effect.scss";
 import decoration from "./themes/decoration.scss";
@@ -27,7 +28,7 @@ export function themeStyles(theme, resource = "") {
     return external && resource ? `${resource}\n${base}` : base;
   }
   if (theme === "plus-emerald")
-    return [themeVariables, features, replies, integration, resource].filter(Boolean).join("\n");
+    return [plusCompatibility, features, replies, integration, resource].filter(Boolean).join("\n");
   return [themeVariables, foundation, features, decoration, replies, palettes, integration].join(
     "\n",
   );

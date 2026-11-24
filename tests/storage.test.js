@@ -16,6 +16,8 @@ test("options reject invalid types and unknown fields", () => {
     privacy: true,
     preloadPages: 99,
     imgurClientId: "x\r\ny",
+    imgbbApiKey: "bad key!",
+    uploadProvider: "unknown",
     injected: true,
   });
   assert.equal(options.theme, "native");
@@ -34,15 +36,15 @@ test("options reject invalid types and unknown fields", () => {
   assert.equal(options.base64Decode, true);
   assert.equal(normalizeOptions({ base64Decode: false }).base64Decode, false);
   assert.equal(options.opCreated, true);
-  assert.equal(options.onlyOp, true);
   assert.equal(options.unreadReplies, true);
-  assert.equal(
-    normalizeOptions({ opCreated: false, onlyOp: false, unreadReplies: false }).onlyOp,
-    false,
-  );
-  assert.equal(options.imgurClientId, "");
+  assert.equal(normalizeOptions({ onlyOp: true }).onlyOp, undefined);
+  assert.equal(options.imgurClientId, undefined);
+  assert.equal(options.imgbbApiKey, undefined);
+  assert.equal(options.uploadProvider, "imgur");
+  assert.equal(normalizeOptions({ uploadProvider: "catbox" }).uploadProvider, "catbox");
+  assert.equal(normalizeOptions({ uploadProvider: "imgbb" }).uploadProvider, "imgur");
   assert.equal(options.injected, undefined);
-  assert.equal(options.replyPreview, true);
+  assert.equal(normalizeOptions({ replyPreview: true }).replyPreview, undefined);
   assert.deepEqual(options.filterKeywords, []);
   assert.equal(normalizeOptions({ filterMode: "invalid" }).filterMode, "collapse");
   assert.equal(normalizeOptions({ filterMode: "blur" }).filterMode, "collapse");
@@ -95,10 +97,10 @@ test("storage writes only changes; local entries and tombstones win imports", ()
   assert.equal(api.writes.length, before);
 });
 
-test("backup excludes Client ID and runtime state; remote events never echo writes", () => {
+test("backup excludes retired image host credentials and runtime state; remote events never echo writes", () => {
   const api = memoryAPI();
   const store = createStorage(api);
-  store.saveOptions({ imgurClientId: "abc123", theme: "vscode" });
+  store.saveOptions({ imgurClientId: "abc123", imgbbApiKey: "ownkey123", theme: "vscode" });
   store.set("daily:reader", { success: true });
   store.set("read-history", { 123: [50, 10, 1000] });
   store.watchTags("Alice", () => {});
@@ -108,7 +110,28 @@ test("backup excludes Client ID and runtime state; remote events never echo writ
   assert.equal(api.writes.length, before);
   const backup = JSON.parse(store.export());
   assert.equal(backup.options.imgurClientId, undefined);
+  assert.equal(backup.options.imgbbApiKey, undefined);
+  assert.equal(store.options().imgurClientId, undefined);
+  assert.equal(store.options().imgbbApiKey, undefined);
   assert.equal(backup.options.theme, "vscode");
   assert.equal(JSON.stringify(backup).includes("daily:"), false);
   assert.equal(JSON.stringify(backup).includes("read-history"), false);
+});
+
+test("opening storage clears retired credentials and switches old ImgBB selection to Imgur", () => {
+  const api = memoryAPI();
+  api.data.set("v2ex-lite:options", {
+    theme: "vscode",
+    upload: true,
+    uploadProvider: "imgbb",
+    imgurClientId: "oldclient",
+    imgbbApiKey: "oldkey",
+  });
+  const store = createStorage(api);
+  assert.equal(store.options().uploadProvider, "imgur");
+  assert.deepEqual(api.writes, ["v2ex-lite:options"]);
+  assert.equal(store.options().theme, "vscode");
+  assert.equal(store.options().upload, true);
+  assert.equal(Object.hasOwn(api.data.get("v2ex-lite:options"), "imgurClientId"), false);
+  assert.equal(Object.hasOwn(api.data.get("v2ex-lite:options"), "imgbbApiKey"), false);
 });

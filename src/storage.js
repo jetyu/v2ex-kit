@@ -3,6 +3,7 @@ import { DEFAULT_THEME, normalizeTheme } from "./theme.js";
 import { DEFAULT_IMGUR_PROXY_URL, normalizeImgurProxyURL } from "./imgur-proxy.js";
 export const PREFIX = "v2ex-lite:";
 export const DEFAULT_IMGUR_CLIENT_ID = "3107b9ef8b316f3";
+export const UPLOAD_PROVIDERS = Object.freeze(["imgur", "catbox"]);
 export const TAG_LIMITS = Object.freeze({ perMember: 20, length: 80, importMembers: 20_000 });
 export const BACKUP_BYTES = 2_000_000;
 export const MAX_HOT_REPLIES = 5;
@@ -24,14 +25,13 @@ export const DEFAULTS = Object.freeze({
   opCreated: true,
   tags: false,
   preloadPages: 0,
-  onlyOp: true,
   unreadReplies: true,
   hotReplies: false,
   hotRepliesLimit: MAX_HOT_REPLIES,
   autoCheckIn: false,
   upload: false,
+  uploadProvider: "imgur",
   emoji: true,
-  replyPreview: true,
   autoFold: true,
   base64Decode: true,
   contentFilter: false,
@@ -39,7 +39,6 @@ export const DEFAULTS = Object.freeze({
   filterReplies: true,
   filterMode: "collapse",
   filterKeywords: [],
-  imgurClientId: "",
   imgurProxy: false,
   imgurProxyUrl: DEFAULT_IMGUR_PROXY_URL,
 });
@@ -50,6 +49,9 @@ export function normalizeOptions(input = {}) {
   const output = { ...DEFAULTS };
   if (!input || typeof input !== "object") return output;
   output.theme = normalizeTheme(input.theme);
+  output.uploadProvider = UPLOAD_PROVIDERS.includes(input.uploadProvider)
+    ? input.uploadProvider
+    : "imgur";
   output.hotRepliesLimit = normalizeHotRepliesLimit(input.hotRepliesLimit);
   output.imgurProxyUrl = normalizeImgurProxyURL(input.imgurProxyUrl) ?? DEFAULT_IMGUR_PROXY_URL;
   output.filterMode = FILTER_MODES.includes(input.filterMode) ? input.filterMode : "collapse";
@@ -64,9 +66,6 @@ export function normalizeOptions(input = {}) {
     input.preloadPages <= MAX_PRELOAD_PAGES
   ) {
     output.preloadPages = input.preloadPages;
-  }
-  if (typeof input.imgurClientId === "string" && /^[a-z0-9]{0,64}$/i.test(input.imgurClientId)) {
-    output.imgurClientId = input.imgurClientId;
   }
   return output;
 }
@@ -166,9 +165,25 @@ export function createStorage(api) {
     api.set(key, value);
     return true;
   };
+  const optionsKey = `${PREFIX}options`;
   return {
-    options: () => normalizeOptions(api.get(`${PREFIX}options`)),
-    saveOptions: (value) => write(`${PREFIX}options`, normalizeOptions(value)),
+    options() {
+      const stored = api.get(optionsKey);
+      const normalized = normalizeOptions(stored);
+      if (
+        stored &&
+        typeof stored === "object" &&
+        (Object.hasOwn(stored, "imgurClientId") || Object.hasOwn(stored, "imgbbApiKey"))
+      ) {
+        try {
+          write(optionsKey, normalized);
+        } catch {
+          // Keep the normalized options usable if the old stored value cannot be replaced.
+        }
+      }
+      return normalized;
+    },
+    saveOptions: (value) => write(optionsKey, normalizeOptions(value)),
     getTags(name) {
       const key = keyFor(name);
       if (!cache.has(key)) cache.set(key, normalizeTags(api.get(key, [])));
@@ -200,8 +215,7 @@ export function createStorage(api) {
     snapshot() {
       const members = Object.create(null);
       for (const key of memberKeys()) members[key.slice(memberPrefix.length)] = api.get(key);
-      const { imgurClientId: _clientId, ...options } = this.options();
-      return { schema: 1, exportedAt: new Date().toISOString(), options, members };
+      return { schema: 1, exportedAt: new Date().toISOString(), options: this.options(), members };
     },
     export() {
       return JSON.stringify(this.snapshot(), null, 2);
@@ -230,8 +244,7 @@ export function createStorage(api) {
           onTags?.(name, normalized);
         }
       }
-      if (settings && data.options)
-        this.saveOptions({ ...data.options, imgurClientId: this.options().imgurClientId });
+      if (settings && data.options) this.saveOptions(data.options);
       return imported;
     },
     import(text) {

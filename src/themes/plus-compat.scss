@@ -1,0 +1,17 @@
+@use "./geometry";
+
+/* Only the variables used by Kit's controls belong ahead of the Plus stylesheet. */
+:root {
+  @include geometry.defaults;
+  body {
+    --v2p-color-button-border: var(--v2p-color-main-300);
+    --v2p-color-button-special-background: var(--v2p-color-accent-50);
+    --v2p-color-button-special-foreground: var(--v2p-color-accent-700, var(--v2p-color-accent-600));
+    --v2p-color-button-special-border: var(--v2p-color-accent-600);
+    --v2p-color-button-special-foreground-hover: var(
+      --v2p-color-accent-700,
+      var(--v2p-color-accent-600)
+    );
+    --v2p-color-bg-tpr: var(--v2p-color-bg-reply);
+  }
+}

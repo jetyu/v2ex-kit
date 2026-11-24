@@ -36,7 +36,7 @@ test("split files obey byte and member limits and restore only complete sets", (
   assert.throws(() => parseImport("\u754c".repeat(700_000)), { message: /2 MB/ });
 });
 
-test("legacy label records and settings restore independently and preserve local secrets", () => {
+test("legacy label records and settings restore independently", () => {
   assert.deepEqual(parseImport('--\u7528\u6237\u6807\u7b7e--{"Alice":["friend"]}').members.alice, [
     "friend",
   ]);
@@ -54,7 +54,7 @@ test("legacy label records and settings restore independently and preserve local
   assert.deepEqual({ ...foreign.members }, { bob: [] });
   const store = createStorage(memoryAPI());
   store.setTags("alice", []);
-  store.saveOptions({ theme: "vscode", imgurClientId: "local123" });
+  store.saveOptions({ theme: "vscode", uploadProvider: "catbox" });
   store.set("backup:mode", "notes");
   const restored = readBackupParts([
     singleBackup(snapshot({ alice: ["old"], bob: [], carol: ["new"] })),
@@ -62,11 +62,11 @@ test("legacy label records and settings restore independently and preserve local
   assert.deepEqual(store.previewRestore(restored), { added: 1, deleted: 1, conflicts: 1 });
   assert.equal(store.restore(restored, { settings: true, tags: false }), 0);
   assert.equal(store.options().theme, "native");
-  assert.equal(store.options().imgurClientId, "local123");
+  assert.equal(store.options().uploadProvider, "imgur");
   assert.equal(store.get("backup:mode"), "notes");
   assert.equal(store.restore(restored), 2);
   assert.deepEqual(store.getTags("alice"), []);
-  assert.equal(JSON.parse(store.export()).options.imgurClientId, undefined);
+  assert.equal(JSON.parse(store.export()).options.uploadProvider, "imgur");
 });
 
 test("a failed restore can resume without repeating completed writes", () => {

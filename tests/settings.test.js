@@ -31,13 +31,12 @@ test("settings give every option a Chinese label and an associated description",
   const store = createStorage(memoryAPI());
   store.saveOptions({
     preloadPages: 3,
-    imgurClientId: "custom123",
     privacy: true,
     theme: "vscode",
   });
   openSettings(store);
   const controls = [...document.querySelectorAll("form :is(input,select,textarea)[name]")];
-  assert.equal(controls.length, 23);
+  assert.equal(controls.length, 21);
   assert.equal(document.querySelectorAll('[role="tabpanel"]').length, 6);
   assert.equal(
     document.querySelector(".v2p-modal-footer [type=submit]").form.id,
@@ -57,7 +56,10 @@ test("settings give every option a Chinese label and an associated description",
     [...preload.options].map(({ value, text }) => [value, text]),
     ["关闭", "1", "2", "3", "4", "5"].map((label, count) => [String(count), label]),
   );
-  assert.equal(document.querySelector('[name="imgurClientId"]').value, "custom123");
+  assert.deepEqual(
+    [...document.querySelector('[name="uploadProvider"]').options].map((option) => option.value),
+    ["imgur", "catbox"],
+  );
   const theme = document.querySelector('[name="theme"]');
   assert.equal(theme.value, "vscode");
   assert.deepEqual(
@@ -134,32 +136,32 @@ test("content filter controls retain their values while the master switch is off
   window.close();
 });
 
-test("Imgur Client ID follows the image upload switch without losing its value", () => {
+test("image host selection follows the upload switch", () => {
   const { window } = dom("");
   const store = createStorage(memoryAPI());
-  store.saveOptions({ upload: false, imgurClientId: "custom123" });
+  store.saveOptions({ upload: false });
   openSettings(store, true);
   const upload = document.querySelector('[name="upload"]');
-  const clientId = document.querySelector('[name="imgurClientId"]');
-  const wrapper = clientId.closest(".vx-settings-option");
+  const provider = document.querySelector('[name="uploadProvider"]');
+  const wrapper = provider.closest(".vx-settings-option");
   assert.equal(upload.checked, false);
-  assert.equal(clientId.disabled, true);
-  assert.equal(clientId.value, "custom123");
+  assert.equal(provider.disabled, true);
+  assert.equal(provider.value, "imgur");
   assert.equal(wrapper.classList.contains("vx-settings-option-disabled"), true);
 
   upload.checked = true;
   upload.dispatchEvent(new Event("change", { bubbles: true }));
-  assert.equal(clientId.disabled, false);
+  assert.equal(provider.disabled, false);
   assert.equal(wrapper.classList.contains("vx-settings-option-disabled"), false);
-  clientId.value = "updated456";
+  provider.value = "catbox";
   upload.checked = false;
   upload.dispatchEvent(new Event("change", { bubbles: true }));
-  assert.equal(clientId.disabled, true);
-  assert.equal(clientId.value, "updated456");
+  assert.equal(provider.disabled, true);
+  assert.equal(provider.value, "catbox");
 
   document.querySelector('.v2p-modal-footer button[type="button"]').click();
   assert.equal(store.options().upload, false);
-  assert.equal(store.options().imgurClientId, "updated456");
+  assert.equal(store.options().uploadProvider, "catbox");
   window.close();
 });
 
@@ -180,10 +182,10 @@ test("guest settings retain saved preferences and show account dependencies", ()
   );
   assert.match(document.querySelector(".v2p-modal-title").textContent, /脚本设置/);
   assert.match(document.querySelector(".vx-settings-notice").textContent, /登录 V2EX/);
-  for (const key of ["autoCheckIn", "emoji", "upload", "imgurClientId"]) {
+  for (const key of ["autoCheckIn", "emoji", "upload", "uploadProvider"]) {
     const control = document.querySelector(`[name="${key}"]`);
     assert.equal(control.disabled, true);
-    assert.equal(control.checked, false);
+    if (control.type === "checkbox") assert.equal(control.checked, false);
     assert.match(control.closest("label").querySelector("small").textContent, /需要登录 V2EX/);
   }
   document.querySelector('[name="preloadPages"]').value = "1";
@@ -233,7 +235,7 @@ test("Apply saves across tabs and keeps the settings panel open", () => {
   dialog.querySelector('[name="base64Decode"]').checked = false;
   const images = dialog.querySelector("#vx-settings-tab-images");
   images.click();
-  dialog.querySelector('[name="imgurClientId"]').value = "custom123";
+  dialog.querySelector('[name="uploadProvider"]').value = "catbox";
   dialog.querySelector('[name="contentFilter"]').checked = true;
   dialog.querySelector('[name="filterMode"]').value = "hide";
   dialog.querySelector('[name="filterKeywords"]').value = "spam\n广告\nspam";
@@ -241,7 +243,7 @@ test("Apply saves across tabs and keeps the settings panel open", () => {
   assert.equal(store.options().theme, "native");
   assert.equal(store.options().hotRepliesLimit, 2);
   assert.equal(store.options().hotReplies, true);
-  assert.equal(store.options().imgurClientId, "custom123");
+  assert.equal(store.options().uploadProvider, "catbox");
   assert.equal(store.options().contentFilter, true);
   assert.equal(store.options().filterMode, "hide");
   assert.deepEqual(store.options().filterKeywords, ["spam", "广告"]);
@@ -277,16 +279,14 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
         "opCreated",
         "autoFold",
         "base64Decode",
-        "onlyOp",
         "unreadReplies",
         "hotReplies",
         "preloadPages",
         "emoji",
-        "replyPreview",
         "imgurProxy",
       ],
       ["contentFilter", "filterTopics", "filterReplies", "filterMode", "filterKeywords"],
-      ["upload", "imgurClientId"],
+      ["upload", "uploadProvider"],
       ["tags"],
       [],
       [],

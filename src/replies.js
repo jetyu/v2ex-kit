@@ -3,7 +3,6 @@ import { button, element, matching, memberName, owned, safeURL } from "./dom.js"
 import { captureImportedActions, enhanceReplyActions, REPLY } from "./reply-actions.js";
 import { createPagination } from "./pagination.js";
 import { normalizeHotRepliesLimit } from "./storage.js";
-import { findTopicAuthor } from "./members.js";
 
 export { enhanceReplyActions, REPLY } from "./reply-actions.js";
 
@@ -253,10 +252,7 @@ export function initReplies({
     signature = "",
     panel,
     hotGap,
-    error,
-    onlyOpActive = false,
-    onlyOpSync = null;
-  const opName = options.onlyOp ? (findTopicAuthor(document)?.toLowerCase() ?? null) : null;
+    error;
   const toolbar = owned(element("div", undefined, "cell"));
   toolbar.dataset.vxPaging = "";
   const status = element("span");
@@ -270,36 +266,15 @@ export function initReplies({
   first.before(firstMarker);
   pages.set(current, firstMarker);
   const filterBar = owned(element("div", undefined, "cell vx-replies-toolbar"));
-  let onlyOpBtn = null;
-  let onlyOpEmpty = null;
   let unreadBtn = null;
-  function toggleOnlyOp(force) {
-    if (!onlyOpBtn) return false;
-    onlyOpActive = typeof force === "boolean" ? force : !onlyOpActive;
-    render();
-    return onlyOpActive;
-  }
-  if (opName) {
-    onlyOpBtn = button(t("onlyOp"), () => toggleOnlyOp());
-    onlyOpBtn.classList.add("vx-only-op-btn");
-    onlyOpBtn.setAttribute("aria-pressed", "false");
-    onlyOpEmpty = owned(element("div", "", "cell vx-only-op-empty"));
-    onlyOpEmpty.hidden = true;
-    filterBar.append(onlyOpBtn);
-  }
   if (unread) {
-    unreadBtn = button("", () =>
-      unread.jumpNext((target) => {
-        if (onlyOpActive && target.dataset.vxOp !== "1") toggleOnlyOp(false);
-      }),
-    );
+    unreadBtn = button("", () => unread.jumpNext());
     unreadBtn.classList.add("vx-unread-jump");
     unreadBtn.hidden = true;
     filterBar.append(unreadBtn);
   }
   filterBar.hidden = true;
   firstMarker.before(filterBar);
-  if (onlyOpEmpty) filterBar.after(onlyOpEmpty);
   function pageReplies(page) {
     const start = pages.get(page);
     if (!start) return [];
@@ -325,8 +300,7 @@ export function initReplies({
   const topClones = new Map();
   const hotLimit = normalizeHotRepliesLimit(options.hotRepliesLimit);
 
-  function stampReply(reply, isPreloaded = false) {
-    if (opName && reply.name.toLowerCase() === opName) reply.node.dataset.vxOp = "1";
+  function observeReply(reply, isPreloaded = false) {
     unread?.observe(reply.node, isPreloaded, reply.name);
   }
 
@@ -340,28 +314,12 @@ export function initReplies({
     retry.hidden = !error;
     retry.disabled = !!error && inFlight.has(error.page);
     paging.refresh(total, [...inFlight.keys()]);
-    if (onlyOpBtn) {
-      const opCount = [...replies.values()].filter(
-        ({ node }) => node.isConnected && node.dataset.vxOp === "1",
-      ).length;
-      onlyOpBtn.textContent = opCount ? t("onlyOpCount", opCount) : t("onlyOp");
-      onlyOpBtn.setAttribute("aria-pressed", String(onlyOpActive));
-      onlyOpBtn.classList.toggle("special", onlyOpActive);
-      container.classList.toggle("vx-only-op", onlyOpActive);
-      document.getElementById("Main")?.classList.toggle("vx-only-op-active", onlyOpActive);
-      if (onlyOpEmpty) {
-        onlyOpEmpty.hidden = !onlyOpActive || opCount > 0;
-        if (!onlyOpEmpty.hidden)
-          onlyOpEmpty.textContent = pages.size < total ? t("onlyOpEmpty") : t("onlyOpNone");
-      }
-      onlyOpSync?.(onlyOpActive);
-    }
     const unreadCount = unread?.placeDivider() ?? 0;
     if (unreadBtn) {
       unreadBtn.hidden = unreadCount === 0;
       if (unreadCount > 0) unreadBtn.textContent = t("unreadCountJump", unreadCount);
     }
-    filterBar.hidden = !onlyOpBtn && (!unreadBtn || unreadBtn.hidden);
+    filterBar.hidden = !unreadBtn || unreadBtn.hidden;
     if (!options.hotReplies) return;
     const ranked = rankReplies(
       [...replies.values()].filter(
@@ -422,7 +380,7 @@ export function initReplies({
       const reply = parseReply(node);
       if (!reply) continue;
       replies.set(reply.id, reply);
-      stampReply(reply, false);
+      observeReply(reply, false);
       const cloned = topClones.get(reply.id);
       if (cloned) cloned.dirty = true;
       changed = true;
@@ -473,7 +431,7 @@ export function initReplies({
           batch(() => {
             next.before(fragment);
             pages.set(page, marker);
-            for (const reply of parsed) stampReply(reply, lowPriority);
+            for (const reply of parsed) observeReply(reply, lowPriority);
             for (const row of added) enhance(row);
           });
           return true;
@@ -496,12 +454,6 @@ export function initReplies({
     add,
     replies,
     paging,
-    hasOpFilter: Boolean(onlyOpBtn),
-    toggleOnlyOp,
-    bindOnlyOpSync(fn) {
-      onlyOpSync = fn;
-      fn?.(onlyOpActive);
-    },
     get loaded() {
       return new Set(pages.keys());
     },

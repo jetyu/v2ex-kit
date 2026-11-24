@@ -729,8 +729,6 @@
       .reply_content,
       .v2p-topic-preview-content,
       .v2p-topic-preview-addons,
-      .v2p-reply-preview,
-      .v2p-lite-reply-preview,
       .markdown_body
     ) {
     a[href] {
@@ -1066,30 +1064,6 @@
     box-shadow: var(--vx-vscode-shadow);
   }
 
-  body .v2p-lite-reply-tabs {
-    padding: 2px;
-    gap: 2px;
-    border: 1px solid var(--vx-vscode-border);
-    border-radius: var(--v2p-button-radius);
-    background-color: var(--vx-palette-page);
-
-    .v2p-lite-reply-tab {
-      border-radius: var(--v2p-button-radius);
-      color: var(--vx-vscode-tab-inactive-fg);
-      background-color: transparent;
-
-      &:hover {
-        color: var(--vx-palette-accent);
-      }
-
-      &.is-active {
-        color: #ffffff;
-        background-color: var(--vx-vscode-button);
-        box-shadow: none;
-      }
-    }
-  }
-
   body #syntax-selector .radio-group {
     border: 1px solid var(--vx-vscode-border);
     border-radius: var(--v2p-button-radius);
@@ -1102,12 +1076,6 @@
       background-color: var(--vx-vscode-button);
       box-shadow: none;
     }
-  }
-
-  body .v2p-lite-reply-preview {
-    border-color: var(--vx-vscode-input-border);
-    border-radius: var(--v2p-input-radius);
-    background-color: var(--vx-palette-panel);
   }
 
   /* Opaque hover widgets, modals & floating actions */

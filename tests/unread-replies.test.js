@@ -95,7 +95,7 @@ test("background tabs are not marked read until visible", () => {
   window2.close();
 });
 
-test("revisiting a topic highlights unread replies, skips own reply, jumps, and resets only-OP", () => {
+test("revisiting a topic highlights unread replies, skips own reply, and jumps between new replies", () => {
   const { window } = dom(`
     <div id="Main">
       <div class="box"><div class="header"><h1>T</h1><small class="gray"><a href="/member/Alice">Alice</a></small></div></div>
@@ -119,7 +119,7 @@ test("revisiting a topic highlights unread replies, skips own reply, jumps, and 
     currentAccount: "reader",
     now: () => 1500,
   });
-  const module = initReplies({
+  initReplies({
     options: { onlyOp: true, unreadReplies: true },
     enhance() {},
     unread,
@@ -136,10 +136,8 @@ test("revisiting a topic highlights unread replies, skips own reply, jumps, and 
   assert.equal(jump.hidden, false);
   assert.equal(jump.textContent, "2 条新回复");
 
-  module.toggleOnlyOp(true);
-  assert.equal(document.querySelector("#replies").classList.contains("vx-only-op"), true);
+  assert.equal(document.querySelector(".vx-only-op-btn"), null);
   jump.click();
-  assert.equal(document.querySelector("#replies").classList.contains("vx-only-op"), false);
   jump.click();
   assert.deepEqual(scrolled, ["r_11", "r_13"]);
   assert.equal(unread.flush(), true);
