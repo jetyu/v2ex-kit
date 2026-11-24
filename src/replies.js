@@ -127,23 +127,36 @@ export function importReply(row, base) {
       node.replaceWith(toggle);
     } else node.remove();
   }
+  const originPrefix = `${location.origin}/member/`;
   for (const node of [copy, ...copy.querySelectorAll("*")]) {
-    const treeRow = node.matches(`${REPLY}[data-depth]`);
+    const treeRow =
+      node.hasAttribute("data-depth") &&
+      node.classList.contains("cell") &&
+      node.id.startsWith("r_");
     const treeLine =
-      node.matches(".reply-tree-line") && node.parentElement?.matches(`${REPLY}[data-depth]`);
+      node.classList.contains("reply-tree-line") &&
+      node.parentElement?.hasAttribute("data-depth") &&
+      node.parentElement.classList.contains("cell") &&
+      node.parentElement.id.startsWith("r_");
     const depth = treeRow && !node.closest(".reply_content") ? node.dataset.depth : "";
     const displayDepth = treeRow ? node.style.getPropertyValue("--depth").trim() : "";
     const level =
       treeLine && !node.closest(".reply_content")
         ? node.style.getPropertyValue("--level").trim()
         : "";
-    for (const attr of [...node.attributes]) {
-      if (
-        /^on/i.test(attr.name) ||
-        attr.name.startsWith("data-vx-") ||
-        ["srcdoc", "style", "srcset", "name"].includes(attr.name)
-      )
-        node.removeAttribute(attr.name);
+    if (node.attributes.length) {
+      for (const attr of [...node.attributes]) {
+        const name = attr.name;
+        if (
+          /^on/i.test(name) ||
+          name.startsWith("data-vx-") ||
+          name === "srcdoc" ||
+          name === "style" ||
+          name === "srcset" ||
+          name === "name"
+        )
+          node.removeAttribute(name);
+      }
     }
     if (/^\d{1,5}$/.test(depth))
       node.style.setProperty("--depth", /^\d{1,5}$/.test(displayDepth) ? displayDepth : depth);
@@ -152,17 +165,20 @@ export function importReply(row, base) {
       if (!node.hasAttribute(attr)) continue;
       const value = safeURL(node.getAttribute(attr), base, attr === "src");
       if (value) {
-        const url = new URL(value);
-        node.setAttribute(
-          attr,
-          attr === "href" &&
+        if (attr === "href" && value.startsWith(originPrefix)) {
+          const url = new URL(value);
+          node.setAttribute(
+            attr,
             url.origin === location.origin &&
-            /^\/member\/[^/]+\/?$/.test(url.pathname) &&
-            !url.search &&
-            !url.hash
-            ? url.pathname
-            : value,
-        );
+              /^\/member\/[^/]+\/?$/.test(url.pathname) &&
+              !url.search &&
+              !url.hash
+              ? url.pathname
+              : value,
+          );
+        } else {
+          node.setAttribute(attr, value);
+        }
       } else node.removeAttribute(attr);
     }
     if (node.tagName === "IMG") node.loading = "lazy";
@@ -213,7 +229,7 @@ export function cloneTopReply(reply) {
   for (const node of cloned.querySelectorAll("[id]")) node.removeAttribute("id");
   return cloned;
 }
-export function initReplies({ options, getDocument, enhance }) {
+export function initReplies({ options, getDocument, enhance, batch = (work) => work() }) {
   if (!/^\/t\/\d+\/?$/.test(location.pathname)) return null;
   const first = document.querySelector(`#Main ${REPLY}`);
   if (!first) return null;
@@ -321,7 +337,8 @@ export function initReplies({ options, getDocument, enhance }) {
     }
     if (changed) render();
   }
-  function loadPage(page) {
+  function loadPage(page, options) {
+    const lowPriority = Boolean(options?.lowPriority);
     if (!Number.isInteger(page) || page < 1 || page > total) return Promise.resolve(false);
     if (pages.has(page)) return Promise.resolve(true);
     if (inFlight.has(page)) return inFlight.get(page);
@@ -333,7 +350,7 @@ export function initReplies({ options, getDocument, enhance }) {
           url.search = "";
           url.searchParams.set("p", String(page));
           url.hash = "";
-          const doc = await getDocument(url.href);
+          const doc = await getDocument(url.href, { lowPriority });
           const rows = [...doc.querySelectorAll(`#Main ${REPLY}`)];
           if (!rows.length) throw new Error(t("noReplies"));
           total = Math.max(total, pageCount(doc, location.pathname));
@@ -357,9 +374,11 @@ export function initReplies({ options, getDocument, enhance }) {
           }
           const next =
             [...pages].sort(([a], [b]) => a - b).find(([number]) => number > page)?.[1] ?? toolbar;
-          next.before(fragment);
-          pages.set(page, marker);
-          for (const row of added) enhance(row);
+          batch(() => {
+            next.before(fragment);
+            pages.set(page, marker);
+            for (const row of added) enhance(row);
+          });
           return true;
         } catch (failure) {
           error = { page, message: failure.message };
@@ -368,10 +387,10 @@ export function initReplies({ options, getDocument, enhance }) {
       })
       .finally(() => {
         inFlight.delete(page);
-        render();
+        batch(render);
       });
     inFlight.set(page, task);
-    render();
+    batch(render);
     return task;
   }
   add(container);
@@ -403,7 +422,7 @@ export function initReplies({ options, getDocument, enhance }) {
     },
     async preload() {
       for (let page = current + 1; page <= Math.min(total, current + options.preloadPages); page++)
-        if (!(await loadPage(page))) break;
+        if (!(await loadPage(page, { lowPriority: true }))) break;
     },
   };
 }

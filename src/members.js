@@ -156,16 +156,17 @@ export function createMembers(store, options, topics, currentAccount) {
   }
   function draw(name, only) {
     const groups = byName.get(name.toLowerCase());
-    for (const group of only ? [only] : (groups ?? [])) {
+    const targets = only ? [only] : (groups ?? []);
+    const tags = store.getTags(name);
+    const joined = tags.join("\uFF0C");
+    for (const group of targets) {
       if (!group.isConnected) {
         groups?.delete(group);
         continue;
       }
-      const tags = store.getTags(name);
       group.replaceChildren();
-      if (tags.length)
-        group.append(element("b", "#"), element("span", tags.join("\uFF0C"), "vx-tags-text"));
-      group.title = tags.join("\uFF0C");
+      if (tags.length) group.append(element("b", "#"), element("span", joined, "vx-tags-text"));
+      group.title = joined;
       group.hidden = !tags.length;
     }
   }
@@ -434,17 +435,18 @@ export function createMembers(store, options, topics, currentAccount) {
 
     document.addEventListener("pointerover", (event) => {
       if (event.pointerType === "touch") return;
-      if (popup.contains(event.target)) {
+      const target = event.target?.nodeType === 1 ? event.target : event.target?.parentElement;
+      if (!target) return;
+      if (!popup.hidden && popup.contains(target)) {
         clearTimeout(closeTimer);
         return;
       }
-      if (event.target.closest?.(".v2p-modal-mask")) return;
-      const link = event.target.closest?.('a[href^="/member/"]'),
-        image = event.target.closest?.("img.avatar");
+      const link = target.closest('a[href^="/member/"]'),
+        image = target.tagName === "IMG" && target.classList.contains("avatar") ? target : null;
       const name =
           memberName(link) ?? (/^[a-z0-9_-]{1,64}$/i.test(image?.alt ?? "") ? image.alt : null),
         anchor = link ?? image;
-      if (!name || !anchor) return;
+      if (!name || !anchor || target.closest(".v2p-modal-mask")) return;
       clearTimeout(closeTimer);
       if (anchor === active) return;
       hide();
@@ -514,7 +516,13 @@ export function createMembers(store, options, topics, currentAccount) {
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") hide();
     });
-    window.addEventListener("scroll", hide, { passive: true });
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (active || !popup.hidden) hide();
+      },
+      { passive: true },
+    );
   }
   return { enhance, edit, createTagEditor, updateTags };
 }

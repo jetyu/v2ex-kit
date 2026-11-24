@@ -45,7 +45,7 @@ function download(text, name) {
 
 export function createBackup(
   store,
-  { onTags, onRestored, signedIn = Boolean(currentUser()) } = {},
+  { onTags, onRestored, signedIn = Boolean(currentUser()), lazyUsage = false } = {},
 ) {
   const root = element("div", undefined, "vx-backup");
   const mode = select(
@@ -69,8 +69,20 @@ export function createBackup(
   const actions = element("div", undefined, "vx-settings-backup-actions");
   const preview = element("div", undefined, "vx-backup-fields");
   let busy = false;
+  let usageLoaded = false;
 
-  function refresh() {
+  function renderControls() {
+    const notes = mode.control.value === "notes";
+    details.replaceChildren();
+    actions.replaceChildren(...(notes ? [saveNote, restoreNote] : [exportFile, importFile]));
+    if (notes) {
+      details.append(element("p", t("backupNotesHelp")));
+      if (!signedIn) details.append(element("strong", t("loginRequired")));
+    }
+  }
+
+  function refreshUsage() {
+    usageLoaded = true;
     const snapshot = store.snapshot();
     const notes = mode.control.value === "notes";
     usage.textContent = t(
@@ -82,12 +94,11 @@ export function createBackup(
         TAG_LIMITS.importMembers,
       ].map((number) => number.toLocaleString("zh-CN")),
     );
-    details.replaceChildren();
-    actions.replaceChildren(...(notes ? [saveNote, restoreNote] : [exportFile, importFile]));
-    if (notes) {
-      details.append(element("p", t("backupNotesHelp")));
-      if (!signedIn) details.append(element("strong", t("loginRequired")));
-    }
+  }
+
+  function refresh() {
+    renderControls();
+    if (!lazyUsage || usageLoaded) refreshUsage();
   }
 
   async function run(action) {
@@ -223,5 +234,6 @@ export function createBackup(
     status,
   );
   refresh();
+  root.vxRefreshUsage = refreshUsage;
   return root;
 }

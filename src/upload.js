@@ -121,6 +121,25 @@ export function createUploadHistory(store, focusFallback) {
     status.textContent = t(message);
     if (restoreFocus) (nextFocus ?? focusFallback)?.focus();
   }
+  const maxChecks = 4;
+  let activeChecks = 0;
+  const checkQueue = [];
+  function scheduleCheck(task) {
+    checkQueue.push(task);
+    drainChecks();
+  }
+  function drainChecks() {
+    while (activeChecks < maxChecks && checkQueue.length) {
+      const next = checkQueue.shift();
+      activeChecks++;
+      Promise.resolve()
+        .then(next)
+        .finally(() => {
+          activeChecks--;
+          drainChecks();
+        });
+    }
+  }
   for (const record of records) {
     const row = element("div", undefined, "cell vx-upload-record");
     const details = element("div", undefined, "vx-upload-record-details");
@@ -150,21 +169,23 @@ export function createUploadHistory(store, focusFallback) {
       if (record.id) {
         image.addEventListener(
           "load",
-          async () => {
-            try {
-              const result = await fetch(url, {
-                method: "HEAD",
-                credentials: "omit",
-                cache: "no-store",
-                referrerPolicy: "no-referrer",
-                signal: AbortSignal.timeout(5000),
-              });
-              if (result.redirected && result.url === "https://i.imgur.com/removed.png")
-                removeRecord(record, row, "imgurUploadRemoved");
-            } catch {
-              // A failed request does not confirm deletion.
-            }
-          },
+          () =>
+            scheduleCheck(async () => {
+              if (!row.isConnected) return;
+              try {
+                const result = await fetch(url, {
+                  method: "HEAD",
+                  credentials: "omit",
+                  cache: "no-store",
+                  referrerPolicy: "no-referrer",
+                  signal: AbortSignal.timeout(5000),
+                });
+                if (result.redirected && result.url === "https://i.imgur.com/removed.png")
+                  removeRecord(record, row, "imgurUploadRemoved");
+              } catch {
+                // A failed request does not confirm deletion.
+              }
+            }),
           { once: true },
         );
       }

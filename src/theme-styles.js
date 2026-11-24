@@ -12,6 +12,8 @@ const resources = Object.freeze({
   "plus-emerald": "v2ex-kit-theme-plus-emerald",
   geist: "v2ex-kit-theme-geist",
   claude: "v2ex-kit-theme-claude",
+  platinum: "v2ex-kit-theme-platinum",
+  still: "v2ex-kit-theme-still",
 });
 
 export function themeResourceName(theme) {

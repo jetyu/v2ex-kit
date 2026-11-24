@@ -216,7 +216,10 @@ test("hot replies keep OP beside the author and use square normal-sized avatars"
   assert.equal(avatar.maxHeight, "40px");
   assert.match(avatar.aspectRatio, /^1(?: \/ 1)?$/);
   assert.equal(avatar.objectFit, "cover");
-  assert.notEqual(window.getComputedStyle(document.querySelector("#top_replies table")).tableLayout, "fixed");
+  assert.notEqual(
+    window.getComputedStyle(document.querySelector("#top_replies table")).tableLayout,
+    "fixed",
+  );
 });
 
 test("tag filters use their grid columns instead of V2EX's fixed input width", () => {
@@ -342,4 +345,68 @@ test("topic editor actions follow a non-submit publication button", () => {
   assert.equal(computed.height, "42px");
   assert.equal(computed.padding, "0px 20px");
   assert.equal(computed.borderRadius, "7px");
+});
+
+test("Plus Emerald keeps unread notifications and coin balance on a single row", () => {
+  dom(`<div id="Rightbar"><div class="box">
+    <div class="cell" id="member-activity"><div class="member-activity-bar"></div></div>
+    <div class="cell flex-one-row" id="member-balance-row">
+      <a href="/notifications" class="fade" id="direct-unread">1 未读提醒</a>
+      <input type="button" class="super special button" value="1 未读提醒" onclick="location.href = '/notifications';">
+      <div id="balance-wrap">
+        <a href="/balance" class="balance_area">7 <img src="/static/img/gold@2x.png"> 81 <img src="/static/img/silver@2x.png"> 73 <img src="/static/img/bronze@2x.png"></a>
+        <a href="/help/currency">?</a>
+      </div>
+    </div>
+  </div></div>`);
+  document.documentElement.dataset.vxTheme = "plus-emerald";
+  const legacyCachedRules = `
+    #Rightbar > .box:has(#member-activity) > .cell > a[href="/notifications"] { display: none !important; }
+    #Rightbar > .box:has(#member-activity) > .cell:has(.balance_area) { justify-content: center; padding: 8px 16px 12px !important; }
+    #Rightbar > .box:has(#member-activity) .balance_area { gap: 10px; }
+  `;
+  const style = document.createElement("style");
+  style.textContent = `${readFileSync("src/styles.css", "utf8")}\n${readFileSync(
+    "src/themes/plus-emerald.css",
+    "utf8",
+  )}\n${legacyCachedRules}`;
+  document.head.append(style);
+  const row = window.getComputedStyle(document.getElementById("member-balance-row"));
+  const directUnread = window.getComputedStyle(document.getElementById("direct-unread"));
+  const unreadBtn = window.getComputedStyle(
+    document.querySelector('#member-balance-row input[type="button"]'),
+  );
+  const balanceWrap = window.getComputedStyle(document.getElementById("balance-wrap"));
+  const balance = window.getComputedStyle(document.querySelector(".balance_area"));
+  assert.equal(row.display, "flex");
+  assert.equal(row.flexWrap, "nowrap");
+  assert.equal(row.paddingLeft, "8px");
+  assert.equal(row.paddingRight, "8px");
+  assert.notEqual(directUnread.display, "none");
+  assert.equal(directUnread.whiteSpace, "nowrap");
+  assert.equal(unreadBtn.whiteSpace, "nowrap");
+  assert.equal(unreadBtn.height, "24px");
+  assert.equal(unreadBtn.fontSize, "12px");
+  assert.equal(balanceWrap.display, "flex");
+  assert.equal(balanceWrap.marginLeft, "auto");
+  assert.equal(balanceWrap.whiteSpace, "nowrap");
+  assert.equal(balance.flexWrap, "nowrap");
+  assert.equal(balance.whiteSpace, "nowrap");
+  assert.equal(balance.gap, "3px");
+});
+
+test("Plus Emerald pins the coin balance to the right edge even when it is alone", () => {
+  dom(`<div id="Rightbar"><div class="box">
+    <div class="cell" id="member-activity"></div>
+    <div class="cell flex-one-row" id="solo-row"><a href="/balance" class="balance_area">7 <img src="/g.png"> 81 <img src="/s.png"></a></div>
+  </div></div>`);
+  document.documentElement.dataset.vxTheme = "plus-emerald";
+  const style = document.createElement("style");
+  style.textContent = `${readFileSync("src/styles.css", "utf8")}\n${readFileSync(
+    "src/themes/plus-emerald.css",
+    "utf8",
+  )}`;
+  document.head.append(style);
+  const balance = window.getComputedStyle(document.querySelector("#solo-row .balance_area"));
+  assert.equal(balance.marginLeft, "auto");
 });

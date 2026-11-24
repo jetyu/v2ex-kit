@@ -1,115 +1,1227 @@
-@mixin palette($page, $panel, $ink, $accent, $dark-page, $dark-panel, $dark-ink, $dark-accent) {
-  --vx-palette-page: #{$page};
-  --vx-palette-panel: #{$panel};
-  --vx-palette-ink: #{$ink};
-  --vx-palette-accent: #{$accent};
+/* 1. VS Code (Light Modern / Dark Modern) */
+:root[data-vx-theme="vscode"] {
+  --vx-theme-box-radius: 4px;
+  --vx-theme-input-radius: 3px;
+  --vx-theme-button-radius: 3px;
+  --vx-theme-popup-radius: 4px;
+
+  --vx-palette-page: #f8f8f8;
+  --vx-palette-panel: #ffffff;
+  --vx-palette-ink: #3b3b3b;
+  --vx-palette-accent: #005fb8;
+  --vx-vscode-focus: #005fb8;
+  --vx-vscode-button: #005fb8;
+  --vx-vscode-secondary-btn: #e5e5e5;
+  --vx-vscode-secondary-hover: #d6d6d6;
+  --vx-vscode-border: #e5e5e5;
+  --vx-vscode-widget-border: #cecece;
+  --vx-vscode-input-bg: #ffffff;
+  --vx-vscode-input-border: #cecece;
+  --vx-vscode-widget-bg: #f8f8f8;
+  --vx-vscode-tab-active-fg: #3b3b3b;
+  --vx-vscode-tab-inactive-fg: #616161;
+  --vx-vscode-muted-fg: #6e7681;
+  --vx-vscode-code-bg: #f3f3f3;
+  --vx-vscode-code-block-bg: #f8f8f8;
+  --vx-vscode-quote-bg: #f8f8f8;
+  --vx-vscode-badge-bg: #e8e8e8;
+  --vx-vscode-badge-fg: #3b3b3b;
+  --vx-vscode-selection: #add6ff;
+  --vx-vscode-selection-list: #0060c0;
+  --vx-vscode-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+  --vx-vscode-mask: rgb(0 0 0 / 32%);
+  --vx-vscode-warn-bg: #fff8e6;
+  --vx-vscode-warn-border: #e0b958;
+  --vx-vscode-warn-fg: #8a5a00;
+  --vx-vscode-scroll-thumb: rgb(100 100 100 / 35%);
 
   &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
-    --vx-palette-page: #{$dark-page};
-    --vx-palette-panel: #{$dark-panel};
-    --vx-palette-ink: #{$dark-ink};
-    --vx-palette-accent: #{$dark-accent};
-    --vx-dark-accent: var(--vx-palette-accent);
+    --vx-palette-page: #181818;
+    --vx-palette-panel: #1f1f1f;
+    --vx-palette-ink: #cccccc;
+    --vx-palette-accent: #4daafc;
+    --vx-dark-accent: #4daafc;
+    --vx-vscode-focus: #0078d4;
+    --vx-vscode-button: #0078d4;
+    --vx-vscode-secondary-btn: #313131;
+    --vx-vscode-secondary-hover: #3c3c3c;
+    --vx-vscode-border: #2b2b2b;
+    --vx-vscode-widget-border: #454545;
+    --vx-vscode-input-bg: #313131;
+    --vx-vscode-input-border: #3c3c3c;
+    --vx-vscode-widget-bg: #202020;
+    --vx-vscode-tab-active-fg: #ffffff;
+    --vx-vscode-tab-inactive-fg: #9d9d9d;
+    --vx-vscode-muted-fg: #8b949e;
+    --vx-vscode-code-bg: #2a2d2e;
+    --vx-vscode-code-block-bg: #181818;
+    --vx-vscode-quote-bg: #222222;
+    --vx-vscode-badge-bg: #313131;
+    --vx-vscode-badge-fg: #cccccc;
+    --vx-vscode-selection: #264f78;
+    --vx-vscode-selection-list: #04395e;
+    --vx-vscode-shadow: 0 4px 16px rgb(0 0 0 / 36%);
+    --vx-vscode-mask: rgb(0 0 0 / 56%);
+    --vx-vscode-warn-bg: #332b19;
+    --vx-vscode-warn-border: #6e5621;
+    --vx-vscode-warn-fg: #e2c08d;
+    --vx-vscode-scroll-thumb: rgb(121 121 121 / 40%);
   }
 }
 
-:root[data-vx-theme="vscode"] {
-  @include palette(#f8f8f8, #fff, #3b3b3b, #005fb8, #181818, #1f1f1f, #ccc, #4daafc);
-  --vx-vscode-button: #005fb8;
-  --vx-vscode-hover: #0258a8;
+/* 2. GitHub Primer (Light Default / Dark Dimmed) */
+:root[data-vx-theme="github"] {
+  --vx-theme-box-radius: 6px;
+  --vx-theme-input-radius: 6px;
+  --vx-theme-button-radius: 6px;
+  --vx-theme-popup-radius: 6px;
+
+  --vx-palette-page: #f6f8fa;
+  --vx-palette-panel: #ffffff;
+  --vx-palette-ink: #1f2328;
+  --vx-palette-accent: #0969da;
+  --vx-vscode-focus: #0969da;
+  --vx-vscode-button: #0969da;
+  --vx-vscode-secondary-btn: #f6f8fa;
+  --vx-vscode-secondary-hover: #eef1f4;
+  --vx-vscode-border: #d0d7de;
+  --vx-vscode-widget-border: #d0d7de;
+  --vx-vscode-input-bg: #ffffff;
+  --vx-vscode-input-border: #d0d7de;
+  --vx-vscode-widget-bg: #ffffff;
+  --vx-vscode-tab-active-fg: #1f2328;
+  --vx-vscode-tab-inactive-fg: #59636e;
+  --vx-vscode-muted-fg: #656d76;
+  --vx-vscode-code-bg: #eff1f3;
+  --vx-vscode-code-block-bg: #f6f8fa;
+  --vx-vscode-quote-bg: #f6f8fa;
+  --vx-vscode-badge-bg: #eff1f3;
+  --vx-vscode-badge-fg: #1f2328;
+  --vx-vscode-selection: #b6e3ff;
+  --vx-vscode-selection-list: #0969da;
+  --vx-vscode-shadow: 0 8px 24px rgb(140 149 159 / 20%);
+  --vx-vscode-mask: rgb(27 31 36 / 32%);
+  --vx-vscode-warn-bg: #fff8c5;
+  --vx-vscode-warn-border: #d4a72c;
+  --vx-vscode-warn-fg: #9a6700;
+  --vx-vscode-scroll-thumb: rgb(140 149 159 / 40%);
 
   &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
-    --vx-vscode-button: #0078d4;
-    --vx-vscode-hover: #026ec1;
+    --vx-palette-page: #1c2128;
+    --vx-palette-panel: #22272e;
+    --vx-palette-ink: #adbac7;
+    --vx-palette-accent: #539bf5;
+    --vx-dark-accent: #539bf5;
+    --vx-vscode-focus: #316dca;
+    --vx-vscode-button: #316dca;
+    --vx-vscode-secondary-btn: #2d333b;
+    --vx-vscode-secondary-hover: #373e47;
+    --vx-vscode-border: #373e47;
+    --vx-vscode-widget-border: #444c56;
+    --vx-vscode-input-bg: #1c2128;
+    --vx-vscode-input-border: #444c56;
+    --vx-vscode-widget-bg: #2d333b;
+    --vx-vscode-tab-active-fg: #cdd9e5;
+    --vx-vscode-tab-inactive-fg: #768390;
+    --vx-vscode-muted-fg: #768390;
+    --vx-vscode-code-bg: #2d333b;
+    --vx-vscode-code-block-bg: #1c2128;
+    --vx-vscode-quote-bg: #1c2128;
+    --vx-vscode-badge-bg: #2d333b;
+    --vx-vscode-badge-fg: #adbac7;
+    --vx-vscode-selection: #264f78;
+    --vx-vscode-selection-list: #316dca;
+    --vx-vscode-shadow: 0 8px 24px rgb(28 33 40 / 50%);
+    --vx-vscode-mask: rgb(0 0 0 / 55%);
+    --vx-vscode-warn-bg: #342a18;
+    --vx-vscode-warn-border: #9e6a03;
+    --vx-vscode-warn-fg: #d29922;
+    --vx-vscode-scroll-thumb: rgb(118 131 144 / 40%);
+  }
+}
+
+/* 3. Linear (Minimal Graphite / Indigo) */
+:root[data-vx-theme="linear"] {
+  --vx-theme-box-radius: 6px;
+  --vx-theme-input-radius: 5px;
+  --vx-theme-button-radius: 5px;
+  --vx-theme-popup-radius: 6px;
+
+  --vx-palette-page: #f4f5f8;
+  --vx-palette-panel: #ffffff;
+  --vx-palette-ink: #1b1b1f;
+  --vx-palette-accent: #5e6ad2;
+  --vx-vscode-focus: #5e6ad2;
+  --vx-vscode-button: #5e6ad2;
+  --vx-vscode-secondary-btn: #ededf2;
+  --vx-vscode-secondary-hover: #e2e3ea;
+  --vx-vscode-border: #e6e7ec;
+  --vx-vscode-widget-border: #d6d8e1;
+  --vx-vscode-input-bg: #ffffff;
+  --vx-vscode-input-border: #d6d8e1;
+  --vx-vscode-widget-bg: #ffffff;
+  --vx-vscode-tab-active-fg: #1b1b1f;
+  --vx-vscode-tab-inactive-fg: #5f626e;
+  --vx-vscode-muted-fg: #80838f;
+  --vx-vscode-code-bg: #f0f1f5;
+  --vx-vscode-code-block-bg: #f7f8fa;
+  --vx-vscode-quote-bg: #f7f8fa;
+  --vx-vscode-badge-bg: #ededf2;
+  --vx-vscode-badge-fg: #1b1b1f;
+  --vx-vscode-selection: #d8dcff;
+  --vx-vscode-selection-list: #5e6ad2;
+  --vx-vscode-shadow: 0 4px 16px rgb(15 18 28 / 10%);
+  --vx-vscode-mask: rgb(15 18 28 / 32%);
+  --vx-vscode-warn-bg: #fef6e6;
+  --vx-vscode-warn-border: #e2a336;
+  --vx-vscode-warn-fg: #946200;
+  --vx-vscode-scroll-thumb: rgb(128 131 143 / 35%);
+
+  &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
+    --vx-palette-page: #0b0c0e;
+    --vx-palette-panel: #131417;
+    --vx-palette-ink: #e3e5e8;
+    --vx-palette-accent: #828fff;
+    --vx-dark-accent: #828fff;
+    --vx-vscode-focus: #5e6ad2;
+    --vx-vscode-button: #5e6ad2;
+    --vx-vscode-secondary-btn: #1e2025;
+    --vx-vscode-secondary-hover: #282b32;
+    --vx-vscode-border: #22242a;
+    --vx-vscode-widget-border: #31343d;
+    --vx-vscode-input-bg: #17181c;
+    --vx-vscode-input-border: #2c2f37;
+    --vx-vscode-widget-bg: #191a1f;
+    --vx-vscode-tab-active-fg: #f7f8f8;
+    --vx-vscode-tab-inactive-fg: #8a8f98;
+    --vx-vscode-muted-fg: #6b707a;
+    --vx-vscode-code-bg: #1e2025;
+    --vx-vscode-code-block-bg: #0d0e11;
+    --vx-vscode-quote-bg: #17181c;
+    --vx-vscode-badge-bg: #1e2025;
+    --vx-vscode-badge-fg: #e3e5e8;
+    --vx-vscode-selection: #2e3468;
+    --vx-vscode-selection-list: #5e6ad2;
+    --vx-vscode-shadow: 0 8px 28px rgb(0 0 0 / 55%);
+    --vx-vscode-mask: rgb(0 0 0 / 60%);
+    --vx-vscode-warn-bg: #292113;
+    --vx-vscode-warn-border: #855c1b;
+    --vx-vscode-warn-fg: #e6b450;
+    --vx-vscode-scroll-thumb: rgb(107 112 122 / 40%);
+  }
+}
+
+/* 4. Notion (Warm Paper / Warm Dark) */
+:root[data-vx-theme="notion"] {
+  --vx-theme-box-radius: 6px;
+  --vx-theme-input-radius: 4px;
+  --vx-theme-button-radius: 4px;
+  --vx-theme-popup-radius: 6px;
+
+  --vx-palette-page: #f7f6f3;
+  --vx-palette-panel: #ffffff;
+  --vx-palette-ink: #37352f;
+  --vx-palette-accent: #2383e2;
+  --vx-vscode-focus: #2383e2;
+  --vx-vscode-button: #2383e2;
+  --vx-vscode-secondary-btn: #f1f1ef;
+  --vx-vscode-secondary-hover: #e8e7e4;
+  --vx-vscode-border: #e9e9e7;
+  --vx-vscode-widget-border: #dfdeda;
+  --vx-vscode-input-bg: #ffffff;
+  --vx-vscode-input-border: #dfdeda;
+  --vx-vscode-widget-bg: #ffffff;
+  --vx-vscode-tab-active-fg: #37352f;
+  --vx-vscode-tab-inactive-fg: #787774;
+  --vx-vscode-muted-fg: #9b9a97;
+  --vx-vscode-code-bg: #f1f1ef;
+  --vx-vscode-code-block-bg: #f7f6f3;
+  --vx-vscode-quote-bg: #f7f6f3;
+  --vx-vscode-badge-bg: #f1f1ef;
+  --vx-vscode-badge-fg: #37352f;
+  --vx-vscode-selection: #cce5ff;
+  --vx-vscode-selection-list: #2383e2;
+  --vx-vscode-shadow: 0 4px 16px rgb(15 15 15 / 10%);
+  --vx-vscode-mask: rgb(15 15 15 / 32%);
+  --vx-vscode-warn-bg: #fbf3db;
+  --vx-vscode-warn-border: #dfab01;
+  --vx-vscode-warn-fg: #9a6700;
+  --vx-vscode-scroll-thumb: rgb(120 119 116 / 35%);
+
+  &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
+    --vx-palette-page: #191919;
+    --vx-palette-panel: #202020;
+    --vx-palette-ink: #d4d4d4;
+    --vx-palette-accent: #529cca;
+    --vx-dark-accent: #529cca;
+    --vx-vscode-focus: #2383e2;
+    --vx-vscode-button: #2383e2;
+    --vx-vscode-secondary-btn: #2c2c2b;
+    --vx-vscode-secondary-hover: #373736;
+    --vx-vscode-border: #2f2f2f;
+    --vx-vscode-widget-border: #3f3f3f;
+    --vx-vscode-input-bg: #252525;
+    --vx-vscode-input-border: #3a3a3a;
+    --vx-vscode-widget-bg: #252525;
+    --vx-vscode-tab-active-fg: #ffffff;
+    --vx-vscode-tab-inactive-fg: #9b9a97;
+    --vx-vscode-muted-fg: #7f7f7f;
+    --vx-vscode-code-bg: #2c2c2b;
+    --vx-vscode-code-block-bg: #191919;
+    --vx-vscode-quote-bg: #252525;
+    --vx-vscode-badge-bg: #2f2f2f;
+    --vx-vscode-badge-fg: #d4d4d4;
+    --vx-vscode-selection: #264a6e;
+    --vx-vscode-selection-list: #2383e2;
+    --vx-vscode-shadow: 0 6px 20px rgb(0 0 0 / 42%);
+    --vx-vscode-mask: rgb(0 0 0 / 56%);
+    --vx-vscode-warn-bg: #372e20;
+    --vx-vscode-warn-border: #8f6a1a;
+    --vx-vscode-warn-fg: #e2b96b;
+    --vx-vscode-scroll-thumb: rgb(155 154 151 / 35%);
+  }
+}
+
+/* 5. Catppuccin (Latte / Mocha) */
+:root[data-vx-theme="catppuccin"] {
+  --vx-theme-box-radius: 8px;
+  --vx-theme-input-radius: 6px;
+  --vx-theme-button-radius: 6px;
+  --vx-theme-popup-radius: 8px;
+
+  --vx-palette-page: #e6e9ef;
+  --vx-palette-panel: #eff1f5;
+  --vx-palette-ink: #4c4f69;
+  --vx-palette-accent: #1e66f5;
+  --vx-vscode-focus: #1e66f5;
+  --vx-vscode-button: #1e66f5;
+  --vx-vscode-secondary-btn: #ccd0da;
+  --vx-vscode-secondary-hover: #bcc0cc;
+  --vx-vscode-border: #ccd0da;
+  --vx-vscode-widget-border: #bcc0cc;
+  --vx-vscode-input-bg: #e6e9ef;
+  --vx-vscode-input-border: #bcc0cc;
+  --vx-vscode-widget-bg: #eff1f5;
+  --vx-vscode-tab-active-fg: #4c4f69;
+  --vx-vscode-tab-inactive-fg: #6c6f85;
+  --vx-vscode-muted-fg: #7c7f93;
+  --vx-vscode-code-bg: #dce0e8;
+  --vx-vscode-code-block-bg: #e6e9ef;
+  --vx-vscode-quote-bg: #e6e9ef;
+  --vx-vscode-badge-bg: #ccd0da;
+  --vx-vscode-badge-fg: #4c4f69;
+  --vx-vscode-selection: #acb0be;
+  --vx-vscode-selection-list: #1e66f5;
+  --vx-vscode-shadow: 0 6px 18px rgb(76 79 105 / 12%);
+  --vx-vscode-mask: rgb(76 79 105 / 32%);
+  --vx-vscode-warn-bg: #f9e2af;
+  --vx-vscode-warn-border: #df8e1d;
+  --vx-vscode-warn-fg: #8d570b;
+  --vx-vscode-scroll-thumb: rgb(124 127 147 / 40%);
+
+  &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
+    --vx-palette-page: #181825;
+    --vx-palette-panel: #1e1e2e;
+    --vx-palette-ink: #cdd6f4;
+    --vx-palette-accent: #89b4fa;
+    --vx-dark-accent: #89b4fa;
+    --vx-vscode-focus: #89b4fa;
+    --vx-vscode-button: #3b6fd8;
+    --vx-vscode-secondary-btn: #313244;
+    --vx-vscode-secondary-hover: #45475a;
+    --vx-vscode-border: #313244;
+    --vx-vscode-widget-border: #45475a;
+    --vx-vscode-input-bg: #181825;
+    --vx-vscode-input-border: #45475a;
+    --vx-vscode-widget-bg: #181825;
+    --vx-vscode-tab-active-fg: #cdd6f4;
+    --vx-vscode-tab-inactive-fg: #a6adc8;
+    --vx-vscode-muted-fg: #9399b2;
+    --vx-vscode-code-bg: #313244;
+    --vx-vscode-code-block-bg: #11111b;
+    --vx-vscode-quote-bg: #181825;
+    --vx-vscode-badge-bg: #313244;
+    --vx-vscode-badge-fg: #cdd6f4;
+    --vx-vscode-selection: #45475a;
+    --vx-vscode-selection-list: #3b6fd8;
+    --vx-vscode-shadow: 0 8px 24px rgb(17 17 27 / 55%);
+    --vx-vscode-mask: rgb(17 17 27 / 60%);
+    --vx-vscode-warn-bg: #332b22;
+    --vx-vscode-warn-border: #f9e2af;
+    --vx-vscode-warn-fg: #f9e2af;
+    --vx-vscode-scroll-thumb: rgb(147 153 178 / 40%);
+  }
+}
+
+/* 6. Zhihu / Juejin Blue (Ant Design Clean Blue) */
+:root[data-vx-theme="zhihu"] {
+  --vx-theme-box-radius: 8px;
+  --vx-theme-input-radius: 6px;
+  --vx-theme-button-radius: 6px;
+  --vx-theme-popup-radius: 8px;
+
+  --vx-palette-page: #f4f6f9;
+  --vx-palette-panel: #ffffff;
+  --vx-palette-ink: #1f2329;
+  --vx-palette-accent: #1677ff;
+  --vx-vscode-focus: #1677ff;
+  --vx-vscode-button: #1677ff;
+  --vx-vscode-secondary-btn: #f2f3f5;
+  --vx-vscode-secondary-hover: #e5e6eb;
+  --vx-vscode-border: #eaedf1;
+  --vx-vscode-widget-border: #d9dde3;
+  --vx-vscode-input-bg: #f7f8fa;
+  --vx-vscode-input-border: #d9dde3;
+  --vx-vscode-widget-bg: #ffffff;
+  --vx-vscode-tab-active-fg: #1f2329;
+  --vx-vscode-tab-inactive-fg: #515767;
+  --vx-vscode-muted-fg: #8a919f;
+  --vx-vscode-code-bg: #f2f3f5;
+  --vx-vscode-code-block-bg: #f7f8fa;
+  --vx-vscode-quote-bg: #f7f8fa;
+  --vx-vscode-badge-bg: #eaf2ff;
+  --vx-vscode-badge-fg: #1677ff;
+  --vx-vscode-selection: #bae0ff;
+  --vx-vscode-selection-list: #1677ff;
+  --vx-vscode-shadow: 0 6px 20px rgb(0 0 0 / 8%);
+  --vx-vscode-mask: rgb(0 0 0 / 32%);
+  --vx-vscode-warn-bg: #fffbe6;
+  --vx-vscode-warn-border: #ffe58f;
+  --vx-vscode-warn-fg: #ad6800;
+  --vx-vscode-scroll-thumb: rgb(138 145 159 / 35%);
+
+  &:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) {
+    --vx-palette-page: #121212;
+    --vx-palette-panel: #1b1c1f;
+    --vx-palette-ink: #dbdee3;
+    --vx-palette-accent: #4096ff;
+    --vx-dark-accent: #4096ff;
+    --vx-vscode-focus: #1677ff;
+    --vx-vscode-button: #1677ff;
+    --vx-vscode-secondary-btn: #27282c;
+    --vx-vscode-secondary-hover: #323439;
+    --vx-vscode-border: #2a2c30;
+    --vx-vscode-widget-border: #3a3d44;
+    --vx-vscode-input-bg: #222327;
+    --vx-vscode-input-border: #36383f;
+    --vx-vscode-widget-bg: #222327;
+    --vx-vscode-tab-active-fg: #ffffff;
+    --vx-vscode-tab-inactive-fg: #9499a3;
+    --vx-vscode-muted-fg: #6f7580;
+    --vx-vscode-code-bg: #27282c;
+    --vx-vscode-code-block-bg: #141517;
+    --vx-vscode-quote-bg: #222327;
+    --vx-vscode-badge-bg: #182b49;
+    --vx-vscode-badge-fg: #69b1ff;
+    --vx-vscode-selection: #15395b;
+    --vx-vscode-selection-list: #1677ff;
+    --vx-vscode-shadow: 0 8px 24px rgb(0 0 0 / 48%);
+    --vx-vscode-mask: rgb(0 0 0 / 56%);
+    --vx-vscode-warn-bg: #2b2111;
+    --vx-vscode-warn-border: #7c5914;
+    --vx-vscode-warn-fg: #e8b339;
+    --vx-vscode-scroll-thumb: rgb(111 117 128 / 40%);
+  }
+}
+
+/* Shared layout & component surface rules across all built-in palette themes */
+:root[data-vx-palette] {
+  scrollbar-color: var(--vx-vscode-scroll-thumb) transparent;
+
+  /* Title bar & Status bar */
+  body :is(#Top, #site-header) {
+    background-color: var(--vx-palette-page);
+    border-bottom: 1px solid var(--vx-vscode-border);
   }
 
-  &,
-  & body {
-    --v2p-box-radius: 6px;
-    --v2p-input-radius: 4px;
-    --v2p-button-radius: 4px;
-    --v2p-popup-radius: 6px;
+  body #Top .tools .top {
+    border-radius: var(--v2p-button-radius);
+    color: var(--vx-vscode-tab-inactive-fg);
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: transparent;
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--vx-vscode-focus);
+      outline-offset: -1px;
+    }
   }
 
-  body :is(#Top, #site-header, #Main #Tabs, #Rightbar > .box) {
-    background: var(--vx-palette-page);
+  body #Bottom {
+    background-color: var(--vx-palette-page);
+    border-top: 1px solid var(--vx-vscode-border);
+    color: var(--vx-vscode-tab-inactive-fg);
+
+    a.dark:hover {
+      color: var(--vx-palette-accent);
+      text-decoration: none;
+    }
   }
 
+  /* Search input & dropdown */
+  body #search-container {
+    border: 1px solid var(--vx-vscode-input-border);
+    border-radius: var(--v2p-input-radius);
+    background-color: var(--vx-vscode-input-bg);
+
+    &:is(.active, :focus-within) {
+      border-color: var(--vx-vscode-focus);
+      background-color: var(--vx-vscode-input-bg);
+      box-shadow: 0 0 0 1px var(--vx-vscode-focus);
+    }
+
+    #search-result {
+      border: 1px solid var(--vx-vscode-widget-border);
+      border-radius: var(--v2p-popup-radius);
+      background: var(--vx-vscode-widget-bg);
+      backdrop-filter: none;
+      box-shadow: var(--vx-vscode-shadow);
+
+      .search-item {
+        border-radius: var(--v2p-button-radius);
+        font-weight: 500;
+
+        &:hover {
+          color: var(--vx-palette-accent);
+          background-color: transparent;
+        }
+
+        &.active:not(.v2p-no-active) {
+          color: #ffffff;
+          background-color: var(--vx-vscode-selection-list);
+        }
+      }
+    }
+  }
+
+  /* Unified cards: #Main, #Rightbar, #Singleton & node headers */
+  body :is(#Main > .box, #Rightbar > .box, #Singleton, #workspace) {
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-box-radius);
+    background-color: var(--vx-palette-panel);
+    background-image: none;
+    box-shadow: none;
+  }
+
+  body #Rightbar > .box {
+    .cell {
+      border-bottom-color: var(--vx-vscode-border);
+    }
+
+    :is(.balance_area, a.balance_area:is(:link, :visited)) {
+      border: 1px solid var(--vx-vscode-border);
+      border-radius: var(--v2p-button-radius);
+      background: var(--vx-palette-page);
+
+      &:hover {
+        border-color: var(--vx-vscode-border);
+        background: var(--vx-palette-page);
+        text-decoration: none;
+      }
+    }
+
+    .v2p-info-row:hover {
+      background-color: transparent;
+    }
+  }
+
+  /* Flush edge-to-edge bars inside padded #Main cards */
+  body
+    #Main
+    .box:not(:has(.cell[id^="r_"]))
+    > :is(#Tabs, #SecondaryTabs, .cell_tabs, .topic_buttons, .dock_area),
+  body #Main #top_replies > .cell:first-child {
+    margin-inline: calc(var(--v2p-spacing-box) * -1);
+    padding-inline: calc(var(--v2p-spacing-box) + var(--v2p-tp-tabs-pd));
+  }
+
+  /* Native category tabs with theme accent active pill & clean node bar */
   body #Main #Tabs {
-    .tab_current {
-      border-radius: 999px;
-      color: #fff;
-      background: var(--vx-vscode-button);
-      box-shadow: none;
+    border-bottom-color: var(--vx-vscode-border);
+    background-color: var(--vx-palette-panel);
+  }
+
+  body #Main .tab {
+    color: var(--vx-palette-ink);
+    background-color: transparent;
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: transparent;
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--vx-vscode-focus);
+      outline-offset: -1px;
+    }
+  }
+
+  body #Main .tab_current {
+    border-radius: var(--v2p-button-radius);
+    color: #ffffff;
+    background-color: var(--vx-vscode-button);
+    box-shadow: none;
+
+    &:hover {
+      color: #ffffff;
+      background-color: var(--vx-vscode-button);
+      text-decoration: none;
     }
   }
 
   body #Main #SecondaryTabs {
-    border-radius: 999px;
-    background: var(--v2p-color-accent-100);
+    border-bottom: 1px solid var(--vx-vscode-border);
+    border-radius: 0;
+    color: var(--vx-vscode-muted-fg);
+    background-color: var(--vx-palette-page);
+
+    a {
+      color: var(--vx-vscode-tab-inactive-fg);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--vx-palette-accent);
+        background-color: transparent;
+        text-decoration: none;
+      }
+
+      &:focus-visible {
+        outline: 1px solid var(--vx-vscode-focus);
+        outline-offset: -1px;
+      }
+    }
+
+    .fr a {
+      color: var(--vx-palette-accent);
+      font-weight: 500;
+
+      &:hover {
+        color: var(--vx-palette-accent);
+        background-color: transparent;
+        text-decoration: none;
+      }
+    }
+  }
+
+  /* Node page header (/go/*) & panel tabs (.cell_tabs) */
+  body #Main .box.node-header {
+    color: var(--vx-palette-ink);
+    background-color: var(--vx-palette-panel);
+
+    .page-content-header {
+      color: var(--vx-palette-ink);
+      background-color: transparent;
+    }
+
+    .node-breadcrumb a {
+      color: var(--vx-palette-accent);
+    }
+
+    :is(.intro, .topic-count) {
+      color: var(--vx-vscode-tab-inactive-fg);
+    }
+  }
+
+  body #Main .cell_tabs {
+    border-bottom: 1px solid var(--vx-vscode-border);
+    background-color: var(--vx-palette-panel);
+
+    .cell_tab {
+      color: var(--vx-vscode-tab-inactive-fg);
+
+      &:hover {
+        color: var(--vx-palette-accent);
+        border-color: transparent;
+        text-decoration: none;
+      }
+    }
+
+    .cell_tab_current {
+      border-bottom: 2px solid var(--vx-vscode-focus);
+      color: var(--vx-palette-accent);
+    }
+  }
+
+  /* Topic list rows */
+  body #Main .cell.item {
+    border-bottom-color: var(--vx-vscode-border);
+
+    .topic-link:hover {
+      color: var(--vx-palette-accent);
+    }
+  }
+
+  /* Unified node, topic & member tag chips */
+  body
+    :is(
+      #Main a.node:any-link,
+      #Rightbar > .box .item_node,
+      .box .tag:is(:link, :visited),
+      .vx-tags,
+      .v2p-reply-tags
+    ) {
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-button-radius);
+    color: var(--vx-vscode-tab-inactive-fg);
+    background-color: var(--vx-palette-page);
+    box-shadow: none;
+    text-decoration: none;
+
+    &:hover {
+      border-color: var(--vx-vscode-border);
+      color: var(--vx-palette-accent);
+      background-color: var(--vx-palette-page);
+      box-shadow: none;
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--vx-vscode-focus);
+      outline-offset: -1px;
+    }
   }
 
   body #Main a.node:any-link {
-    padding: 0;
-    border-radius: 0;
-    color: var(--vx-palette-accent);
-    background: transparent;
+    padding: 1px 6px;
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
 
-    &:is(:hover, :focus-visible) {
-      text-decoration: underline;
+  body #Rightbar > .box .item_node {
+    padding: 2px 7px;
+  }
+
+  /* Unified counters & status badges */
+  body #Main .cell :is(.count_livid, .count_orange) {
+    padding: 2px 8px;
+    border-radius: var(--v2p-button-radius);
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  body #Main .cell .count_livid {
+    color: var(--vx-vscode-badge-fg);
+    background-color: var(--vx-vscode-badge-bg);
+
+    &:hover {
+      color: var(--vx-vscode-badge-fg);
+      background-color: var(--vx-vscode-badge-bg);
+      text-decoration: none;
     }
   }
 
-  body :is(#Main, #Rightbar) > .box {
-    border-radius: var(--v2p-box-radius);
+  body #Main .cell .count_orange,
+  body .online {
+    border-radius: var(--v2p-button-radius);
+    color: #ffffff;
+    background: var(--vx-vscode-button);
   }
 
-  body :is(#Top, #Main, #Rightbar) .button.special:not(:disabled),
-  body #reply-box :is(input, button)[type="submit"]:enabled,
-  body #reply-box .vx-editor-action-button:enabled {
-    border: 1px solid transparent;
+  /* Topic, reply & preview prose: links, code, blockquotes, supplements, actions */
+  body
+    :is(
+      .topic_content,
+      .reply_content,
+      .v2p-topic-preview-content,
+      .v2p-topic-preview-addons,
+      .v2p-reply-preview,
+      .v2p-lite-reply-preview,
+      .markdown_body
+    ) {
+    a[href] {
+      color: var(--vx-palette-accent);
+      background-color: transparent;
+      text-decoration: none;
+
+      &:hover {
+        color: var(--vx-palette-accent);
+        background-color: transparent;
+        text-decoration: underline;
+        text-underline-offset: 0.28em;
+      }
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid var(--vx-vscode-border);
+      border-radius: var(--v2p-button-radius);
+      color: var(--vx-palette-ink);
+      background-color: var(--vx-vscode-code-bg);
+    }
+
+    pre {
+      padding: 10px 12px;
+      border: 1px solid var(--vx-vscode-border);
+      border-radius: var(--v2p-box-radius);
+      color: var(--vx-palette-ink);
+      background-color: var(--vx-vscode-code-block-bg);
+
+      :is(code, .hljs) {
+        padding: 0;
+        border: none;
+        background-color: transparent;
+      }
+    }
+
+    blockquote {
+      margin-inline: 0;
+      padding: 6px 12px;
+      border-left: 3px solid var(--vx-vscode-focus);
+      border-radius: 0 var(--v2p-button-radius) var(--v2p-button-radius) 0;
+      color: var(--vx-vscode-tab-inactive-fg);
+      background-color: var(--vx-vscode-quote-bg);
+    }
+  }
+
+  body #Main :is(.topic_content, .reply_content) a[href^="/member"] {
+    color: var(--vx-palette-accent);
+    background-color: transparent;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: transparent;
+      text-decoration: underline;
+      text-underline-offset: 0.28em;
+    }
+  }
+
+  body #Main .subtle {
+    border-top: 1px solid var(--vx-vscode-border);
+    border-left: 3px solid var(--vx-vscode-focus);
+    background-color: var(--vx-vscode-quote-bg);
+    background-image: none;
+  }
+
+  body #Main .topic_buttons {
+    border-top: 1px solid var(--vx-vscode-border);
+    background-color: transparent;
+
+    a.tb:link:hover:not(.v2p-hover-btn) {
+      color: var(--vx-palette-accent);
+      background: transparent;
+      text-decoration: none;
+    }
+  }
+
+  body #Main .vote:link {
+    border: 1px solid var(--vx-vscode-input-border);
     border-radius: var(--v2p-button-radius);
-    color: #fff;
-    background: var(--vx-vscode-button);
+    color: var(--vx-vscode-tab-inactive-fg);
+    background-color: var(--vx-palette-panel);
     box-shadow: none;
 
     &:hover {
-      color: #fff;
-      background: var(--vx-vscode-hover);
+      border-color: var(--vx-vscode-input-border);
+      color: var(--vx-palette-accent);
+      background-color: var(--vx-palette-panel);
+      box-shadow: none;
+      text-decoration: none;
     }
   }
 
-  &[data-v2p-mobile] :is(body, #Main) {
-    min-width: 0 !important;
+  body #Main .dock_area {
+    border-block: 1px solid var(--vx-vscode-border);
+    background: var(--vx-palette-page);
+  }
+
+  body :is(.outdated, .problem, .message) {
+    border: 1px solid var(--vx-vscode-border);
+    border-left: 3px solid var(--vx-vscode-warn-border);
+    color: var(--vx-vscode-warn-fg);
+    background-color: var(--vx-vscode-warn-bg);
+  }
+
+  /* Hot replies, floor numbers, semantic badges & inline annotations */
+  body #top_replies {
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-box-radius);
+    background-color: var(--vx-palette-panel);
+
+    > .cell:first-child {
+      border-bottom: 1px solid var(--vx-vscode-border);
+      background-color: var(--vx-palette-page);
+
+      .fade {
+        color: var(--vx-palette-ink);
+        font-weight: 600;
+      }
+    }
+  }
+
+  body #Main .cell[id^="r_"] .no {
+    font-variant-numeric: tabular-nums;
+    color: var(--vx-vscode-muted-fg);
+  }
+
+  body a.no {
+    border-color: var(--vx-vscode-border);
+    border-radius: var(--v2p-button-radius) !important;
+    font-variant-numeric: tabular-nums;
+
+    &:hover {
+      border-color: var(--vx-vscode-border);
+      color: var(--vx-palette-accent);
+      background-color: transparent !important;
+      text-decoration: none;
+    }
+  }
+
+  body .badge {
+    border-radius: var(--v2p-button-radius);
+
+    &.op {
+      border-color: var(--v2p-color-accent-300);
+      color: var(--vx-palette-accent);
+      background-color: var(--v2p-color-accent-50);
+    }
+
+    &.mod {
+      border-color: var(--vx-vscode-button);
+      color: #ffffff;
+      background-color: var(--vx-vscode-button);
+    }
+
+    &.pro {
+      border-color: var(--vx-vscode-border);
+      color: var(--vx-palette-ink);
+      background-color: var(--vx-vscode-badge-bg);
+    }
+
+    &.you {
+      border-color: var(--vx-vscode-warn-border);
+      color: var(--vx-vscode-warn-fg);
+      background-color: var(--vx-vscode-warn-bg);
+    }
+  }
+
+  body :is(.v2p-decode, .v2p-register-days) {
+    border: 1px solid var(--vx-vscode-warn-border);
+    border-radius: var(--v2p-button-radius);
+    color: var(--vx-vscode-warn-fg);
+    background-color: var(--vx-vscode-warn-bg);
+  }
+
+  body .v2p-decode:hover {
+    color: var(--vx-vscode-warn-fg);
+    text-decoration: none;
+  }
+
+  body :is(.v2p-control, .v2p-decode)::after {
+    border: 1px solid var(--vx-vscode-widget-border);
+    border-radius: var(--v2p-popup-radius);
+    background-color: var(--vx-vscode-widget-bg);
+    box-shadow: var(--vx-vscode-shadow);
+  }
+
+  /* Flat buttons: secondary vs primary accent */
+  body
+    :is(
+      :is(#Top, #Main, #Rightbar, .v2p-popup, .v2p-modal-mask:not(#vx-settings-dialog))
+        .button:is(.normal, .super),
+      #reply-box .vx-editor-action-button:enabled,
+      .v2p-topic-preview-btn
+    ) {
+    border: 1px solid var(--vx-vscode-input-border);
+    border-radius: var(--v2p-button-radius);
+    color: var(--vx-palette-ink);
+    background: var(--vx-vscode-secondary-btn);
+    box-shadow: none;
+    transition: none;
+
+    &:is(:hover:enabled, :active:enabled, :hover) {
+      border-color: var(--vx-vscode-input-border);
+      color: var(--vx-palette-accent);
+      background: var(--vx-vscode-secondary-btn);
+      box-shadow: none;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--vx-vscode-focus);
+      outline-offset: 1px;
+    }
+  }
+
+  body .v2p-topic-preview-btn:active {
+    transform: none;
+  }
+
+  body
+    :is(
+      :is(#Top, #Main, #Rightbar, .v2p-popup, .v2p-modal-mask:not(#vx-settings-dialog))
+        .button.special:not(:disabled),
+      #reply-box :is(input, button)[type="submit"]:enabled
+    ) {
+    border: 1px solid var(--vx-vscode-button);
+    border-radius: var(--v2p-button-radius);
+    color: #ffffff;
+    background: var(--vx-vscode-button);
+    box-shadow: none;
+    transition: none;
+
+    &:is(:hover, :hover:enabled, :active:enabled) {
+      border-color: var(--vx-vscode-button);
+      color: #ffffff;
+      background: var(--vx-vscode-button);
+      box-shadow: none;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--vx-vscode-focus);
+      outline-offset: 1px;
+    }
+  }
+
+  body .social_label:is(:link, :visited, :active) {
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-button-radius);
+    color: var(--vx-palette-ink);
+    background-color: var(--vx-palette-page);
+    box-shadow: none;
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: var(--vx-palette-page);
+      text-decoration: none;
+    }
+  }
+
+  body a.btn_hero {
+    border-color: var(--vx-vscode-input-border);
+    border-radius: var(--v2p-button-radius);
+    color: var(--vx-palette-ink);
+    background-color: var(--vx-vscode-secondary-btn);
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: var(--vx-vscode-secondary-btn);
+      text-decoration: none;
+    }
+  }
+
+  body .onoffswitch label .frame::before {
+    background-color: var(--vx-vscode-button);
+  }
+
+  /* Flat pagination */
+  body :is(.page_normal, .page_current):is(:link, :visited) {
+    padding: 4px 9px;
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-button-radius);
+    box-shadow: none;
+    transition: none;
+  }
+
+  body .page_normal:is(:link, :visited) {
+    color: var(--vx-palette-ink);
+    background-color: var(--vx-palette-panel);
+
+    &:hover {
+      transform: none;
+      border-color: var(--vx-vscode-border);
+      color: var(--vx-palette-accent);
+      background-color: var(--vx-palette-panel);
+      text-decoration: none;
+    }
+  }
+
+  body .page_current:is(:link, :visited) {
+    border-color: var(--vx-vscode-button);
+    color: #ffffff;
+    background-color: var(--vx-vscode-button);
+  }
+
+  /* Inputs, selects & reply editor */
+  body
+    :is(
+      :is(#Top, #Main, #Rightbar, .v2p-modal-mask:not(#vx-settings-dialog))
+        :is(.ml, .mle, .mll, .sl, .sll, .sls, select),
+      #reply-box textarea
+    ) {
+    border: 1px solid var(--vx-vscode-input-border);
+    border-radius: var(--v2p-input-radius);
+    color: var(--vx-palette-ink);
+    background-color: var(--vx-vscode-input-bg);
+
+    &:hover {
+      border-color: var(--vx-vscode-input-border);
+    }
+
+    &:focus {
+      border-color: var(--vx-vscode-focus);
+      background-color: var(--vx-vscode-input-bg);
+      outline: 1px solid var(--vx-vscode-focus);
+      outline-offset: -1px;
+    }
+  }
+
+  body #reply-box.reply-box-sticky {
+    border: 1px solid var(--vx-vscode-widget-border);
+    outline: none;
+    box-shadow: var(--vx-vscode-shadow);
+  }
+
+  body .v2p-lite-reply-tabs {
+    padding: 2px;
+    gap: 2px;
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-button-radius);
+    background-color: var(--vx-palette-page);
+
+    .v2p-lite-reply-tab {
+      border-radius: var(--v2p-button-radius);
+      color: var(--vx-vscode-tab-inactive-fg);
+      background-color: transparent;
+
+      &:hover {
+        color: var(--vx-palette-accent);
+      }
+
+      &.is-active {
+        color: #ffffff;
+        background-color: var(--vx-vscode-button);
+        box-shadow: none;
+      }
+    }
+  }
+
+  body #syntax-selector .radio-group {
+    border: 1px solid var(--vx-vscode-border);
+    border-radius: var(--v2p-button-radius);
+    background-color: var(--vx-palette-page);
+    box-shadow: none;
+
+    > input[type="radio"]:checked + label {
+      border-radius: var(--v2p-button-radius);
+      color: #ffffff;
+      background-color: var(--vx-vscode-button);
+      box-shadow: none;
+    }
+  }
+
+  body .v2p-lite-reply-preview {
+    border-color: var(--vx-vscode-input-border);
+    border-radius: var(--v2p-input-radius);
+    background-color: var(--vx-palette-panel);
+  }
+
+  /* Opaque hover widgets, modals & floating actions */
+  body :is(.v2p-popup, .vx-page-actions, .vx-page-action-hint) {
+    border: 1px solid var(--vx-vscode-widget-border);
+    border-radius: var(--v2p-popup-radius);
+    background: var(--vx-vscode-widget-bg);
+    backdrop-filter: none;
+    box-shadow: var(--vx-vscode-shadow);
+  }
+
+  body .v2p-popup .vx-member-reply {
+    padding: 3px 4px;
+    border-radius: var(--v2p-button-radius);
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: transparent;
+      text-decoration: none;
+    }
+  }
+
+  body :not(#vx-settings-dialog) > .v2p-modal-main {
+    border: 1px solid var(--vx-vscode-widget-border);
+    border-radius: var(--v2p-popup-radius);
+    background-color: var(--vx-palette-panel);
+    box-shadow: var(--vx-vscode-shadow);
+
+    :is(.v2p-modal-header, .v2p-modal-footer) {
+      border-color: var(--vx-vscode-border);
+      background-color: var(--vx-palette-page);
+      background-image: none;
+    }
+  }
+
+  body .vx-page-actions button {
+    border-radius: var(--v2p-button-radius);
+    transition: none;
+
+    &:hover {
+      color: var(--vx-palette-accent);
+      background-color: transparent;
+    }
+  }
+
+  &[data-v2p-mobile] {
+    :is(body, #Main) {
+      min-width: 0 !important;
+    }
   }
 }
 
-:root[data-v2p-theme][data-vx-theme="vscode"] {
+:root[data-v2p-theme][data-vx-palette] {
   &,
   & body {
+    --v2p-box-radius: var(--vx-theme-box-radius);
+    --v2p-input-radius: var(--vx-theme-input-radius);
+    --v2p-button-radius: var(--vx-theme-button-radius);
+    --v2p-popup-radius: var(--vx-theme-popup-radius);
+    --v2p-color-main-50: var(--vx-palette-page);
+    --v2p-color-main-100: var(--vx-vscode-code-bg);
+    --v2p-color-main-150: color-mix(in srgb, var(--vx-palette-ink) 8%, var(--vx-palette-panel));
+    --v2p-color-main-200: var(--vx-vscode-border);
+    --v2p-color-main-300: var(--vx-vscode-input-border);
+    --v2p-color-main-350: var(--vx-vscode-muted-fg);
+    --v2p-color-main-400: var(--vx-vscode-muted-fg);
+    --v2p-color-main-500: var(--vx-vscode-tab-inactive-fg);
+    --v2p-color-main-600: color-mix(in srgb, var(--vx-palette-ink) 82%, var(--vx-palette-panel));
+    --v2p-color-main-700: var(--vx-palette-ink);
+    --v2p-color-main-800: var(--vx-palette-ink);
+    --v2p-color-orange-50: var(--vx-vscode-warn-bg);
+    --v2p-color-orange-100: var(--vx-vscode-warn-bg);
+    --v2p-color-orange-400: var(--vx-vscode-warn-fg);
     --v2p-color-background: var(--vx-palette-page);
     --v2p-color-bg-content: var(--vx-palette-panel);
+    --v2p-color-bg-footer: var(--vx-palette-page);
     --v2p-color-foreground: var(--vx-palette-ink);
-    --v2p-color-font-secondary: color-mix(
-      in srgb,
-      var(--vx-palette-ink) 86%,
-      var(--vx-palette-panel)
-    );
-    --v2p-color-font-tertiary: color-mix(
-      in srgb,
-      var(--vx-palette-ink) 72%,
-      var(--vx-palette-panel)
-    );
-    --v2p-color-font-quaternary: var(--v2p-color-font-tertiary);
-    --vx-color-fill: color-mix(in srgb, var(--vx-palette-ink) 7%, var(--vx-palette-panel));
-    --v2p-color-divider: color-mix(in srgb, var(--vx-palette-ink) 18%, var(--vx-palette-panel));
-    --v2p-color-border: var(--v2p-color-divider);
-    --v2p-color-bg-subtle: var(--v2p-color-accent-50);
-    --v2p-color-bg-hover-btn: var(--vx-color-fill);
-    --v2p-color-bg-input: var(--vx-color-fill);
-    --v2p-color-bg-block: var(--vx-color-fill);
-    --v2p-color-button-background: var(--vx-color-fill);
-    --v2p-color-button-background-hover: var(--v2p-color-divider);
+    --v2p-color-font-primary: var(--vx-palette-ink);
+    --v2p-color-font-secondary: var(--vx-vscode-tab-inactive-fg);
+    --v2p-color-font-tertiary: var(--vx-vscode-muted-fg);
+    --v2p-color-font-quaternary: var(--vx-vscode-muted-fg);
+    --vx-color-fill: var(--vx-vscode-code-bg);
+    --v2p-color-divider: var(--vx-vscode-border);
+    --v2p-color-border: var(--vx-vscode-border);
+    --v2p-color-border-darker: var(--vx-vscode-widget-border);
+    --v2p-color-input-border: var(--vx-vscode-input-border);
+    --v2p-color-input-border-focus: var(--vx-vscode-focus);
+    --v2p-color-bg-subtle: var(--vx-vscode-quote-bg);
+    --v2p-color-bg-hover-btn: transparent;
+    --v2p-color-bg-input: var(--vx-vscode-input-bg);
+    --v2p-color-bg-search: var(--vx-vscode-input-bg);
+    --v2p-color-bg-search-active: var(--vx-vscode-input-bg);
+    --v2p-color-bg-widget: var(--vx-vscode-widget-bg);
+    --v2p-color-bg-tooltip: var(--vx-vscode-widget-bg);
+    --v2p-color-bg-tabs: var(--vx-palette-page);
+    --v2p-color-bg-reply: var(--vx-palette-page);
+    --v2p-color-bg-tpr: var(--vx-palette-page);
+    --v2p-color-bg-avatar: var(--vx-vscode-badge-bg);
+    --v2p-color-bg-block: var(--vx-vscode-code-bg);
+    --v2p-color-bg-block-darker: var(--vx-vscode-secondary-btn);
+    --v2p-color-bg-link: transparent;
+    --v2p-color-bg-link-hover: transparent;
+    --v2p-color-button-background: var(--vx-vscode-secondary-btn);
+    --v2p-color-button-foreground: var(--vx-palette-ink);
+    --v2p-color-button-background-hover: var(--vx-vscode-secondary-hover);
+    --v2p-color-button-foreground-hover: var(--vx-palette-ink);
+    --v2p-color-button-border: var(--vx-vscode-input-border);
+    --v2p-color-button-special-background: var(--vx-vscode-button);
+    --v2p-color-button-special-foreground: #ffffff;
+    --v2p-color-button-special-border: var(--vx-vscode-button);
+    --v2p-color-button-special-foreground-hover: #ffffff;
+    --button-hover-shadow: none;
+    --v2p-color-link-visited: var(--vx-vscode-muted-fg);
+    --v2p-color-cell-num: var(--vx-vscode-muted-fg);
     --v2p-color-accent-50: color-mix(
       in srgb,
       var(--vx-palette-accent) 10%,
@@ -134,8 +1246,24 @@
     --v2p-color-accent-500: var(--vx-palette-accent);
     --v2p-color-accent-600: var(--vx-palette-accent);
     --v2p-color-accent-700: var(--vx-palette-accent);
-    --v2p-color-selection-background: var(--v2p-color-accent-200);
+    --v2p-color-selection-foreground: var(--vx-palette-ink);
+    --v2p-color-selection-background: var(--vx-vscode-selection);
+    --v2p-color-mask: var(--vx-vscode-mask);
+    --v2p-box-shadow: none;
+    --v2p-widget-shadow: var(--vx-vscode-shadow);
+    --v2p-toast-shadow: var(--vx-vscode-shadow);
+    --box-background-alt-color: var(--vx-palette-page);
+    --box-background-hover-color: transparent;
+    --button-border-color: var(--vx-vscode-input-border);
+    --button-border-hover-color: var(--vx-vscode-input-border);
+    --link-darker-color: var(--vx-vscode-tab-inactive-fg);
     --link-hover-color: var(--vx-palette-accent);
     --vx-reply-link: var(--vx-palette-accent);
+    --vx-cited-background: var(--vx-vscode-quote-bg);
+    --vx-modal-mask-background: var(--vx-vscode-mask);
+    --vx-modal-mask-image: none;
+    --vx-modal-header-image: none;
+    --vx-account-image: none;
+    --vx-subtle-image: none;
   }
 }

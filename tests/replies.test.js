@@ -480,3 +480,42 @@ test("imported account actions call only the matching native callbacks after con
   assert.equal(imported.querySelector(".reply_content .v2p-control"), null);
   window.close();
 });
+
+test("single-page topics skip layout reads on scroll while preload uses low priority", async () => {
+  const { window } = dom(fixture);
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+  let measured = 0;
+  let rafCalls = 0;
+  window.requestAnimationFrame = () => {
+    rafCalls++;
+    return rafCalls;
+  };
+  const priorities = [];
+  const module = initReplies({
+    options: { hotReplies: false, preloadPages: 1 },
+    enhance: () => {},
+    getDocument: async (url, opts) => {
+      priorities.push({ page: Number(new URL(url).searchParams.get("p")), opts });
+      return new DOMParser().parseFromString(
+        `<div id="Main"><div class="cell" id="r_900"><span class="no">900</span></div></div>`,
+        "text/html",
+      );
+    },
+  });
+  const marker = document.querySelector("[data-vx-page-start]");
+  marker.getBoundingClientRect = () => {
+    measured++;
+    return { top: 0 };
+  };
+  window.dispatchEvent(new window.Event("scroll"));
+  module.paging.trackReading();
+  assert.equal(rafCalls, 0);
+  assert.equal(measured, 0);
+  await module.preload();
+  await module.paging.navigate(3);
+  assert.deepEqual(priorities, [
+    { page: 2, opts: { lowPriority: true } },
+    { page: 3, opts: { lowPriority: false } },
+  ]);
+  window.close();
+});

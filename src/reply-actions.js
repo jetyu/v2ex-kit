@@ -8,15 +8,25 @@ const importedActions = new WeakMap();
 const boundActions = new WeakSet();
 
 export function captureImportedActions(root, base) {
-  for (const anchor of root.querySelectorAll("a[onclick]")) {
+  const anchors = root.querySelectorAll("a[onclick]");
+  if (!anchors.length) return;
+  const baseUrl = new URL(base);
+  baseUrl.hash = "";
+  const baseHref = baseUrl.href;
+  const authors = new Map();
+  for (const anchor of anchors) {
     if (anchor.closest(".reply_content")) continue;
     const row = anchor.closest(REPLY);
     const id = Number(/^r_(\d+)$/.exec(row?.id ?? "")?.[1]);
     if (!Number.isSafeInteger(id) || id <= 0) continue;
-    const author = [...row.querySelectorAll('strong a[href^="/member/"]')].find(
-      (link) => link.closest(REPLY) === row,
-    );
-    const name = memberName(author);
+    let name = authors.get(row);
+    if (name === undefined) {
+      const author = [...row.querySelectorAll('strong a[href^="/member/"]')].find(
+        (link) => link.closest(REPLY) === row,
+      );
+      name = memberName(author);
+      authors.set(row, name);
+    }
     if (!name) continue;
     const source = anchor.getAttribute("onclick") ?? "";
     let kind;
@@ -30,9 +40,7 @@ export function captureImportedActions(root, base) {
     if (!kind) continue;
     if (kind !== "reply" && anchor.closest(".thank_area")?.closest(REPLY) !== row) continue;
     const cost = /(?:Spend|\u82b1\u8d39)\s*(\d+)/i.exec(source)?.[1];
-    const url = new URL(base);
-    url.hash = row.id;
-    anchor.href = url.href;
+    anchor.href = `${baseHref}#${row.id}`;
     importedActions.set(anchor, { kind, id, name, cost });
   }
 }

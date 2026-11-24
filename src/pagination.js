@@ -193,7 +193,12 @@ export function createPagination({
       }
     }
   }
+  let orderedPages = [];
   function trackReading() {
+    if (pages.size <= 1 && !lastJump) {
+      setReading(pages.keys().next().value ?? current);
+      return;
+    }
     const threshold = Math.min(100, window.innerHeight / 4);
     if (lastJump) {
       const top = lastJump.getBoundingClientRect().top;
@@ -202,14 +207,19 @@ export function createPagination({
         return;
       lastJump = null;
     }
-    const ordered = [...pages].sort(([a], [b]) => a - b);
-    let page = ordered[0]?.[0] ?? current;
-    for (const [number, marker] of ordered)
+    if (
+      pages.size !== orderedPages.length ||
+      orderedPages.some(([number, marker]) => pages.get(number) !== marker)
+    ) {
+      orderedPages = [...pages].sort(([a], [b]) => a - b);
+    }
+    let page = orderedPages[0]?.[0] ?? current;
+    for (const [number, marker] of orderedPages)
       if (marker.isConnected && marker.getBoundingClientRect().top <= threshold) page = number;
     setReading(page);
   }
   function schedule() {
-    if (scheduled) return;
+    if (scheduled || (pages.size <= 1 && !lastJump)) return;
     scheduled = true;
     window.requestAnimationFrame(() => {
       scheduled = false;

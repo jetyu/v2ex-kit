@@ -21,7 +21,11 @@ import { initReplyPreview } from "./reply-preview.js";
 let themeReady = false;
 
 function prepareTheme() {
-  if (!themeReady && (document.querySelector("body > #Top #Logo") || isV2EXPage(document))) {
+  if (
+    !themeReady &&
+    document.body &&
+    (document.getElementById("Logo")?.closest("body > #Top") || isV2EXPage(document))
+  ) {
     let theme;
     try {
       theme = GM_getValue(`${PREFIX}options`, {})?.theme;
@@ -74,15 +78,32 @@ function start() {
     members.enhance(root);
     topics.enhance(root);
     enhanceEmojis(root);
-    if (isTopic) enhanceImages(root);
-    enhanceReplyActions(root);
+    if (isTopic) {
+      enhanceImages(root);
+      enhanceReplyActions(root);
+    }
     folding.enhance(root);
     if (options.base64Decode) enhanceBase64(root);
     contentFilter.enhance(root);
   };
   enhance(main ?? document);
   if (options.imgurProxy) installImgurProxy(document, options.imgurProxyUrl);
-  const replies = initReplies({ options, getDocument, enhance });
+  let mainObserver;
+  let collectMutations = () => {};
+  let scheduleFlush = () => {};
+  const batch = (work) => {
+    const pending = mainObserver?.takeRecords();
+    if (pending?.length) {
+      collectMutations(pending);
+      scheduleFlush();
+    }
+    try {
+      return work();
+    } finally {
+      mainObserver?.takeRecords();
+    }
+  };
+  const replies = initReplies({ options, getDocument, enhance, batch });
   installPageActions(Boolean(name));
   installSettings(store, Boolean(name), members);
   if (name) {
@@ -94,7 +115,7 @@ function start() {
     const roots = new Set();
     const changed = new Set();
     let scheduled = false;
-    const observer = new MutationObserver((mutations) => {
+    collectMutations = (mutations) => {
       for (const mutation of mutations) {
         const target =
           mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
@@ -115,25 +136,37 @@ function start() {
           if (node.nodeType === 1 && !node.matches("[data-vx-owned]")) roots.add(node);
         }
       }
+    };
+    scheduleFlush = () => {
       if (scheduled || (!roots.size && !changed.size)) return;
       scheduled = true;
       requestAnimationFrame(() => {
         scheduled = false;
-        for (const root of roots) {
-          if (root.isConnected) {
-            enhance(root);
-            replies?.add(root);
+        const pending = mainObserver?.takeRecords();
+        if (pending?.length) collectMutations(pending);
+        try {
+          for (const root of roots) {
+            if (root.isConnected) {
+              enhance(root);
+              replies?.add(root);
+            }
           }
+          for (const node of changed)
+            if (node.isConnected) {
+              folding.enhance(node);
+              contentFilter.enhance(node);
+            }
+          replies?.update(changed);
+        } finally {
+          mainObserver?.takeRecords();
+          roots.clear();
+          changed.clear();
         }
-        for (const node of changed)
-          if (node.isConnected) {
-            folding.enhance(node);
-            contentFilter.enhance(node);
-          }
-        replies?.update(changed);
-        roots.clear();
-        changed.clear();
       });
+    };
+    mainObserver = new MutationObserver((mutations) => {
+      collectMutations(mutations);
+      scheduleFlush();
     });
     const watchReplyText =
       Boolean(replies) &&
@@ -148,7 +181,7 @@ function start() {
       observerOptions.attributes = true;
       observerOptions.attributeFilter = ["class", "style", "hidden"];
     }
-    observer.observe(main, observerOptions);
+    mainObserver.observe(main, observerOptions);
   }
   if (name && options.autoCheckIn) {
     const report = (message) => {

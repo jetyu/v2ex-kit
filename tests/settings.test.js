@@ -62,7 +62,20 @@ test("settings give every option a Chinese label and an associated description",
   assert.equal(theme.value, "vscode");
   assert.deepEqual(
     [...theme.options].map((option) => option.value),
-    ["plus-emerald", "geist", "claude", "vscode", "native"],
+    [
+      "plus-emerald",
+      "geist",
+      "claude",
+      "platinum",
+      "still",
+      "vscode",
+      "github",
+      "linear",
+      "notion",
+      "catppuccin",
+      "zhihu",
+      "native",
+    ],
   );
   assert.equal(document.querySelector('[name="language"]'), null);
   const filterMode = document.querySelector('[name="filterMode"]');
@@ -293,6 +306,7 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
       "https://github.com/v2hot/v2ex.rep",
       "https://github.com/thinktip/v2ex-plus",
       "https://github.com/yuyinws/v2ex-theme",
+      "https://github.com/StillNotYet/v2ex-still",
     ],
   );
   assert.deepEqual(
@@ -301,6 +315,28 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
   );
   tabs[0].click();
   assert.equal(theme.value, "vscode");
+  document.querySelector(".v2p-modal-close-btn").click();
+  window.close();
+});
+
+test("backup usage snapshot loads lazily when the backup tab is activated", () => {
+  const { window } = dom("");
+  const api = memoryAPI();
+  let listCalls = 0;
+  const originalKeys = api.keys;
+  api.keys = () => {
+    listCalls++;
+    return originalKeys();
+  };
+  const store = createStorage(api);
+  store.setTags("alice", ["friend"]);
+  openSettings(store, true);
+  assert.equal(listCalls, 0);
+  const backup = document.querySelector("#vx-settings-panel-backup .vx-backup");
+  assert.ok(backup);
+  document.querySelector("#vx-settings-tab-backup").click();
+  assert.equal(listCalls, 1);
+  assert.match(backup.textContent, /1 条用户记录/);
   document.querySelector(".v2p-modal-close-btn").click();
   window.close();
 });

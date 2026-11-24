@@ -122,23 +122,61 @@
 }
 
 #vx-settings-dialog {
+  --v2p-color-background: #f5f5f5;
   --v2p-color-bg-content: #fff;
+  --v2p-color-bg-block: #f2f2f2;
   --v2p-color-foreground: #000;
+  --v2p-color-font-primary: #000;
   --v2p-color-bg-input: #f9f9f9;
   --v2p-color-font-secondary: #666;
   --v2p-color-font-tertiary: var(--v2p-color-font-secondary);
   --v2p-color-mask: rgb(0 0 0 / 28%);
-  --box-border-color: rgb(128 128 128 / 23%);
+  --v2p-color-error: #c53030;
+  --v2p-color-border: rgb(128 128 128 / 23%);
+  --v2p-color-border-darker: #ccc;
+  --v2p-color-divider: var(--v2p-color-border);
+  --v2p-color-input-border: #ddd;
+  --v2p-color-accent-500: #485cc7;
+  --v2p-color-accent-600: #485cc7;
+  --v2p-focus-ring: #485cc7;
+  --v2p-box-radius: 3px;
+  --v2p-input-radius: 3px;
+  --v2p-button-radius: 3px;
+  --v2p-popup-radius: 3px;
+  --box-background-color: var(--v2p-color-bg-content);
+  --box-background-alt-color: var(--v2p-color-bg-input);
+  --box-background-hover-color: var(--vx-settings-button-hover);
+  --box-border-color: var(--v2p-color-border);
   --box-border-radius: 3px;
   --vx-settings-button: #f0f0f0;
   --vx-settings-button-hover: #f5f5f5;
   --vx-settings-button-border: #ddd;
   --vx-settings-active: #334;
+  --vx-settings-active-hover: #445;
   --vx-control-accent: #485cc7;
+  --button-background-color: var(--vx-settings-button);
+  --button-foreground-color: var(--v2p-color-font-secondary);
+  --button-background-hover-color: var(--vx-settings-button);
+  --button-foreground-hover-color: var(--v2p-color-foreground);
+  --button-border-color: var(--vx-settings-button-border);
+  --button-border-hover-color: var(--vx-settings-button-border);
+  --button-hover-shadow: none;
+  --v2p-color-button-background: var(--vx-settings-button);
+  --v2p-color-button-foreground: var(--v2p-color-foreground);
+  --v2p-color-button-background-hover: var(--vx-settings-button-hover);
+  --v2p-color-button-foreground-hover: var(--v2p-color-foreground);
+  --v2p-color-button-border: var(--vx-settings-button-border);
+  --v2p-color-button-special-background: var(--vx-settings-active);
+  --v2p-color-button-special-foreground: #fff;
+  --v2p-color-button-special-border: var(--vx-settings-active);
+  --v2p-color-button-special-foreground-hover: #fff;
+  --vx-modal-mask-background: var(--v2p-color-mask);
   --vx-modal-mask-image: none;
   --vx-modal-header-image: none;
   color-scheme: light;
   color: var(--v2p-color-foreground);
+  background-color: var(--v2p-color-mask);
+  background-image: none;
   font:
     14px/1.5 system-ui,
     sans-serif;
@@ -147,17 +185,27 @@
   justify-content: center;
 }
 
-:root:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"])
+:root:is(.night, [data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"])
   #vx-settings-dialog {
+  --v2p-color-background: #0f161f;
   --v2p-color-bg-content: #18222d;
+  --v2p-color-bg-block: #22303f;
   --v2p-color-foreground: #d1d5d9;
+  --v2p-color-font-primary: #d1d5d9;
   --v2p-color-bg-input: #001d25;
   --v2p-color-font-secondary: #b2c3d4;
-  --box-border-color: #22303f;
+  --v2p-color-error: #ff8589;
+  --v2p-color-border: #22303f;
+  --v2p-color-border-darker: #3e5874;
+  --v2p-color-input-border: #3e5874;
+  --v2p-color-accent-500: #7b8fe8;
+  --v2p-color-accent-600: #7b8fe8;
+  --v2p-focus-ring: #7b8fe8;
   --vx-settings-button: #22303f;
   --vx-settings-button-hover: #2c3a4d;
   --vx-settings-button-border: #3e5874;
   --vx-settings-active: #393f4e;
+  --vx-settings-active-hover: #474f62;
   --vx-control-accent: #7b8fe8;
   color-scheme: dark;
 }
@@ -168,7 +216,16 @@
   height: 720px;
   max-height: 100%;
   border: 1px solid var(--box-border-color);
+  border-radius: 3px;
+  background-color: var(--v2p-color-bg-content);
+  background-image: none;
   box-shadow: 0 8px 28px rgb(0 0 0 / 20%);
+}
+
+#vx-settings-dialog :is(.v2p-modal-header, .v2p-modal-footer) {
+  border-color: var(--box-border-color);
+  background-color: var(--v2p-color-bg-content);
+  background-image: none;
 }
 
 .vx-settings-tabs {
@@ -423,6 +480,7 @@
   color: var(--v2p-color-foreground);
   font: inherit;
   background: var(--v2p-color-bg-input);
+  box-shadow: none;
 }
 
 :is(#vx-settings-dialog, .vx-tag-editor-dialog)
@@ -455,7 +513,8 @@
   border: 1px solid var(--vx-settings-button-border);
   border-radius: var(--vx-control-radius);
   color: var(--v2p-color-foreground);
-  background: var(--vx-settings-button);
+  background-color: var(--vx-settings-button);
+  box-shadow: none;
   font-family: inherit;
   font-size: 13px;
   line-height: 1.4;
@@ -505,15 +564,44 @@
 }
 
 #vx-settings-dialog :is(.normal.button, .v2p-modal-close-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   height: auto;
+  min-height: 30px;
+  max-width: none;
   margin: 0;
   padding: 3px 10px !important;
   border: 1px solid var(--vx-settings-button-border);
   border-radius: 3px !important;
   color: var(--v2p-color-foreground);
   font: inherit;
+  font-weight: 500;
+  line-height: 1.4;
   text-shadow: none;
   background: var(--vx-settings-button);
+  box-shadow: none;
+  transition: none;
+}
+
+#vx-settings-dialog :is(.normal.button, .v2p-modal-close-btn):is(:hover:enabled, :active:enabled) {
+  border: 1px solid var(--vx-settings-button-border);
+  color: var(--v2p-color-foreground);
+  background: var(--vx-settings-button-hover);
+  box-shadow: none;
+}
+
+#vx-settings-dialog .button.special {
+  border: 1px solid var(--vx-settings-active);
+  color: #fff;
+  background: var(--vx-settings-active);
+}
+
+#vx-settings-dialog .button.special:is(:hover:enabled, :active:enabled) {
+  border: 1px solid var(--vx-settings-active-hover);
+  color: #fff;
+  background: var(--vx-settings-active-hover);
   box-shadow: none;
 }
 
@@ -524,7 +612,12 @@
 }
 
 #vx-settings-dialog select:focus-visible,
-:is(#vx-settings-dialog, .vx-tag-editor-dialog) button:focus-visible {
+#vx-settings-dialog :is(a[href], button, summary):focus-visible {
+  outline: 2px solid var(--vx-control-accent) !important;
+  outline-offset: 2px !important;
+}
+
+.vx-tag-editor-dialog button:focus-visible {
   outline: 2px solid var(--vx-control-accent);
   outline-offset: 2px;
 }
@@ -1191,4 +1284,124 @@
 
 .vx-backup :is(.vx-backup-fields, p):empty {
   display: none;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  > :last-child {
+  margin-left: auto !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(> a[href="/notifications"]) {
+  display: block !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"]) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  padding: 8px 8px 10px !important;
+  white-space: nowrap !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  > * {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell
+  a[href="/notifications"]:not(.button) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px;
+  font-size: 12px !important;
+  line-height: 18px !important;
+  white-space: nowrap !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  :is(input[onclick*="/notifications"], .button) {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  line-height: 22px !important;
+  white-space: nowrap !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  > :is(.balance_area, a[href="/balance"], :has(.balance_area, a[href="/balance"])) {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin: 0 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  :is(.balance_area, a[href="/balance"]) {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 3px !important;
+  margin: 0 !important;
+  padding: 2px 4px !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
+  white-space: nowrap !important;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-vx-theme="plus-emerald"]
+  body
+  #Rightbar#Rightbar#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  :is(.balance_area, a[href="/balance"])
+  img {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
 }

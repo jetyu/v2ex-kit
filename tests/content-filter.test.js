@@ -77,3 +77,23 @@ test("hide mode removes matching replies without affecting disabled topic filter
   assert.equal(document.querySelector("#r_10").hidden, true);
   assert.equal(document.querySelector("#r_10 .vx-filter-notice"), null);
 });
+
+test("multi-keyword filter escapes regex metacharacters and matches full-width Unicode text", () => {
+  dom(`
+    <div class="cell" id="r_1"><div class="reply_content">c++ (beta) [v1.0]</div></div>
+    <div class="cell" id="r_2"><div class="reply_content">ＡＤＶＥＲＴ 推广</div></div>
+    <div class="cell" id="r_3"><div class="reply_content">normal c plus plus</div></div>
+  `);
+  createContentFilter(
+    normalizeOptions({
+      contentFilter: true,
+      filterTopics: false,
+      filterReplies: true,
+      filterMode: "collapse",
+      filterKeywords: ["c++ (beta)", "advert", "[v2.0]?*"],
+    }),
+  ).enhance(document);
+  assert.equal(document.querySelector("#r_1").classList.contains("vx-content-filtered"), true);
+  assert.equal(document.querySelector("#r_2").classList.contains("vx-content-filtered"), true);
+  assert.equal(document.querySelector("#r_3").classList.contains("vx-content-filtered"), false);
+});

@@ -41,6 +41,7 @@ export function createTopics(options, getDocument = createHTTP()) {
   }
   return {
     enhance(root) {
+      if (!options.newTab && !options.preview) return;
       for (const link of matching(
         root,
         ".item_title a[href], a.topic-link[href], .item_hot_topic_title > a[href], a.v2p-member-topic-item[href]",

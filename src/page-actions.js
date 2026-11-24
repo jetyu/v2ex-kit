@@ -46,13 +46,19 @@ export function installPageActions(signedIn, pageWindow = globalThis.unsafeWindo
     controls.append(reply);
   }
 
+  let lastNearTop;
   const sync = () => {
     const nearTop = window.scrollY < 160;
+    if (nearTop === lastNearTop) return;
+    lastNearTop = nearTop;
     top.hidden = nearTop;
     controls.hidden = nearTop && !editor && !controls.querySelector("#vx-settings");
   };
   document.body.append(controls);
   window.addEventListener("scroll", sync, { passive: true });
-  window.addEventListener("pageshow", sync);
+  window.addEventListener("pageshow", () => {
+    lastNearTop = undefined;
+    sync();
+  });
   sync();
 }

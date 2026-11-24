@@ -1,7 +1,20 @@
 export const THEME_STYLE_ID = "v2ex-kit-theme";
 export const DEFAULT_THEME = "native";
-export const EXTERNAL_THEMES = Object.freeze(["geist", "claude"]);
-export const THEMES = Object.freeze(["plus-emerald", ...EXTERNAL_THEMES, "vscode", "native"]);
+export const EXTERNAL_THEMES = Object.freeze(["geist", "claude", "platinum", "still"]);
+export const PALETTE_THEMES = Object.freeze([
+  "vscode",
+  "github",
+  "linear",
+  "notion",
+  "catppuccin",
+  "zhihu",
+]);
+export const THEMES = Object.freeze([
+  "plus-emerald",
+  ...EXTERNAL_THEMES,
+  ...PALETTE_THEMES,
+  "native",
+]);
 
 export function normalizeTheme(value) {
   return THEMES.includes(value) ? value : DEFAULT_THEME;
@@ -15,6 +28,8 @@ export function applyTheme(doc = document, theme = doc.documentElement?.dataset.
     root.dataset.vxTheme === "native" || EXTERNAL_THEMES.includes(root.dataset.vxTheme);
   if (native) delete root.dataset.v2pTheme;
   else root.dataset.v2pTheme = "minimalist";
+  if (PALETTE_THEMES.includes(root.dataset.vxTheme)) root.dataset.vxPalette = "1";
+  else delete root.dataset.vxPalette;
   if (!root.hasAttribute("data-vx-system-dark")) {
     const scheme = doc.defaultView?.matchMedia?.("(prefers-color-scheme: dark)");
     const sync = () => (root.dataset.vxSystemDark = scheme?.matches ? "1" : "0");

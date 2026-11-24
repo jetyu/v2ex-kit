@@ -1,5 +1,3 @@
-import { matching } from "./dom.js";
-
 export const DEFAULT_IMGUR_PROXY_URL = "https://proxy.duckduckgo.com/iu/?u=";
 const endpoints = new WeakMap();
 
@@ -54,7 +52,9 @@ export function installImgurProxy(doc, value) {
   const prefix = normalizeImgurProxyURL(value) ?? DEFAULT_IMGUR_PROXY_URL;
   endpoints.set(doc, prefix);
   function rewrite(image) {
-    const url = imgurURL(image.src);
+    const src = image.src;
+    if (!src || src.startsWith(prefix) || !src.toLowerCase().includes("imgur.com")) return;
+    const url = imgurURL(src);
     if (!url || url.href.startsWith(prefix)) return;
     image.referrerPolicy = "no-referrer";
     image.src = prefix + encodeURIComponent(url.href);
@@ -65,10 +65,13 @@ export function installImgurProxy(doc, value) {
   const observer = new view.MutationObserver((records) => {
     for (const record of records) {
       if (record.type === "attributes") {
-        if (record.target.matches(selector)) rewrite(record.target);
+        if (record.target.tagName === "IMG") rewrite(record.target);
       } else {
-        for (const node of record.addedNodes)
-          if (node.nodeType === 1) for (const image of matching(node, selector)) rewrite(image);
+        for (const node of record.addedNodes) {
+          if (node.nodeType !== 1) continue;
+          if (node.tagName === "IMG") rewrite(node);
+          else for (const image of node.querySelectorAll(selector)) rewrite(image);
+        }
       }
     }
   });

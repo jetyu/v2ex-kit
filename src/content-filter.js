@@ -11,8 +11,13 @@ const FILTER_CLASSES = [
   "vx-filter-revealed",
 ];
 
+const NON_ASCII = /[^\u0000-\u007f]/;
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 function normalized(value) {
-  return value.normalize("NFKC").toLocaleLowerCase("zh-CN");
+  return NON_ASCII.test(value)
+    ? value.normalize("NFKC").toLocaleLowerCase("zh-CN")
+    : value.toLowerCase();
 }
 
 function topicTarget(link) {
@@ -33,12 +38,27 @@ export function createContentFilter(options) {
   const keywords = options.contentFilter
     ? options.filterKeywords.map((value) => ({ label: value, match: normalized(value) }))
     : [];
+  const labelByMatch = new Map();
+  for (const { match, label } of keywords)
+    if (!labelByMatch.has(match)) labelByMatch.set(match, label);
+  const matcher =
+    keywords.length > 1
+      ? new RegExp(
+          [...keywords]
+            .sort((a, b) => b.match.length - a.match.length)
+            .map(({ match }) => escapeRegExp(match))
+            .join("|"),
+        )
+      : null;
   const states = new WeakMap();
 
   function findKeyword(text) {
     if (!text || !keywords.length) return null;
     const haystack = normalized(text);
-    return keywords.find(({ match }) => haystack.includes(match))?.label ?? null;
+    if (keywords.length === 1)
+      return haystack.includes(keywords[0].match) ? keywords[0].label : null;
+    const found = matcher.exec(haystack);
+    return found ? (labelByMatch.get(found[0]) ?? null) : null;
   }
 
   function clear(target) {

@@ -65,17 +65,17 @@ export function createTagManager(store, { createTagEditor, updateTags }) {
   function render() {
     const query = search.value.trim().toLowerCase();
     const matching = members.filter(
-      ({ name, tags }) =>
+      ({ name, tags, lowerTags }) =>
         (!group.value || tags.includes(group.value)) &&
-        (name.includes(query) || tags.some((tag) => tag.toLowerCase().includes(query))),
+        (!query || name.includes(query) || lowerTags.some((tag) => tag.includes(query))),
     );
     count.textContent =
       query || group.value
         ? t("filteredTaggedCount", matching.length, members.length)
         : t("taggedCount", members.length);
-    list.replaceChildren();
+    const fragment = document.createDocumentFragment();
     more.hidden = matching.length <= limit;
-    if (!matching.length) list.append(element("li", t("noMatchingTags"), "vx-tag-empty"));
+    if (!matching.length) fragment.append(element("li", t("noMatchingTags"), "vx-tag-empty"));
     for (const { name, tags } of matching.slice(0, limit)) {
       const row = element("li", undefined, "vx-tag-row");
       const text = element("div", undefined, "vx-tag-member");
@@ -125,12 +125,16 @@ export function createTagManager(store, { createTagEditor, updateTags }) {
       const actions = element("div", undefined, "vx-tag-actions");
       actions.append(edit, remove);
       row.append(text, actions);
-      list.append(row);
+      fragment.append(row);
     }
+    list.replaceChildren(fragment);
   }
   function refresh() {
     const selected = group.value;
-    members = store.taggedMembers();
+    members = store.taggedMembers().map((entry) => ({
+      ...entry,
+      lowerTags: entry.tags.map((tag) => tag.toLowerCase()),
+    }));
     const groups = new Map();
     for (const { tags } of members)
       for (const tag of tags) groups.set(tag, (groups.get(tag) ?? 0) + 1);

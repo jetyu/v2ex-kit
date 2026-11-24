@@ -296,3 +296,33 @@ test("history removes confirmed Imgur deletions and lets users remove local reco
     window.close();
   }
 });
+
+test("upload history limits concurrent HEAD verification probes", async () => {
+  const { window } = dom("");
+  const store = createStorage(memoryAPI());
+  for (let i = 0; i < 10; i++)
+    store.recordUpload({ link: `https://i.imgur.com/img${i}.png`, fileName: `img${i}.png` });
+  const previousFetch = globalThis.fetch;
+  let active = 0;
+  let peak = 0;
+  let total = 0;
+  globalThis.fetch = async (url) => {
+    active++;
+    total++;
+    peak = Math.max(peak, active);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    active--;
+    return { status: 200, redirected: false, url };
+  };
+  try {
+    document.body.append(createUploadHistory(store));
+    for (const preview of document.querySelectorAll(".vx-upload-record-preview img"))
+      preview.dispatchEvent(new Event("load"));
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    assert.equal(total, 10);
+    assert.ok(peak <= 4, `Expected peak <= 4, got ${peak}`);
+  } finally {
+    globalThis.fetch = previousFetch;
+    window.close();
+  }
+});

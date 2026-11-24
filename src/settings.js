@@ -124,7 +124,12 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
           const label = {
             geist: "Geist",
             claude: "Claude",
+            platinum: "Platinum",
+            still: "Still (Safari)",
             vscode: "VS Code",
+            github: "GitHub",
+            linear: "Linear",
+            catppuccin: "Catppuccin",
           }[value];
           const option = element(
             "option",
@@ -132,6 +137,8 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
               t(
                 {
                   "plus-emerald": "themePlusEmerald",
+                  notion: "themeNotion",
+                  zhihu: "themeZhihu",
                   native: "themeNative",
                 }[value],
               ),
@@ -259,6 +266,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
   let manager;
   const backup = createBackup(store, {
     signedIn,
+    lazyUsage: true,
     onTags: tagActions?.updateTags,
     onRestored(settings) {
       manager?.refresh();
@@ -289,6 +297,7 @@ export function openSettings(store, signedIn = Boolean(currentUser()), tagAction
     panels.settingsTags.append(details);
   }
   addPanel("backup").append(backup);
+  tabs.at(-1).onActivate = () => backup.vxRefreshUsage?.();
   addPanel("about").append(createAbout());
   if (!signedIn) dialog.content.append(element("p", t("guestNotice"), "vx-settings-notice"));
   dialog.content.append(form);

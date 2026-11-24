@@ -1,9 +1,13 @@
 import { t } from "./i18n.js";
 
 export function isV2EXPage(doc) {
+  if (!doc) return false;
+  const hasHeader = doc.getElementById
+    ? Boolean(doc.getElementById("Top") || doc.getElementById("site-header"))
+    : Boolean(doc.querySelector("#Top, #site-header"));
+  if (!hasHeader) return false;
   return Boolean(
-    doc?.querySelector("#Top, #site-header") &&
-    doc.querySelector("#Main, #site-header ~ #Wrapper > .content"),
+    doc.getElementById?.("Main") || doc.querySelector("#site-header ~ #Wrapper > .content"),
   );
 }
 
@@ -110,16 +114,40 @@ function createReplyActions(root, submit) {
   const doc = submit.ownerDocument;
   const view = doc.defaultView;
   submit.classList.add("vx-editor-primary-action");
-  const sync = () => {
-    const { width, height } = submit.getBoundingClientRect();
-    if (width > 0) root.style.setProperty("--vx-reply-action-width", `${width}px`);
-    if (height > 0) root.style.setProperty("--vx-reply-action-height", `${height}px`);
-  };
   if (!root.vxReplyActionsSync) {
+    let lastWidth = 0;
+    let lastHeight = 0;
+    let frame = null;
+    const sync = () => {
+      if (frame !== null) {
+        view?.cancelAnimationFrame?.(frame);
+        frame = null;
+      }
+      const { width, height } = submit.getBoundingClientRect();
+      if (width > 0 && width !== lastWidth) {
+        lastWidth = width;
+        root.style.setProperty("--vx-reply-action-width", `${width}px`);
+      }
+      if (height > 0 && height !== lastHeight) {
+        lastHeight = height;
+        root.style.setProperty("--vx-reply-action-height", `${height}px`);
+      }
+    };
+    const onFrame = () => {
+      frame = null;
+      sync();
+    };
+    const schedule = () => {
+      if (frame !== null) return;
+      if (typeof view?.requestAnimationFrame === "function")
+        frame = view.requestAnimationFrame(onFrame);
+      else sync();
+    };
     root.vxReplyActionsSync = sync;
-    const resizeObserver = view?.ResizeObserver ? new view.ResizeObserver(sync) : null;
+    root.vxReplyActionsSchedule = schedule;
+    const resizeObserver = view?.ResizeObserver ? new view.ResizeObserver(schedule) : null;
     resizeObserver?.observe(submit);
-    const mutationObserver = view?.MutationObserver ? new view.MutationObserver(sync) : null;
+    const mutationObserver = view?.MutationObserver ? new view.MutationObserver(schedule) : null;
     if (mutationObserver && doc.documentElement) {
       mutationObserver.observe(doc.documentElement, {
         attributes: true,
@@ -132,16 +160,26 @@ function createReplyActions(root, submit) {
         attributeFilter: ["class", "style"],
       });
     }
-    view?.addEventListener?.("resize", sync);
+    view?.addEventListener?.("resize", schedule, { passive: true });
+    const onPageHide = (event) => {
+      if (event.persisted) return;
+      if (frame !== null) view.cancelAnimationFrame?.(frame);
+      frame = null;
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      view.removeEventListener?.("resize", schedule);
+      view.removeEventListener?.("pagehide", onPageHide);
+    };
+    view?.addEventListener?.("pagehide", onPageHide);
   }
   const append = (control) => {
     control.classList.add(...submit.classList);
     root.append(control);
     root.vxReplyActionsSync();
-    view?.requestAnimationFrame?.(root.vxReplyActionsSync);
+    root.vxReplyActionsSchedule();
     return control;
   };
-  sync();
+  root.vxReplyActionsSync();
   return { root, submit, append };
 }
 
@@ -296,32 +334,54 @@ export function syncOnce(doc, pageWindow = globalThis.unsafeWindow) {
 }
 
 export function createHTTP(fetcher = fetch) {
-  let tail = Promise.resolve();
-  return (path) => {
-    const task = tail.then(async () => {
-      const url = new URL(path, location.href);
-      if (url.origin !== location.origin) throw new Error(t("requestOrigin"));
-      const response = await fetcher(url.href, {
-        credentials: "same-origin",
-        signal: AbortSignal.timeout(15_000),
-      });
-      if (!response.ok) throw new Error(t("requestHTTP", response.status));
-      const final = new URL(response.url || url.href);
-      const rewardRedirect =
-        url.pathname === "/mission/daily/redeem" && final.pathname === "/mission/daily";
-      if (final.origin !== url.origin || (final.pathname !== url.pathname && !rewardRedirect))
-        throw new Error(t("requestRedirected"));
-      const doc = new DOMParser().parseFromString(await response.text(), "text/html");
-      if (!doc.querySelector("#Main, #site-header ~ #Wrapper > .content"))
-        throw new Error(t("requestUnexpected"));
-      syncOnce(doc);
-      return doc;
+  const high = [];
+  const low = [];
+  let active = false;
+  let queued = false;
+
+  async function run(path) {
+    const url = new URL(path, location.href);
+    if (url.origin !== location.origin) throw new Error(t("requestOrigin"));
+    const response = await fetcher(url.href, {
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(15_000),
     });
-    // The queue only needs completion, not the last parsed document.
-    tail = task.then(
-      () => undefined,
-      () => undefined,
-    );
-    return task;
-  };
+    if (!response.ok) throw new Error(t("requestHTTP", response.status));
+    const final = new URL(response.url || url.href);
+    const rewardRedirect =
+      url.pathname === "/mission/daily/redeem" && final.pathname === "/mission/daily";
+    if (final.origin !== url.origin || (final.pathname !== url.pathname && !rewardRedirect))
+      throw new Error(t("requestRedirected"));
+    const doc = new DOMParser().parseFromString(await response.text(), "text/html");
+    if (!doc.querySelector("#Main, #site-header ~ #Wrapper > .content"))
+      throw new Error(t("requestUnexpected"));
+    syncOnce(doc);
+    return doc;
+  }
+
+  function drain() {
+    queued = false;
+    if (active) return;
+    const next = high.shift() ?? low.shift();
+    if (!next) return;
+    active = true;
+    run(next.path)
+      .then(next.resolve, next.reject)
+      .finally(() => {
+        active = false;
+        scheduleDrain();
+      });
+  }
+
+  function scheduleDrain() {
+    if (active || queued) return;
+    queued = true;
+    queueMicrotask(drain);
+  }
+
+  return (path, options) =>
+    new Promise((resolve, reject) => {
+      (options?.lowPriority ? low : high).push({ path, resolve, reject });
+      scheduleDrain();
+    });
 }

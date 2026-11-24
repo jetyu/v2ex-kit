@@ -3773,45 +3773,103 @@ html.v2p-hide-node-icons #Tabs a[aria-label="Planet"]::after {
   font-variant-numeric: tabular-nums;
 }
 
-#Rightbar > .box:has(#member-activity) > .cell > a[href="/notifications"] {
+#Rightbar > .box > .cell:has(.balance_area, a[href="/balance"]) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  min-height: 30px;
+  box-sizing: border-box;
+  padding: 8px 8px 10px !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+#Rightbar > .box > .cell:has(.balance_area, a[href="/balance"]) > * {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#Rightbar#Rightbar > .box > .cell:has(.balance_area, a[href="/balance"]) > :last-child {
+  margin-left: auto !important;
+}
+
+#Rightbar > .box > .cell:has(.balance_area, a[href="/balance"]) > .spacer {
   display: none !important;
 }
 
 #Rightbar
-  > .box:has(#member-activity)
-  > .cell:has(> a[href="/notifications"]):not(:has(.balance_area)):not(:has(a[href="/balance"])) {
-  display: none !important;
-}
-
-#Rightbar > .box:has(#member-activity) > .cell:has(.balance_area),
-#Rightbar > .box:has(#member-activity) > .cell:has(a[href="/balance"]) {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  box-sizing: border-box;
-  padding: 8px 16px 12px !important;
-  border: 0 !important;
-}
-
-#Rightbar > .box:has(#member-activity) > .cell:has(.balance_area) > .spacer,
-#Rightbar > .box:has(#member-activity) > .cell:has(a[href="/balance"]) > .spacer {
-  display: none !important;
-}
-
-#Rightbar > .box:has(#member-activity) .balance_area,
-#Rightbar > .box:has(#member-activity) a[href="/balance"] {
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  a[href="/notifications"]:not(.button) {
   display: inline-flex !important;
-  align-items: center;
-  gap: 10px;
-  margin: 0 auto;
-  padding: 3px 4px;
+  align-items: center !important;
+  gap: 4px;
+  font-size: 12px !important;
+  line-height: 18px !important;
+  white-space: nowrap !important;
+}
+
+#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  :is(input[onclick*="/notifications"], .button) {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  line-height: 22px !important;
+  white-space: nowrap !important;
+}
+
+#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  > :is(.balance_area, a[href="/balance"], :has(.balance_area, a[href="/balance"])) {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin: 0 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  :is(.balance_area, a[href="/balance"]) {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 3px !important;
+  margin: 0 !important;
+  padding: 2px 4px !important;
   color: var(--v2p-color-font-secondary) !important;
   background: transparent !important;
-  font-size: 12px;
+  font-size: 12px !important;
   font-weight: 500;
-  line-height: 18px;
+  line-height: 18px !important;
+  white-space: nowrap !important;
+  font-variant-numeric: tabular-nums;
   text-decoration: none !important;
+}
+
+#Rightbar
+  > .box
+  > .cell:has(.balance_area, a[href="/balance"])
+  :is(.balance_area, a[href="/balance"])
+  img {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
 }
 
 #Rightbar .v2p-lite-balance-wallet {

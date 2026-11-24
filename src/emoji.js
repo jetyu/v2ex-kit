@@ -12,38 +12,47 @@ const groupLabels = {
   "\u5176\u4ed6": "emojiOther",
 };
 
-const pictures = new Map(
-  groups
-    .flatMap((group) => group.items)
-    .filter((item) => item.url)
-    .map((item) => [item.url, item.image]),
-);
-const tokens = new Map(
-  groups
-    .flatMap((group) => group.items)
-    .filter((item) => item.url)
-    .map((item) => [item.value, item.url]),
-);
-const tokenPictures = new Map(
-  groups
-    .flatMap((group) => group.items)
-    .filter((item) => item.image)
-    .map((item) => [item.value, item.image]),
-);
-const emojiSources = new Set([...pictures.keys(), ...pictures.values()]);
+let emojiMaps;
+function getEmojiMaps() {
+  if (!emojiMaps) {
+    const pictures = new Map();
+    const tokens = new Map();
+    const tokenPictures = new Map();
+    const emojiSources = new Set();
+    for (const group of groups) {
+      for (const item of group.items) {
+        if (item.url) {
+          pictures.set(item.url, item.image);
+          tokens.set(item.value, item.url);
+          emojiSources.add(item.url);
+        }
+        if (item.image) {
+          tokenPictures.set(item.value, item.image);
+          emojiSources.add(item.image);
+        }
+      }
+    }
+    emojiMaps = { pictures, tokens, tokenPictures, emojiSources };
+  }
+  return emojiMaps;
+}
 
 export function emojiPicture(token) {
-  return tokenPictures.get(token) ?? null;
+  return getEmojiMaps().tokenPictures.get(token) ?? null;
 }
 
 export function transformEmoji(text) {
+  const { tokens } = getEmojiMaps();
   return text.replace(/\[[^\]]+\]/g, (token) =>
     tokens.has(token) ? `${tokens.get(token)} ` : token,
   );
 }
 
 export function enhanceEmojis(root) {
-  for (const image of matching(root, "img.embedded_image")) {
+  const images = matching(root, "img.embedded_image");
+  if (!images.length) return;
+  const { pictures, emojiSources } = getEmojiMaps();
+  for (const image of images) {
     const source = originalImageURL(image.getAttribute("src") ?? "", image.ownerDocument);
     const high = pictures.get(source);
     if (high || emojiSources.has(source)) {

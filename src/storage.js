@@ -14,7 +14,8 @@ export function normalizeHotRepliesLimit(value) {
     ? value
     : MAX_HOT_REPLIES;
 }
-export const byteLength = (text) => new TextEncoder().encode(text).length;
+const encoder = new TextEncoder();
+export const byteLength = (text) => encoder.encode(text).length;
 export const DEFAULTS = Object.freeze({
   theme: DEFAULT_THEME,
   newTab: true,
@@ -216,10 +217,14 @@ export function createStorage(api) {
       if (tags) {
         for (const [name, value] of Object.entries(data.members)) {
           // Existing records include tombstones and may have changed since the preview.
-          if (api.get(keyFor(name)) !== undefined) continue;
-          this.setTags(name, value);
+          const key = keyFor(name);
+          if (api.get(key) !== undefined) continue;
+          if (!validName.test(name)) throw new Error(t("badUsername"));
+          const normalized = normalizeTags(value);
+          api.set(key, normalized);
+          cache.set(key, normalized);
           imported++;
-          onTags?.(name, value);
+          onTags?.(name, normalized);
         }
       }
       if (settings && data.options)

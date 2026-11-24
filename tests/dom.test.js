@@ -100,3 +100,36 @@ test("page requests serialize, survive failures and reject sign-in redirects", a
   assert.equal(peak, 1);
   await assert.rejects(get("https://evil.test"), /跨站/);
 });
+
+test("interactive page requests jump ahead of queued low-priority background loads", async () => {
+  dom("<div></div>");
+  const order = [];
+  let active = 0;
+  let peak = 0;
+  let releaseFirst;
+  const get = createHTTP(async (url) => {
+    const pathname = new URL(url).pathname;
+    order.push(pathname);
+    active++;
+    peak = Math.max(peak, active);
+    if (pathname === "/first") await new Promise((resolve) => (releaseFirst = resolve));
+    active--;
+    return {
+      ok: true,
+      url,
+      text: async () => `<div id="Main">${pathname}</div>`,
+    };
+  });
+  const first = get("/first", { lowPriority: true });
+  await Promise.resolve();
+  const bg = get("/bg", { lowPriority: true });
+  const fg = get("/fg");
+  releaseFirst();
+  await Promise.all([first, bg, fg]);
+  assert.equal(peak, 1);
+  assert.deepEqual(order, ["/first", "/fg", "/bg"]);
+
+  order.length = 0;
+  await Promise.all([get("/same-tick-bg", { lowPriority: true }), get("/same-tick-fg")]);
+  assert.deepEqual(order, ["/same-tick-fg", "/same-tick-bg"]);
+});

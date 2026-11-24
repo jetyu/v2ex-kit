@@ -7,6 +7,7 @@ const references = [
   ["V2EX.REP", "https://github.com/v2hot/v2ex.rep", "aboutRep"],
   ["V2EX Plus", "https://github.com/thinktip/v2ex-plus", "aboutPlus"],
   ["V2EX Theme", "https://github.com/yuyinws/v2ex-theme", "aboutTheme"],
+  ["v2ex-still", "https://github.com/StillNotYet/v2ex-still", "aboutStill"],
 ];
 
 function link(label, url) {

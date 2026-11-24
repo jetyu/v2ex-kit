@@ -60,7 +60,7 @@ export function createCheckIn({
         // Persist the attempt before networking so navigation cannot create unbounded retries.
         store.set(key, state);
         try {
-          const doc = await getDocument("/mission/daily");
+          const doc = await getDocument("/mission/daily", { lowPriority: true });
           if (currentUser(doc)?.toLowerCase() !== name.toLowerCase())
             throw new Error(t("accountChanged"));
           if (!redeemed(doc)) {
@@ -76,7 +76,7 @@ export function createCheckIn({
             const path = link?.getAttribute("href") ?? inline;
             if (!path || !/^\/mission\/daily\/redeem\?once=\d+$/.test(path))
               throw new Error(t("rewardLinkMissing"));
-            const result = await getDocument(path);
+            const result = await getDocument(path, { lowPriority: true });
             if (!redeemed(result)) throw new Error(t("rewardUnconfirmed"));
           }
           store.set(key, { ...state, success: true, nextAt: 0 });

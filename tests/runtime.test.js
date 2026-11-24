@@ -148,7 +148,7 @@ test("saved themes are selected before the first style and recover from invalid 
 });
 
 test("external themes use cached resources without runtime CSS imports", async () => {
-  for (const theme of ["geist", "claude"]) {
+  for (const theme of ["geist", "claude", "platinum", "still"]) {
     const instance = new JSDOM(fixture, {
       url: "https://www.v2ex.com/t/123",
       runScripts: "outside-only",
@@ -598,5 +598,76 @@ test("script uses Chinese and guests skip account features", async () => {
   assert.equal(window.document.querySelector('[name="autoCheckIn"]').disabled, true);
   assert.equal(window.document.querySelector('[name="autoFold"]').checked, true);
   assert.deepEqual(requests, []);
+  instance.window.close();
+});
+
+test("preloaded replies are enhanced once without triggering redundant mutation passes", async () => {
+  const instance = new JSDOM(fixture, {
+    url: "https://www.v2ex.com/t/123",
+    runScripts: "outside-only",
+    pretendToBeVisual: true,
+  });
+  const { window } = instance;
+  const doc = window.document;
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+  let rafCallbacks = 0;
+  const nativeRAF = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = (cb) => {
+    rafCallbacks++;
+    return nativeRAF(cb);
+  };
+  Object.assign(window, {
+    GM_getValue: (key, fallback) =>
+      key === "v2ex-lite:options"
+        ? {
+            autoCheckIn: false,
+            preloadPages: 1,
+            hotReplies: true,
+            tags: true,
+            base64Decode: true,
+            userCards: false,
+            replyPreview: false,
+            autoFold: false,
+          }
+        : fallback,
+    GM_setValue() {},
+    GM_deleteValue() {},
+    GM_listValues: () => [],
+    GM_addValueChangeListener() {},
+    GM_addStyle() {},
+    GM_registerMenuCommand() {},
+    GM_xmlhttpRequest: () => assert.fail("unexpected upload"),
+    fetch: async (url) => ({
+      ok: true,
+      url,
+      text: async () =>
+        `<div id="Main"><div class="cell" id="r_200"><table><tbody><tr><td><strong><a href="/member/Dave">Dave</a></strong><span class="no">4</span><span><img src="/heart.png">30</span><div class="reply_content">SGVsbG8sIFYyRVgh</div></td></tr></tbody></table></div></div>`,
+    }),
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    unsafeWindow: window,
+  });
+  window.eval(built);
+  rafCallbacks = 0;
+  window.dispatchEvent(new window.Event("load"));
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  const loaded = doc.getElementById("r_200");
+  assert.ok(loaded);
+  assert.equal(loaded.querySelectorAll(".vx-tags").length, 1);
+  assert.equal(loaded.querySelector(".v2p-decode").textContent, "Hello, V2EX!");
+  assert.equal(doc.querySelector("#top_replies a.no").getAttribute("href"), "#r_200");
+  // Main MutationObserver should not schedule a redundant rAF pass for loadPage's own insertion.
+  assert.equal(rafCallbacks, 0);
+
+  // An external mutation made right before a batched pagination load must not be swallowed.
+  const external = doc.createElement("div");
+  external.className = "cell";
+  external.id = "r_201";
+  external.innerHTML =
+    '<table><tbody><tr><td><strong><a href="/member/Eve">Eve</a></strong><span class="no">5</span><div class="reply_content">SGVsbG8sIFYyRVgh</div></td></tr></tbody></table>';
+  doc.querySelector("#replies").append(external);
+  doc.querySelector('[data-vx-page="3"]').click();
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  assert.equal(external.querySelectorAll(".vx-tags").length, 1);
+  assert.equal(external.querySelector(".v2p-decode").textContent, "Hello, V2EX!");
   instance.window.close();
 });
