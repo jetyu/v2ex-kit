@@ -33,6 +33,13 @@ test("options reject invalid types and unknown fields", () => {
     assert.equal(options[key], false, key);
   assert.equal(options.base64Decode, true);
   assert.equal(normalizeOptions({ base64Decode: false }).base64Decode, false);
+  assert.equal(options.opCreated, true);
+  assert.equal(options.onlyOp, true);
+  assert.equal(options.unreadReplies, true);
+  assert.equal(
+    normalizeOptions({ opCreated: false, onlyOp: false, unreadReplies: false }).onlyOp,
+    false,
+  );
   assert.equal(options.imgurClientId, "");
   assert.equal(options.injected, undefined);
   assert.equal(options.replyPreview, true);
@@ -93,6 +100,7 @@ test("backup excludes Client ID and runtime state; remote events never echo writ
   const store = createStorage(api);
   store.saveOptions({ imgurClientId: "abc123", theme: "vscode" });
   store.set("daily:reader", { success: true });
+  store.set("read-history", { 123: [50, 10, 1000] });
   store.watchTags("Alice", () => {});
   const before = api.writes.length;
   api.listeners.get("v2ex-lite:member:alice")("key", [], ["remote"], true);
@@ -102,4 +110,5 @@ test("backup excludes Client ID and runtime state; remote events never echo writ
   assert.equal(backup.options.imgurClientId, undefined);
   assert.equal(backup.options.theme, "vscode");
   assert.equal(JSON.stringify(backup).includes("daily:"), false);
+  assert.equal(JSON.stringify(backup).includes("read-history"), false);
 });

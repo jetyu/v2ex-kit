@@ -2,6 +2,7 @@ import { t } from "./i18n.js";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import groups from "./vendor/polish/emoticons.json" with { type: "json" };
 import { button, element, matching, onEditorActions, owned, replyActions } from "./dom.js";
+import { createEditor } from "./editor.js";
 import { originalImageURL } from "./imgur-proxy.js";
 
 const groupLabels = {
@@ -66,7 +67,7 @@ export function enhanceEmojis(root) {
 export function initEmoji(options, doc = document) {
   if (!options.emoji) return;
   const textarea = doc.querySelector(
-    'textarea#reply_content, #reply-box textarea, textarea[name="content"]',
+    'textarea#reply_content, #reply-box textarea:not(.CodeMirror textarea), textarea[name="content"]:not(.CodeMirror textarea), textarea#topic_content',
   );
   if (!textarea) return;
   const actions = replyActions(textarea);
@@ -81,6 +82,7 @@ export function initEmoji(options, doc = document) {
   }
   if (textarea.vxEmojiInitialized) return;
   textarea.vxEmojiInitialized = true;
+  const editor = createEditor(textarea);
   const trigger = owned(button(t("replyEmoji"), () => {}, doc));
   trigger.classList.add("v2p-lite-emoji-trigger", "vx-editor-action-button");
   trigger.setAttribute("aria-label", t("insertEmoji"));
@@ -132,9 +134,7 @@ export function initEmoji(options, doc = document) {
             choice.append(image);
           }
           const insert = () => {
-            textarea.setRangeText(item.value, ...selection, "end");
-            textarea.dispatchEvent(new doc.defaultView.Event("input", { bubbles: true }));
-            textarea.focus();
+            editor.insert(item.value, selection);
             remember();
           };
           choice.addEventListener("click", insert);
@@ -162,7 +162,7 @@ export function initEmoji(options, doc = document) {
         popup.style.top = `${y}px`;
       })
       .catch(close);
-    textarea.focus();
+    editor.focus();
   });
   doc.addEventListener("click", (event) => {
     if (!popup.contains(event.target) && !trigger.contains(event.target)) close();
@@ -174,10 +174,10 @@ export function initEmoji(options, doc = document) {
     }
   });
   const applyEmoji = () => {
-    const transformed = transformEmoji(textarea.value);
-    if (transformed === textarea.value) return;
-    textarea.value = transformed;
-    textarea.dispatchEvent(new doc.defaultView.Event("input", { bubbles: true }));
+    const value = editor.getValue();
+    const transformed = transformEmoji(value);
+    if (transformed === value) return;
+    editor.setValue(transformed);
   };
   actions.submit.addEventListener("click", applyEmoji, true);
   textarea.form?.addEventListener(

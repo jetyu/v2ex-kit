@@ -1,23 +1,11 @@
 import { t } from "./i18n.js";
 import { button, element, onEditorActions, owned, replyActions, safeURL } from "./dom.js";
+import { createEditor, replaceTextareaRange } from "./editor.js";
 import { DEFAULT_IMGUR_CLIENT_ID } from "./storage.js";
 import { originalImageURL } from "./imgur-proxy.js";
 
 export function replacePlaceholder(textarea, marker, replacement) {
-  const offset = textarea.value.indexOf(marker);
-  if (offset < 0) return false;
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  textarea.setRangeText(replacement, offset, offset + marker.length, "preserve");
-  const adjust = (position) =>
-    position <= offset
-      ? position
-      : position >= offset + marker.length
-        ? position + replacement.length - marker.length
-        : offset + replacement.length;
-  textarea.setSelectionRange(adjust(start), adjust(end));
-  textarea.dispatchEvent(new Event("input", { bubbles: true }));
-  return true;
+  return replaceTextareaRange(textarea, marker, replacement);
 }
 
 export function uploadImage(file, clientId = DEFAULT_IMGUR_CLIENT_ID, request = GM_xmlhttpRequest) {
@@ -227,7 +215,7 @@ export function createUploadHistory(store, focusFallback) {
 
 export function initUpload(options, store, request = GM_xmlhttpRequest) {
   const textarea = document.querySelector(
-    'textarea#reply_content, #reply-box textarea, textarea[name="content"]',
+    'textarea#reply_content, #reply-box textarea:not(.CodeMirror textarea), textarea[name="content"]:not(.CodeMirror textarea), textarea#topic_content',
   );
   if (!textarea || !options.upload) return;
   const sourceURL = sourceTopicURL(location.href);
@@ -257,14 +245,36 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
   pick.classList.add("vr_upload_image", "vx-upload-button", "vx-editor-action-button");
   pick.setAttribute("aria-label", t("insertImage"));
   pick.title = t("insertImage");
+  const editor = createEditor(textarea);
   const actions = replyActions(textarea);
-  if (actions) actions.append(pick);
-  else {
+  const bindSubmitGuard = (control) => {
+    control?.addEventListener(
+      "click",
+      (event) => {
+        if (pending || /\[vx-upload:[^\]]+\]/.test(editor.getValue())) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          messages.append(element("p", t("finishUploads")));
+        }
+      },
+      true,
+    );
+  };
+  if (actions) {
+    actions.append(pick);
+    bindSubmitGuard(actions.submit);
+  } else {
     textarea.form?.append(pick);
-    onEditorActions(textarea, (ready) => ready.append(pick));
+    onEditorActions(textarea, (ready) => {
+      ready.append(pick);
+      bindSubmitGuard(ready.submit);
+    });
   }
   toolbar.append(input, messages);
-  textarea.after(toolbar);
+  const anchor = editor.getCodeMirror()
+    ? (actions?.root ?? editor.getCodeMirror().element)
+    : textarea;
+  anchor.after(toolbar);
   let queue = Promise.resolve();
   let pending = 0;
   let pausedUntil = store.get("upload-paused-until", 0);
@@ -284,14 +294,13 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
     for (const file of images) {
       pending++;
       const marker = `[vx-upload:${crypto.randomUUID()}]`;
-      textarea.setRangeText(`\n${marker}\n`, textarea.selectionEnd, textarea.selectionEnd, "end");
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      editor.insert(`\n${marker}\n`);
       const row = element("p", t("queued", file.name || t("pastedImage")));
       messages.append(row);
       while (messages.children.length > 20) messages.firstElementChild.remove();
       queue = queue.then(async () => {
         if (paused()) {
-          replacePlaceholder(textarea, marker, "");
+          editor.replaceMarker(marker, "");
           row.textContent = t("cancelQueued");
           pending--;
           return;
@@ -299,7 +308,7 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
         row.textContent = t("uploading", file.name || t("pastedImage"));
         try {
           const result = await uploadImage(file, options.imgurClientId, request);
-          const replaced = replacePlaceholder(textarea, marker, result.link);
+          const replaced = editor.replaceMarker(marker, result.link);
           row.textContent = replaced ? t("uploaded") : t("draftMarkerRemoved");
           const link = element("a", result.link);
           link.href = result.link;
@@ -329,7 +338,7 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
               /* Keep this page paused even when storage is full. */
             }
           }
-          replacePlaceholder(textarea, marker, "");
+          editor.replaceMarker(marker, "");
           row.textContent = `${file.name || t("pastedImage")}: ${error.message}${error.rateLimited ? "" : ` ${t("selectAgain")}`}`;
         } finally {
           pending--;
@@ -343,27 +352,50 @@ export function initUpload(options, store, request = GM_xmlhttpRequest) {
     enqueue(input.files);
     input.value = "";
   });
-  textarea.addEventListener("paste", (event) => {
-    const images = [...(event.clipboardData?.items ?? [])]
-      .filter((item) => item.kind === "file")
-      .map((item) => item.getAsFile())
-      .filter(Boolean);
-    if (enqueue(images)) event.preventDefault();
-  });
-  textarea.addEventListener("dragover", (event) => {
-    if ([...(event.dataTransfer?.items ?? [])].some((item) => item.type.startsWith("image/")))
-      event.preventDefault();
-  });
-  textarea.addEventListener("drop", (event) => {
-    const files = [...(event.dataTransfer?.files ?? [])];
-    if (!files.some((file) => file.type.startsWith("image/"))) return;
-    event.preventDefault();
-    enqueue(files);
+  const handledEvents = new WeakSet();
+  editor.onEditorSurface((target, capture) => {
+    target.addEventListener(
+      "paste",
+      (event) => {
+        if (handledEvents.has(event)) return;
+        const images = [...(event.clipboardData?.items ?? [])]
+          .filter((item) => item.kind === "file")
+          .map((item) => item.getAsFile())
+          .filter(Boolean);
+        if (enqueue(images)) {
+          handledEvents.add(event);
+          event.preventDefault();
+          if (capture) event.stopPropagation();
+        }
+      },
+      capture,
+    );
+    target.addEventListener(
+      "dragover",
+      (event) => {
+        if ([...(event.dataTransfer?.items ?? [])].some((item) => item.type.startsWith("image/")))
+          event.preventDefault();
+      },
+      capture,
+    );
+    target.addEventListener(
+      "drop",
+      (event) => {
+        if (handledEvents.has(event)) return;
+        const files = [...(event.dataTransfer?.files ?? [])];
+        if (!files.some((file) => file.type.startsWith("image/"))) return;
+        handledEvents.add(event);
+        event.preventDefault();
+        if (capture) event.stopPropagation();
+        enqueue(files);
+      },
+      capture,
+    );
   });
   textarea.form?.addEventListener(
     "submit",
     (event) => {
-      if (pending || /\[vx-upload:[^\]]+\]/.test(textarea.value)) {
+      if (pending || /\[vx-upload:[^\]]+\]/.test(editor.getValue())) {
         event.preventDefault();
         event.stopImmediatePropagation();
         messages.append(element("p", t("finishUploads")));

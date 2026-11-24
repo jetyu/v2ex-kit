@@ -3,6 +3,7 @@ import { button, element, matching, memberName, owned, safeURL } from "./dom.js"
 import { captureImportedActions, enhanceReplyActions, REPLY } from "./reply-actions.js";
 import { createPagination } from "./pagination.js";
 import { normalizeHotRepliesLimit } from "./storage.js";
+import { findTopicAuthor } from "./members.js";
 
 export { enhanceReplyActions, REPLY } from "./reply-actions.js";
 
@@ -198,13 +199,15 @@ export function cloneTopReply(reply) {
     "v2p-reply-leaf",
     "reply-group-item",
     "nested",
+    "vx-reply-unread",
+    "vx-unread-flash",
   );
-  for (const name of ["data-depth", "data-reply-id", "data-v2p-reply-depth"])
+  for (const name of ["data-depth", "data-reply-id", "data-v2p-reply-depth", "data-vx-unread"])
     cloned.removeAttribute(name);
   for (const name of ["--depth", "--level", "--tree-top", "--tree-bottom"])
     cloned.style.removeProperty(name);
   for (const child of cloned.querySelectorAll(
-    ".cell,.nested,.reply-toggle,.reply-tree-line,.reply-tree-join,.reply-tree-more",
+    ".cell,.nested,.reply-toggle,.reply-tree-line,.reply-tree-join,.reply-tree-more,.vx-unread-badge",
   ))
     if (!child.closest(".reply_content")) child.remove();
   const floor = cloned.querySelector(".no");
@@ -229,7 +232,13 @@ export function cloneTopReply(reply) {
   for (const node of cloned.querySelectorAll("[id]")) node.removeAttribute("id");
   return cloned;
 }
-export function initReplies({ options, getDocument, enhance, batch = (work) => work() }) {
+export function initReplies({
+  options,
+  getDocument,
+  enhance,
+  batch = (work) => work(),
+  unread = null,
+}) {
   if (!/^\/t\/\d+\/?$/.test(location.pathname)) return null;
   const first = document.querySelector(`#Main ${REPLY}`);
   if (!first) return null;
@@ -244,7 +253,10 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
     signature = "",
     panel,
     hotGap,
-    error;
+    error,
+    onlyOpActive = false,
+    onlyOpSync = null;
+  const opName = options.onlyOp ? (findTopicAuthor(document)?.toLowerCase() ?? null) : null;
   const toolbar = owned(element("div", undefined, "cell"));
   toolbar.dataset.vxPaging = "";
   const status = element("span");
@@ -257,9 +269,66 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
   firstMarker.dataset.vxPageStart = String(current);
   first.before(firstMarker);
   pages.set(current, firstMarker);
-  const paging = createPagination({ container, first, toolbar, pages, current, total, loadPage });
+  const filterBar = owned(element("div", undefined, "cell vx-replies-toolbar"));
+  let onlyOpBtn = null;
+  let onlyOpEmpty = null;
+  let unreadBtn = null;
+  function toggleOnlyOp(force) {
+    if (!onlyOpBtn) return false;
+    onlyOpActive = typeof force === "boolean" ? force : !onlyOpActive;
+    render();
+    return onlyOpActive;
+  }
+  if (opName) {
+    onlyOpBtn = button(t("onlyOp"), () => toggleOnlyOp());
+    onlyOpBtn.classList.add("vx-only-op-btn");
+    onlyOpBtn.setAttribute("aria-pressed", "false");
+    onlyOpEmpty = owned(element("div", "", "cell vx-only-op-empty"));
+    onlyOpEmpty.hidden = true;
+    filterBar.append(onlyOpBtn);
+  }
+  if (unread) {
+    unreadBtn = button("", () =>
+      unread.jumpNext((target) => {
+        if (onlyOpActive && target.dataset.vxOp !== "1") toggleOnlyOp(false);
+      }),
+    );
+    unreadBtn.classList.add("vx-unread-jump");
+    unreadBtn.hidden = true;
+    filterBar.append(unreadBtn);
+  }
+  filterBar.hidden = true;
+  firstMarker.before(filterBar);
+  if (onlyOpEmpty) filterBar.after(onlyOpEmpty);
+  function pageReplies(page) {
+    const start = pages.get(page);
+    if (!start) return [];
+    const nodes = [];
+    for (let cursor = start.nextElementSibling; cursor; cursor = cursor.nextElementSibling) {
+      if (cursor.matches(".vx-page-start") || cursor === toolbar) break;
+      nodes.push(...matching(cursor, REPLY));
+    }
+    return nodes;
+  }
+  const paging = createPagination({
+    container,
+    first,
+    toolbar,
+    pages,
+    current,
+    total,
+    loadPage,
+    onNavigate(page, nextTotal) {
+      unread?.markPageVisited(page, nextTotal, pageReplies(page));
+    },
+  });
   const topClones = new Map();
   const hotLimit = normalizeHotRepliesLimit(options.hotRepliesLimit);
+
+  function stampReply(reply, isPreloaded = false) {
+    if (opName && reply.name.toLowerCase() === opName) reply.node.dataset.vxOp = "1";
+    unread?.observe(reply.node, isPreloaded, reply.name);
+  }
 
   function render() {
     toolbar.hidden = !inFlight.size && !error;
@@ -271,6 +340,28 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
     retry.hidden = !error;
     retry.disabled = !!error && inFlight.has(error.page);
     paging.refresh(total, [...inFlight.keys()]);
+    if (onlyOpBtn) {
+      const opCount = [...replies.values()].filter(
+        ({ node }) => node.isConnected && node.dataset.vxOp === "1",
+      ).length;
+      onlyOpBtn.textContent = opCount ? t("onlyOpCount", opCount) : t("onlyOp");
+      onlyOpBtn.setAttribute("aria-pressed", String(onlyOpActive));
+      onlyOpBtn.classList.toggle("special", onlyOpActive);
+      container.classList.toggle("vx-only-op", onlyOpActive);
+      document.getElementById("Main")?.classList.toggle("vx-only-op-active", onlyOpActive);
+      if (onlyOpEmpty) {
+        onlyOpEmpty.hidden = !onlyOpActive || opCount > 0;
+        if (!onlyOpEmpty.hidden)
+          onlyOpEmpty.textContent = pages.size < total ? t("onlyOpEmpty") : t("onlyOpNone");
+      }
+      onlyOpSync?.(onlyOpActive);
+    }
+    const unreadCount = unread?.placeDivider() ?? 0;
+    if (unreadBtn) {
+      unreadBtn.hidden = unreadCount === 0;
+      if (unreadCount > 0) unreadBtn.textContent = t("unreadCountJump", unreadCount);
+    }
+    filterBar.hidden = !onlyOpBtn && (!unreadBtn || unreadBtn.hidden);
     if (!options.hotReplies) return;
     const ranked = rankReplies(
       [...replies.values()].filter(
@@ -302,7 +393,7 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
       hotGap = owned(element("div", undefined, "sep20"));
       hotGap.dataset.vxHotGap = "";
       const anchor =
-        container.closest("#topic-replies") ?? (container.id === "Main" ? firstMarker : container);
+        container.closest("#topic-replies") ?? (container.id === "Main" ? filterBar : container);
       anchor.before(panel, hotGap);
     }
     const rankedIds = new Set(ranked.map((reply) => reply.id));
@@ -331,6 +422,7 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
       const reply = parseReply(node);
       if (!reply) continue;
       replies.set(reply.id, reply);
+      stampReply(reply, false);
       const cloned = topClones.get(reply.id);
       if (cloned) cloned.dirty = true;
       changed = true;
@@ -355,7 +447,8 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
           if (!rows.length) throw new Error(t("noReplies"));
           total = Math.max(total, pageCount(doc, location.pathname));
           const fragment = document.createDocumentFragment(),
-            added = [];
+            added = [],
+            parsed = [];
           const marker = owned(element("span", undefined, "vx-page-start"));
           marker.dataset.vxPageStart = String(page);
           fragment.append(marker);
@@ -366,7 +459,10 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
               if (replies.has(child.id)) child.remove();
             for (const node of matching(clean, REPLY)) {
               const reply = parseReply(node);
-              if (reply) replies.set(reply.id, reply);
+              if (reply) {
+                replies.set(reply.id, reply);
+                parsed.push(reply);
+              }
             }
             clean.dataset.vxLoaded = "";
             fragment.append(clean);
@@ -377,6 +473,7 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
           batch(() => {
             next.before(fragment);
             pages.set(page, marker);
+            for (const reply of parsed) stampReply(reply, lowPriority);
             for (const row of added) enhance(row);
           });
           return true;
@@ -399,6 +496,12 @@ export function initReplies({ options, getDocument, enhance, batch = (work) => w
     add,
     replies,
     paging,
+    hasOpFilter: Boolean(onlyOpBtn),
+    toggleOnlyOp,
+    bindOnlyOpSync(fn) {
+      onlyOpSync = fn;
+      fn?.(onlyOpActive);
+    },
     get loaded() {
       return new Set(pages.keys());
     },

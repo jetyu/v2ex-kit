@@ -428,3 +428,79 @@ test("guests and the current member never receive follow controls", async () => 
     globalThis.fetch = oldFetch;
   }
 });
+
+test("enhanceOp shows OP join date, highlights recent accounts, and shares summary cache with cards", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const cases = [
+    { ageDays: 3, expectedClass: "vx-op-created-alert", pattern: /7 天内注册/ },
+    { ageDays: 18, expectedClass: "vx-op-created-recent", pattern: /30 天内注册/ },
+    { ageDays: 400, expectedClass: null, pattern: /加入于 \d{4}-\d{2}-\d{2}/ },
+  ];
+  const oldFetch = globalThis.fetch;
+  try {
+    for (const { ageDays, expectedClass, pattern } of cases) {
+      const { window } = dom(
+        `<div id="Main"><div class="box"><div class="header">
+          <div class="fr"><a href="/member/Alice"><img class="avatar" src="/a.png"></a></div>
+          <h1>Topic title</h1>
+          <small class="gray"><a href="/member/Alice">Alice</a> · 1 小时前</small>
+        </div></div></div>`,
+      );
+      const calls = [];
+      const fetcher = async (path) => {
+        calls.push(path);
+        if (path.startsWith("/api/")) {
+          return response({
+            username: "Alice",
+            id: 777,
+            created: nowSec - ageDays * 86400,
+          });
+        }
+        return response(followProfile(false));
+      };
+      globalThis.fetch = fetcher;
+      const members = createMembers(
+        createStorage(memoryAPI()),
+        { opCreated: true, userCards: true },
+        null,
+        "reader",
+      );
+      const badge = await members.enhanceOp(document, fetcher);
+      assert.ok(badge);
+      assert.equal(document.querySelectorAll(".vx-op-created").length, 1);
+      assert.match(badge.textContent, pattern);
+      assert.match(badge.title, /777/);
+      if (expectedClass) assert.equal(badge.classList.contains(expectedClass), true);
+      else assert.equal(badge.classList.contains("v2p-register-days"), false);
+      assert.deepEqual(calls, ["/api/members/show.json?username=Alice"]);
+
+      await members.enhanceOp(document, fetcher);
+      assert.equal(calls.length, 1);
+
+      document
+        .querySelector('small.gray a[href="/member/Alice"]')
+        .dispatchEvent(new window.MouseEvent("pointerover", { bubbles: true }));
+      await delay(530);
+      assert.deepEqual(calls, ["/api/members/show.json?username=Alice", "/member/Alice"]);
+      assert.match(document.querySelector(".v2p-no").textContent, /777/);
+      window.close();
+    }
+  } finally {
+    globalThis.fetch = oldFetch;
+  }
+});
+
+test("enhanceOp skips when disabled or when summary lookup fails", async () => {
+  const { window } = dom(
+    `<div id="Main"><div class="box"><div class="header"><h1>T</h1><small class="gray"><a href="/member/Alice">Alice</a></small></div></div></div>`,
+  );
+  const disabled = createMembers(createStorage(memoryAPI()), { opCreated: false });
+  assert.equal(
+    await disabled.enhanceOp(document, () => assert.fail("disabled opCreated should not fetch")),
+    null,
+  );
+  const enabled = createMembers(createStorage(memoryAPI()), { opCreated: true });
+  assert.equal(await enabled.enhanceOp(document, async () => response({}, "", 404)), null);
+  assert.equal(document.querySelector(".vx-op-created"), null);
+  window.close();
+});

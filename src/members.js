@@ -1,12 +1,62 @@
 import { t } from "./i18n.js";
 import { button, element, matching, memberName, modal, owned, safeURL } from "./dom.js";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { blockMember, fetchMember, setMemberFollow } from "./member-data.js";
+import { blockMember, fetchMember, fetchMemberSummary, setMemberFollow } from "./member-data.js";
 import { normalizeTags, TAG_LIMITS } from "./storage.js";
+
+export function formatCreatedDate(createdSeconds) {
+  const sec = Number(createdSeconds);
+  if (!Number.isFinite(sec) || sec <= 0) return "";
+  const created = new Date(sec * 1000);
+  if (!Number.isFinite(created.getTime())) return "";
+  return `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}-${String(created.getDate()).padStart(2, "0")}`;
+}
+
+export function accountAgeDays(createdSeconds, nowMs = Date.now()) {
+  const sec = Number(createdSeconds);
+  if (!Number.isFinite(sec) || sec <= 0) return null;
+  return Math.max(0, Math.floor((nowMs / 1000 - sec) / 86400));
+}
+
+export function findTopicAuthorLink(root = document) {
+  const doc = root.ownerDocument ?? root;
+  const main = root.id === "Main" ? root : (doc.getElementById?.("Main") ?? root);
+  const header =
+    [...main.querySelectorAll(".header")].find((node) => node.querySelector("h1")) ??
+    main.querySelector(".header");
+  if (!header) return null;
+  const candidates = [
+    ...header.querySelectorAll('small.gray a[href^="/member/"], a[href^="/member/"]'),
+  ];
+  return (
+    candidates.find(
+      (link) =>
+        memberName(link) && link.textContent.trim() && !link.closest("h1, [data-vx-owned], .fr"),
+    ) ??
+    candidates.find(
+      (link) => memberName(link) && link.textContent.trim() && !link.closest("h1, [data-vx-owned]"),
+    ) ??
+    null
+  );
+}
+
+export function findTopicAuthor(root = document) {
+  const doc = root.ownerDocument ?? root;
+  const link = findTopicAuthorLink(root);
+  const name = memberName(link);
+  if (name) return name;
+  const main = root.id === "Main" ? root : (doc.getElementById?.("Main") ?? root);
+  const opBadge = main.querySelector('.cell[id^="r_"] .badge.op');
+  const replyLink = opBadge
+    ?.closest('.cell[id^="r_"]')
+    ?.querySelector('strong a[href^="/member/"]');
+  return memberName(replyLink);
+}
 
 export function createMembers(store, options, topics, currentAccount) {
   const registered = new WeakSet(),
-    byName = new Map();
+    byName = new Map(),
+    summaryCache = new Map();
   function updateTags(name, tags) {
     store.setTags(name, tags);
     draw(name);
@@ -262,11 +312,7 @@ export function createMembers(store, options, topics, currentAccount) {
       }
       username.append(link);
       const number = element("div", data ? t("memberNumber", data.id) : "", "v2p-no");
-      const created = new Date(Number(data?.created) * 1000);
-      const date =
-        data && Number.isFinite(created.getTime())
-          ? `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}-${String(created.getDate()).padStart(2, "0")}`
-          : "";
+      const date = data ? formatCreatedDate(data.created) : "";
       const joined = element("div", date ? t("joined", date) : "", "v2p-created-date");
       if (!data) {
         number.classList.add("v2p-loading");
@@ -280,8 +326,8 @@ export function createMembers(store, options, topics, currentAccount) {
         rank.rel = "noopener noreferrer";
         right.append(rank);
       }
-      const days = Math.ceil((Date.now() / 1000 - Number(data?.created)) / 86400);
-      if (data && days >= 0 && days <= 30) {
+      const days = data ? accountAgeDays(data.created) : null;
+      if (days !== null && days <= 30) {
         const recent = element("div", t("recentMember", days <= 15 ? 15 : 30), "v2p-register-days");
         recent.style.margin = "5px 0";
         right.append(recent);
@@ -477,7 +523,13 @@ export function createMembers(store, options, topics, currentAccount) {
         controller = task;
         const timeout = setTimeout(() => task.abort(), 10_000);
         try {
-          const data = await fetchMember(name, task.signal, fetch);
+          const cachedSummary = summaryCache.get(key);
+          const data = await fetchMember(
+            name,
+            task.signal,
+            fetch,
+            cachedSummary?.expires > Date.now() ? cachedSummary.data : null,
+          );
           if (request !== sequence || task.signal.aborted) return;
           if (cache.size >= 100) cache.delete(cache.keys().next().value);
           cache.set(key, { data, expires: Date.now() + 600_000 });
@@ -524,5 +576,46 @@ export function createMembers(store, options, topics, currentAccount) {
       { passive: true },
     );
   }
-  return { enhance, edit, createTagEditor, updateTags };
+  async function enhanceOp(root = document, fetcher = fetch) {
+    if (!options.opCreated) return null;
+    const authorLink = findTopicAuthorLink(root);
+    const name = memberName(authorLink);
+    if (!authorLink || !name) return null;
+    const header = authorLink.closest(".header");
+    if (!header || header.querySelector(".vx-op-created")) return null;
+    const key = name.toLowerCase();
+    let data = summaryCache.get(key)?.expires > Date.now() ? summaryCache.get(key).data : null;
+    if (!data) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10_000);
+      try {
+        data = await fetchMemberSummary(name, controller.signal, fetcher);
+        if (summaryCache.size >= 100) summaryCache.delete(summaryCache.keys().next().value);
+        summaryCache.set(key, { data, expires: Date.now() + 600_000 });
+      } catch {
+        return null;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    if (!authorLink.isConnected || header.querySelector(".vx-op-created")) return null;
+    const date = formatCreatedDate(data?.created);
+    if (!date) return null;
+    const days = accountAgeDays(data?.created);
+    const badge = owned(element("span", undefined, "vx-op-created", authorLink.ownerDocument));
+    if (days !== null && days <= 7) {
+      badge.classList.add("v2p-register-days", "vx-op-created-alert");
+      badge.textContent = `${t("opJoined", date)} · ${days === 0 ? t("opJoinedToday") : t("opJoinedDays", 7)}`;
+    } else if (days !== null && days <= 30) {
+      badge.classList.add("v2p-register-days", "vx-op-created-recent");
+      badge.textContent = `${t("opJoined", date)} · ${t("opJoinedDays", days <= 15 ? 15 : 30)}`;
+    } else {
+      badge.textContent = t("opJoined", date);
+    }
+    badge.title = data.id ? t("opNewMemberTitle", data.id, date) : t("opJoined", date);
+    authorLink.after(badge);
+    return badge;
+  }
+
+  return { enhance, enhanceOp, edit, createTagEditor, updateTags };
 }

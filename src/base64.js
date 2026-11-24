@@ -1,5 +1,5 @@
 const TOKEN = /(?:^|(?<=[^A-Za-z0-9+/=_-]))([A-Za-z0-9+/]{8,}={0,2})(?=$|[^A-Za-z0-9+/=_-])/g;
-const CONTENT = ".topic_content, .reply_content, .v2p-topic-reply-content";
+const CONTENT = ".topic_content, .reply_content";
 const SKIP = "script, style, textarea, input, select, option, code, pre, [data-vx-owned]";
 const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
 const scannedText = new WeakMap();

@@ -5,7 +5,7 @@ import { createStorage, PREFIX } from "./storage.js";
 import { createHTTP, currentUser, isV2EXPage, matching, whenPageIdle } from "./dom.js";
 import { createMembers } from "./members.js";
 import { createTopics } from "./preview.js";
-import { enhanceReplyActions, initReplies, REPLY } from "./replies.js";
+import { enhanceReplyActions, initReplies, pageCount, REPLY } from "./replies.js";
 import { createCheckIn } from "./check-in.js";
 import { initUpload } from "./upload.js";
 import { createReplyFolding } from "./folding.js";
@@ -17,6 +17,7 @@ import { installPlusNavigation } from "./plus-navigation.js";
 import { enhanceBase64 } from "./base64.js";
 import { createContentFilter } from "./content-filter.js";
 import { initReplyPreview } from "./reply-preview.js";
+import { createTopicUnread, enhanceUnreadList } from "./unread-replies.js";
 
 let themeReady = false;
 
@@ -81,12 +82,15 @@ function start() {
     if (isTopic) {
       enhanceImages(root);
       enhanceReplyActions(root);
+    } else if (options.unreadReplies) {
+      enhanceUnreadList(root, store);
     }
     folding.enhance(root);
     if (options.base64Decode) enhanceBase64(root);
     contentFilter.enhance(root);
   };
   enhance(main ?? document);
+  if (isTopic && options.opCreated) whenPageIdle(() => void members.enhanceOp(main ?? document));
   if (options.imgurProxy) installImgurProxy(document, options.imgurProxyUrl);
   let mainObserver;
   let collectMutations = () => {};
@@ -103,8 +107,26 @@ function start() {
       mainObserver?.takeRecords();
     }
   };
-  const replies = initReplies({ options, getDocument, enhance, batch });
-  installPageActions(Boolean(name));
+  const unread =
+    isTopic && options.unreadReplies
+      ? createTopicUnread({
+          store,
+          doc: document,
+          totalPages: pageCount(document, location.pathname),
+          currentPage: (() => {
+            const p = Number(new URL(location.href).searchParams.get("p"));
+            return Number.isInteger(p) && p >= 1 && p <= 100_000 ? p : 1;
+          })(),
+          currentAccount: name,
+        })
+      : null;
+  const replies = initReplies({ options, getDocument, enhance, batch, unread });
+  const pageActions = installPageActions(
+    Boolean(name),
+    undefined,
+    replies?.hasOpFilter ? { onToggleOnlyOp: () => replies.toggleOnlyOp() } : {},
+  );
+  replies?.bindOnlyOpSync?.((active) => pageActions?.syncOnlyOp(active));
   installSettings(store, Boolean(name), members);
   if (name) {
     initEmoji(options);

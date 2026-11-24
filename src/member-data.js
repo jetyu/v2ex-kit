@@ -89,9 +89,9 @@ export async function fetchMemberSummary(name, signal, fetcher = fetch) {
   return result;
 }
 
-export async function fetchMember(name, signal, fetcher = fetch) {
+export async function fetchMember(name, signal, fetcher = fetch, cachedSummary = null) {
   const [data, page] = await Promise.all([
-    fetchMemberSummary(name, signal, fetcher),
+    cachedSummary ?? fetchMemberSummary(name, signal, fetcher),
     fetchMemberPage(name, signal, fetcher).catch((error) => {
       if (signal.aborted) throw error;
       return null;

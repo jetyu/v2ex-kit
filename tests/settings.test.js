@@ -37,7 +37,7 @@ test("settings give every option a Chinese label and an associated description",
   });
   openSettings(store);
   const controls = [...document.querySelectorAll("form :is(input,select,textarea)[name]")];
-  assert.equal(controls.length, 20);
+  assert.equal(controls.length, 23);
   assert.equal(document.querySelectorAll('[role="tabpanel"]').length, 6);
   assert.equal(
     document.querySelector(".v2p-modal-footer [type=submit]").form.id,
@@ -274,8 +274,11 @@ test("settings tabs support keyboard navigation and retain edits across pages", 
         "autoCheckIn",
         "preview",
         "userCards",
+        "opCreated",
         "autoFold",
         "base64Decode",
+        "onlyOp",
+        "unreadReplies",
         "hotReplies",
         "preloadPages",
         "emoji",

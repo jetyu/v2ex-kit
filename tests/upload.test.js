@@ -326,3 +326,72 @@ test("upload history limits concurrent HEAD verification probes", async () => {
     window.close();
   }
 });
+
+test("topic upload inserts and replaces markers inside CodeMirror and guards publish click", async () => {
+  const { window } = dom(
+    `<form action="/write">
+      <textarea id="topic_content" name="content" style="display:none"></textarea>
+      <div class="CodeMirror"></div>
+      <button type="button" class="super normal button">发布主题</button>
+    </form>`,
+    "https://www.v2ex.com/write",
+  );
+  const textarea = document.querySelector("#topic_content");
+  const cmNode = document.querySelector(".CodeMirror");
+  let value = "Topic ";
+  let cursor = value.length;
+  cmNode.CodeMirror = {
+    getValue: () => value,
+    setValue(next) {
+      value = next;
+    },
+    replaceSelection(text) {
+      value = value.slice(0, cursor) + text + value.slice(cursor);
+      cursor += text.length;
+    },
+    posFromIndex: (index) => ({ index }),
+    replaceRange(replacement, from, to) {
+      value = value.slice(0, from.index) + replacement + value.slice(to.index);
+    },
+    save() {
+      textarea.value = value;
+    },
+    focus() {},
+  };
+
+  let finishRequest;
+  initUpload({ upload: true }, createStorage(memoryAPI()), (request) => {
+    finishRequest = () =>
+      request.onload({
+        status: 200,
+        responseText: '{"success":true,"data":{"link":"https://i.imgur.com/topic.png"}}',
+      });
+  });
+
+  const paste = new window.Event("paste", { bubbles: true, cancelable: true });
+  Object.defineProperty(paste, "clipboardData", {
+    value: {
+      items: [{ kind: "file", getAsFile: () => new File(["a"], "a.png", { type: "image/png" }) }],
+    },
+  });
+  cmNode.dispatchEvent(paste);
+  assert.equal(paste.defaultPrevented, true);
+  assert.match(value, /^Topic \n\[vx-upload:[^\]]+\]\n$/);
+  assert.equal(textarea.value, value);
+
+  const publish = document.querySelector("button");
+  let published = 0;
+  publish.addEventListener("click", () => published++);
+  publish.click();
+  assert.equal(published, 0);
+
+  await new Promise(setImmediate);
+  finishRequest();
+  await new Promise(setImmediate);
+  assert.equal(value, "Topic \nhttps://i.imgur.com/topic.png\n");
+  assert.equal(textarea.value, "Topic \nhttps://i.imgur.com/topic.png\n");
+
+  publish.click();
+  assert.equal(published, 1);
+  window.close();
+});

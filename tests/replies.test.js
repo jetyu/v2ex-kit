@@ -201,8 +201,7 @@ test("hot replies retain unchanged rows and update counts, ordering and empty st
   const header = panel.firstElementChild;
   const unchanged = document.querySelector("#rhot_2");
   const original = document.querySelector("#rhot_1");
-  const ids = () =>
-    [...document.querySelectorAll("#top_replies > .vx-hot-reply")].map((n) => n.id);
+  const ids = () => [...document.querySelectorAll("#top_replies > .vx-hot-reply")].map((n) => n.id);
   const update = (id, count) => {
     const reply = document.querySelector(`#r_${id}`);
     reply.querySelector(".thank_count").textContent = String(count);
@@ -517,5 +516,74 @@ test("single-page topics skip layout reads on scroll while preload uses low prio
     { page: 2, opts: { lowPriority: true } },
     { page: 3, opts: { lowPriority: false } },
   ]);
+  window.close();
+});
+
+test("only-OP toggle filters non-OP replies, preserves nested OP groups, and updates counts on preload", async () => {
+  const { window } = dom(`
+    <div id="Main">
+      <div class="box"><div class="header"><h1>Topic</h1><small class="gray"><a href="/member/Alice">Alice</a></small></div></div>
+      <div class="box" id="replies">
+        <div class="cell"><a class="page_normal" href="/t/123?p=1">1</a><a class="page_normal" href="/t/123?p=2">2</a></div>
+        <div class="cell" id="r_1"><strong><a href="/member/Alice">Alice</a></strong><span class="no">1</span><span><img src="/heart.png">1</span><div class="reply_content">OP one</div></div>
+        <div class="cell" id="r_2"><strong><a href="/member/Bob">Bob</a></strong><span class="no">2</span><span><img src="/heart.png">9</span><div class="reply_content">Other</div></div>
+        <div class="reply-group"><div class="cell reply-group-item" id="r_3"><strong><a href="/member/Alice">Alice</a></strong><span class="no">3</span><div class="reply_content">Nested OP</div></div></div>
+      </div>
+    </div>`);
+  const module = initReplies({
+    options: { onlyOp: true, hotReplies: true, preloadPages: 1 },
+    enhance() {},
+    getDocument: async () =>
+      new DOMParser().parseFromString(
+        `<div id="Main"><div class="cell" id="r_4"><strong><a href="/member/Alice">Alice</a></strong><span class="no">4</span><div class="reply_content">Page 2 OP</div></div></div>`,
+        "text/html",
+      ),
+  });
+  const btn = document.querySelector(".vx-only-op-btn");
+  assert.ok(btn);
+  assert.equal(module.hasOpFilter, true);
+  assert.equal(btn.textContent, "只看楼主（2）");
+  assert.equal(btn.getAttribute("aria-pressed"), "false");
+  assert.equal(document.querySelector("#r_1").dataset.vxOp, "1");
+  assert.equal(document.querySelector("#r_2").dataset.vxOp, undefined);
+  assert.equal(document.querySelector("#r_3").dataset.vxOp, "1");
+
+  let synced = null;
+  module.bindOnlyOpSync((state) => (synced = state));
+  assert.equal(synced, false);
+
+  btn.click();
+  assert.equal(synced, true);
+  assert.equal(btn.getAttribute("aria-pressed"), "true");
+  assert.equal(document.querySelector("#replies").classList.contains("vx-only-op"), true);
+  assert.equal(document.querySelector("#Main").classList.contains("vx-only-op-active"), true);
+  assert.equal(document.querySelector(".vx-only-op-empty").hidden, true);
+
+  await module.preload();
+  assert.equal(document.querySelector("#r_4").dataset.vxOp, "1");
+  assert.equal(btn.textContent, "只看楼主（3）");
+
+  module.toggleOnlyOp(false);
+  assert.equal(synced, false);
+  assert.equal(document.querySelector("#replies").classList.contains("vx-only-op"), false);
+  window.close();
+});
+
+test("only-OP mode shows empty state when no OP replies are loaded", () => {
+  const { window } = dom(`
+    <div id="Main">
+      <div class="box"><div class="header"><h1>Topic</h1><small class="gray"><a href="/member/Alice">Alice</a></small></div></div>
+      <div class="box" id="replies">
+        <div class="cell" id="r_1"><strong><a href="/member/Bob">Bob</a></strong><span class="no">1</span><div class="reply_content">Other</div></div>
+      </div>
+    </div>`);
+  const module = initReplies({
+    options: { onlyOp: true, hotReplies: false, preloadPages: 0 },
+    enhance() {},
+  });
+  module.toggleOnlyOp(true);
+  const empty = document.querySelector(".vx-only-op-empty");
+  assert.equal(empty.hidden, false);
+  assert.equal(empty.textContent, "楼主暂无回复。");
   window.close();
 });

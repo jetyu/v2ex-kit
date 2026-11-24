@@ -2,7 +2,11 @@ import { button, element, owned } from "./dom.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 
-export function installPageActions(signedIn, pageWindow = globalThis.unsafeWindow) {
+export function installPageActions(
+  signedIn,
+  pageWindow = globalThis.unsafeWindow,
+  topicActions = {},
+) {
   const controls = owned(element("div", undefined, "vx-page-actions"));
   controls.setAttribute("role", "group");
   controls.setAttribute("aria-label", t("pageActions"));
@@ -18,6 +22,19 @@ export function installPageActions(signedIn, pageWindow = globalThis.unsafeWindo
   topHint.setAttribute("aria-hidden", "true");
   top.append(icon("arrow-up"), topHint);
   controls.append(top);
+
+  let onlyOp;
+  let onlyOpHint;
+  if (typeof topicActions?.onToggleOnlyOp === "function") {
+    onlyOp = button("", () => topicActions.onToggleOnlyOp());
+    onlyOp.className = "vx-only-op-action";
+    onlyOp.setAttribute("aria-pressed", "false");
+    onlyOp.setAttribute("aria-label", t("onlyOp"));
+    onlyOpHint = element("span", t("onlyOp"), "vx-page-action-hint");
+    onlyOpHint.setAttribute("aria-hidden", "true");
+    onlyOp.append(icon("user-check"), onlyOpHint);
+    controls.append(onlyOp);
+  }
 
   const editor =
     signedIn && /^\/t\/\d+\/?$/.test(location.pathname)
@@ -52,7 +69,7 @@ export function installPageActions(signedIn, pageWindow = globalThis.unsafeWindo
     if (nearTop === lastNearTop) return;
     lastNearTop = nearTop;
     top.hidden = nearTop;
-    controls.hidden = nearTop && !editor && !controls.querySelector("#vx-settings");
+    controls.hidden = nearTop && !editor && !onlyOp && !controls.querySelector("#vx-settings");
   };
   document.body.append(controls);
   window.addEventListener("scroll", sync, { passive: true });
@@ -61,4 +78,14 @@ export function installPageActions(signedIn, pageWindow = globalThis.unsafeWindo
     sync();
   });
   sync();
+  return {
+    syncOnlyOp(active) {
+      if (!onlyOp) return;
+      const label = t(active ? "showAllReplies" : "onlyOp");
+      onlyOp.classList.toggle("vx-action-active", active);
+      onlyOp.setAttribute("aria-pressed", String(active));
+      onlyOp.setAttribute("aria-label", label);
+      onlyOpHint.textContent = label;
+    },
+  };
 }

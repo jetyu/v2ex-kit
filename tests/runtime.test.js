@@ -347,6 +347,7 @@ test("bundled script initializes, enhances only new nodes, and settles without s
         preloadPages: 0,
         userCards: false,
         replyPreview: false,
+        unreadReplies: false,
         hotReplies: true,
         tags: true,
         emoji: true,
@@ -669,5 +670,89 @@ test("preloaded replies are enhanced once without triggering redundant mutation 
   await new Promise((resolve) => setTimeout(resolve, 120));
   assert.equal(external.querySelectorAll(".vx-tags").length, 1);
   assert.equal(external.querySelector(".v2p-decode").textContent, "Hello, V2EX!");
+  instance.window.close();
+});
+
+test("bundled script renders OP join hint, syncs only-OP actions, and persists unread markers", async () => {
+  const html = fixture.replace(
+    '<div class="header"><h1>Fixture topic</h1></div>',
+    '<div class="header"><h1>Fixture topic</h1><small class="gray"><a href="/member/Alice">Alice</a> · now</small></div>',
+  );
+  const instance = new JSDOM(html, {
+    url: "https://www.v2ex.com/t/123",
+    runScripts: "outside-only",
+    pretendToBeVisual: true,
+  });
+  const { window } = instance;
+  const doc = window.document;
+  const data = new Map([
+    [
+      "v2ex-lite:options",
+      {
+        autoCheckIn: false,
+        preloadPages: 0,
+        userCards: false,
+        replyPreview: false,
+        opCreated: true,
+        onlyOp: true,
+        unreadReplies: true,
+      },
+    ],
+    ["v2ex-lite:read-history", { 123: [10, 1, 100] }],
+  ]);
+  const apiCalls = [];
+  Object.assign(window, {
+    GM_getValue: (key, fallback) => (data.has(key) ? structuredClone(data.get(key)) : fallback),
+    GM_setValue: (key, value) => data.set(key, structuredClone(value)),
+    GM_deleteValue: (key) => data.delete(key),
+    GM_listValues: () => [...data.keys()],
+    GM_addValueChangeListener: () => {},
+    GM_addStyle: () => {},
+    GM_registerMenuCommand: () => {},
+    GM_xmlhttpRequest: () => assert.fail("unexpected upload"),
+    fetch: async (url) => {
+      apiCalls.push(url);
+      return {
+        ok: true,
+        url,
+        json: async () => ({
+          username: "Alice",
+          id: 999,
+          created: Math.floor(Date.now() / 1000) - 2 * 86400,
+        }),
+      };
+    },
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    unsafeWindow: window,
+  });
+  window.eval(built);
+  window.dispatchEvent(new window.Event("load"));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  assert.deepEqual(apiCalls, ["/api/members/show.json?username=Alice"]);
+  const opBadge = doc.querySelector(".vx-op-created");
+  assert.ok(opBadge);
+  assert.equal(opBadge.classList.contains("vx-op-created-alert"), true);
+  assert.match(opBadge.textContent, /7 天内注册/);
+
+  const actionButtons = doc.querySelector(".vx-page-actions");
+  assert.equal(actionButtons.lastElementChild.id, "vx-settings");
+  const floatingOp = doc.querySelector(".vx-only-op-action");
+  const barOp = doc.querySelector(".vx-only-op-btn");
+  assert.ok(floatingOp);
+  assert.equal(barOp.textContent, "只看楼主（2）");
+  floatingOp.click();
+  assert.equal(barOp.getAttribute("aria-pressed"), "true");
+  assert.equal(floatingOp.getAttribute("aria-pressed"), "true");
+  assert.equal(doc.querySelector("#replies").classList.contains("vx-only-op"), true);
+
+  assert.deepEqual(
+    [...doc.querySelectorAll(".vx-reply-unread")].map((node) => node.id),
+    ["r_11", "r_12"],
+  );
+  assert.equal(doc.querySelector(".vx-unread-divider").nextElementSibling.id, "r_11");
+
+  window.dispatchEvent(new window.Event("pagehide"));
+  assert.equal(data.get("v2ex-lite:read-history")["123"][0], 12);
   instance.window.close();
 });

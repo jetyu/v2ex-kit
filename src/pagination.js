@@ -9,6 +9,7 @@ export function createPagination({
   current,
   total: initialTotal,
   loadPage,
+  onNavigate,
 }) {
   let reading = current,
     total = initialTotal,
@@ -49,6 +50,7 @@ export function createPagination({
     setReading(page);
     lastJump = pages.get(page);
     lastJump?.scrollIntoView({ block: "start" });
+    onNavigate?.(page, total);
     return true;
   }
   function controls() {

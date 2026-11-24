@@ -78,3 +78,56 @@ test("topic emoji waits for an asynchronously rendered publication control outsi
   assert.equal(trigger.parentElement, publish.parentElement);
   assert.equal(publish.nextElementSibling, trigger);
 });
+
+test("topic emoji inserts into CodeMirror and transforms tokens before publish click", () => {
+  const { window } = dom(
+    `<form action="/write">
+      <textarea id="topic_content" name="content" style="display:none"></textarea>
+      <div class="CodeMirror"></div>
+      <button type="button" class="super normal button">发布主题</button>
+    </form>`,
+  );
+  const textarea = document.querySelector("#topic_content");
+  const cmNode = document.querySelector(".CodeMirror");
+  let value = "Before ";
+  let cursor = value.length;
+  let focused = 0;
+  cmNode.CodeMirror = {
+    getValue: () => value,
+    setValue(next) {
+      value = next;
+    },
+    replaceSelection(text) {
+      value = value.slice(0, cursor) + text + value.slice(cursor);
+      cursor += text.length;
+    },
+    save() {
+      textarea.value = value;
+    },
+    focus() {
+      focused++;
+    },
+  };
+  const publish = document.querySelector("button");
+  let submittedValue = "";
+  publish.addEventListener("click", () => {
+    submittedValue = cmNode.CodeMirror.getValue();
+  });
+
+  initEmoji({ emoji: true });
+  document.querySelector('[aria-label="插入表情"]').click();
+  const face = groups[0].items[0];
+  const choice = [...document.querySelectorAll(".v2p-emoji")].find(
+    (node) => node.title === face.value,
+  );
+  choice.click();
+
+  assert.equal(value, `Before ${face.value}`);
+  assert.equal(textarea.value, `Before ${face.value}`);
+  assert.ok(focused >= 1);
+
+  publish.click();
+  assert.equal(submittedValue, `Before ${face.url} `);
+  assert.equal(textarea.value, `Before ${face.url} `);
+  window.close();
+});
