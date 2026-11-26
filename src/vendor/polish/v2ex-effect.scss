@@ -217,11 +217,10 @@ a.v2p-topic-preview-title-link {
 
 .v2p-likes-box {
   user-select: none;
-  position: relative;
-  top: 3px;
   display: inline-flex;
   column-gap: 5px;
   align-items: center;
+  align-self: center;
 
   &.v2p-thanked {
     font-weight: bold;

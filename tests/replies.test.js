@@ -459,6 +459,10 @@ test("imported account actions call only the matching native callbacks after con
   assert.equal(imported.querySelectorAll("[onclick]").length, 0);
   assert.equal(imported.querySelector(".v2p-control-thank").parentElement, thank);
   assert.equal(imported.querySelector(".v2p-control-hide").parentElement, hide);
+  assert.equal(
+    reply.querySelector(".v2p-control-reply svg").getAttribute("stroke"),
+    "currentColor",
+  );
   assert.equal(parseReply(imported).name, "Alice");
   assert.equal(reply.getAttribute("href"), "https://www.v2ex.com/t/123?p=3#r_201");
   thank.click();
@@ -476,6 +480,8 @@ test("imported account actions call only the matching native callbacks after con
     ["hide", 201, "456"],
   ]);
   assert.match(notices[0], /2.*Alice/);
+  cloneTopReply(parseReply(imported)).querySelector(".v2p-control-reply").closest("a").click();
+  assert.deepEqual(calls.at(-1), ["reply", "Alice", 201]);
   assert.equal(imported.querySelector(".reply_content .v2p-control"), null);
   window.close();
 });

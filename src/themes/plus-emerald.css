@@ -2043,8 +2043,8 @@ html.v2p-topnav-pending #Top .tools {
 
 #Main .cell[id^="r"] > table td:last-of-type .fr {
   user-select: none;
-  position: relative;
-  top: -3px;
+  display: flex;
+  align-items: center;
 }
 
 #Main .cell[id^="r"] > table td:last-of-type .fr a {
@@ -2062,7 +2062,7 @@ html.v2p-topnav-pending #Top .tools {
 #Main .cell[id^="r"] .no {
   user-select: none;
   position: relative;
-  top: -4px;
+  top: 0;
   padding: 5px 10px;
   font-size: 12px;
   color: var(--v2p-color-cell-num);
@@ -2728,7 +2728,6 @@ a.light-toggle[href*="/settings/night/toggle"] {
 
 :root:is([data-site-theme="dark"], [data-site-theme="auto"][data-vx-system-dark="1"]) .no {
   background-color: var(--v2p-color-main-100);
-  margin-top: -3px;
   border-radius: 99px;
 }
 

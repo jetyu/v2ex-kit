@@ -191,14 +191,15 @@ test("hot replies keep OP beside the author and use square normal-sized avatars"
     </tr></tbody></table></div>
   </div></div>`);
   const style = document.createElement("style");
-  style.textContent = `${compile("src/vendor/rep/content.scss").css}\n${readFileSync(
-    "src/themes/plus-emerald.css",
-    "utf8",
-  )}`;
+  style.textContent = `${compile("src/vendor/polish/v2ex-effect.scss").css}\n${
+    compile("src/vendor/rep/content.scss").css
+  }\n${readFileSync("src/themes/plus-emerald.css", "utf8")}`;
   document.head.append(style);
   const infoNode = document.querySelector("#top_replies td > .flex-one-row > .flex-one-row");
   const info = window.getComputedStyle(infoNode);
   const likes = window.getComputedStyle(infoNode.querySelector(".v2p-likes-box"));
+  const actions = window.getComputedStyle(document.querySelector("#top_replies .fr"));
+  const floor = window.getComputedStyle(document.querySelector("#top_replies .no"));
   const avatar = window.getComputedStyle(document.querySelector("#top_replies .avatar"));
   assert.equal(info.flexGrow, "0");
   assert.equal(info.justifyContent, "flex-start");
@@ -206,8 +207,12 @@ test("hot replies keep OP beside the author and use square normal-sized avatars"
     [...infoNode.children].map((node) => node.className || node.tagName),
     ["STRONG", "badges", "ago", "v2p-likes-box"],
   );
-  assert.equal(likes.top, "0px");
+  assert.equal(likes.top, "auto");
   assert.equal(likes.alignSelf, "center");
+  assert.equal(actions.display, "flex");
+  assert.equal(actions.alignItems, "center");
+  assert.equal(actions.top, "auto");
+  assert.equal(floor.top, "0px");
   assert.equal(avatar.display, "block");
   assert.equal(avatar.width, "40px");
   assert.equal(avatar.minWidth, "40px");
@@ -221,6 +226,35 @@ test("hot replies keep OP beside the author and use square normal-sized avatars"
     window.getComputedStyle(document.querySelector("#top_replies table")).tableLayout,
     "fixed",
   );
+});
+
+test("ordinary and hot reply metadata share one centered alignment", () => {
+  const row = (id, extra = "") => `<div class="cell ${extra}" id="${id}"><table><tbody><tr><td>
+    <div class="flex-one-row">
+      <div class="flex-one-row gap10"><strong>Alice</strong><span class="ago">now</span><span class="v2p-likes-box"><span class="v2p-icon-heart"></span>2</span></div>
+      <div class="flex-one-row gap10"><div class="thank_area v2p-controls"><a><span class="v2p-control v2p-control-hide"></span></a><a><span class="v2p-control v2p-control-thank"></span></a></div><a class="v2p-control v2p-control-reply"></a><span class="no">7</span></div>
+    </div>
+  </td></tr></tbody></table></div>`;
+  dom(`<div id="Main">${row("r_7")}${row("rhot_7", "vx-hot-reply")}</div>`);
+  document.documentElement.dataset.siteTheme = "dark";
+  const style = document.createElement("style");
+  style.textContent = `${compile("src/vendor/polish/v2ex-effect.scss").css}\n${
+    compile("src/vendor/rep/content.scss").css
+  }\n${readFileSync("src/themes/plus-emerald.css", "utf8")}`;
+  document.head.append(style);
+  for (const reply of document.querySelectorAll(".cell")) {
+    const [details, actions] = reply.querySelectorAll("td > .flex-one-row > .flex-one-row");
+    const likes = window.getComputedStyle(reply.querySelector(".v2p-likes-box"));
+    const controls = window.getComputedStyle(reply.querySelector(".v2p-controls"));
+    const floor = window.getComputedStyle(reply.querySelector(".no"));
+    assert.equal(window.getComputedStyle(details).alignItems, "center");
+    assert.equal(window.getComputedStyle(actions).alignItems, "center");
+    assert.equal(likes.top, "auto");
+    assert.equal(likes.alignSelf, "center");
+    assert.equal(controls.alignItems, "center");
+    assert.equal(floor.top, "0px");
+    assert.equal(floor.marginTop, "0px");
+  }
 });
 
 test("tag filters use their grid columns instead of V2EX's fixed input width", () => {

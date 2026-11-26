@@ -166,6 +166,7 @@ const messages = {
   nextPage: "下一页",
   replyPages: "回复分页",
   hideReply: "隐藏回复",
+  replyAction: "回复",
   thankReply: "感谢回复",
   thanked: "已感谢",
   confirmHide: "确定要隐藏这条回复吗？",

@@ -56,13 +56,36 @@ a.no {
   overflow-wrap: anywhere;
 }
 
+#Main .cell:is([id^="r_"], .vx-hot-reply) > table td > .flex-one-row,
+#Main .cell:is([id^="r_"], .vx-hot-reply) > table td > .flex-one-row > .flex-one-row {
+  align-items: center;
+}
+
 #top_replies td > .flex-one-row > .flex-one-row:first-child {
   flex: 0 1 auto;
   justify-content: flex-start;
+}
 
-  > .v2p-likes-box {
-    top: 0;
-    align-self: center;
+// Align the visible icons and floor even when a cached theme offsets .no.
+#Main .cell:is([id^="r_"], .vx-hot-reply) > table > tbody > tr > td > .flex-one-row {
+  > :is(.flex-one-row, .fr):last-child {
+    display: flex;
+    align-items: center;
+    top: auto;
+
+    > a,
+    > .no,
+    .thank_area > a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    > .no {
+      position: static;
+      margin-block: 0;
+    }
   }
 }
 

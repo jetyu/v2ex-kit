@@ -94,10 +94,32 @@ function bindImportedAction(anchor, action, pageWindow) {
   });
 }
 
+const controlIcons = { hide: "eye-off", thank: "heart", reply: "reply" };
+const controlLabels = { hide: "hideReply", thank: "thankReply", reply: "replyAction" };
+
+function decorateAction(anchor, action) {
+  if (anchor.querySelector(".v2p-control")) return;
+  const control = owned(
+    element("span", undefined, `v2p-control v2p-hover-btn v2p-control-${action}`),
+  );
+  control.append(icon(controlIcons[action]));
+  anchor.classList.remove("thank");
+  anchor.style.removeProperty("color");
+  anchor.title = t(controlLabels[action]);
+  anchor.setAttribute("aria-label", anchor.title);
+  anchor.replaceChildren(control);
+}
+
 export function enhanceReplyActions(root, pageWindow = globalThis.unsafeWindow) {
-  for (const anchor of matching(root, 'a[href*="#r_"]')) {
+  for (const anchor of matching(root, 'a[href*="#r_"], a[onclick*="replyOne"]')) {
     const action = importedActions.get(anchor);
     if (action) bindImportedAction(anchor, action, pageWindow);
+    if (
+      (action?.kind === "reply" || /\breplyOne\s*\(/.test(anchor.getAttribute("onclick") ?? "")) &&
+      anchor.closest(REPLY)?.closest("#Main") &&
+      !anchor.closest(".reply_content")
+    )
+      decorateAction(anchor, "reply");
   }
   for (const area of matching(root, ".thank_area")) {
     const reply = area.closest(REPLY);
@@ -113,16 +135,7 @@ export function enhanceReplyActions(root, pageWindow = globalThis.unsafeWindow) 
           : /thankReply\s*\(|\/thank\/reply\//.test(source)
             ? "thank"
             : null);
-      if (!action || anchor.querySelector(".v2p-control")) continue;
-      const control = owned(
-        element("span", undefined, `v2p-control v2p-hover-btn v2p-control-${action}`),
-      );
-      control.append(icon(action === "hide" ? "eye-off" : "heart"));
-      anchor.classList.remove("thank");
-      anchor.style.removeProperty("color");
-      anchor.title = action === "hide" ? t("hideReply") : t("thankReply");
-      anchor.setAttribute("aria-label", anchor.title);
-      anchor.replaceChildren(control);
+      if (action) decorateAction(anchor, action);
     }
     const thankControls = [...area.querySelectorAll(".v2p-control-thank")];
     if (area.classList.contains("thanked")) {

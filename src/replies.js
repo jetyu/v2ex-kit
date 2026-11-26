@@ -54,6 +54,15 @@ function replyAction(anchor) {
 }
 
 function bindClonedReplyActions(cloned, reply) {
+  const replyControl = cloned.querySelector(".v2p-control-reply")?.closest("a");
+  if (replyControl) {
+    const source = directReplyNode(reply, ".v2p-control-reply")?.closest("a");
+    replyControl.removeAttribute("onclick");
+    replyControl.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (source?.isConnected) source.click();
+    });
+  }
   const sourceArea = directReplyNode(reply, ".thank_area");
   const clonedArea = [...cloned.querySelectorAll(".thank_area")].find(
     (area) => !area.closest(".reply_content") && area.closest(".vx-hot-reply") === cloned,
@@ -65,6 +74,7 @@ function bindClonedReplyActions(cloned, reply) {
     if (action && !sourceActions.has(action)) sourceActions.set(action, anchor);
   }
   for (const anchor of [...clonedArea.querySelectorAll("a")]) {
+    if (anchor === replyControl) continue;
     const action = replyAction(anchor);
     const source = sourceActions.get(action);
     if (!source || action === "reply") {
